@@ -18,9 +18,14 @@ class RoomManager {
 
   getOrCreatePublicRoom() {
     let publicRoom = this.rooms.get('MASA-101');
-    if (!publicRoom || publicRoom.game.state === GAME_STATES.GAME_OVER) {
+    const hasActiveHuman = publicRoom && publicRoom.game && publicRoom.game.players.some(p => p && !p.isBot);
+
+    if (!publicRoom || publicRoom.game.state === GAME_STATES.GAME_OVER || (publicRoom.game.state === GAME_STATES.PLAYING && !hasActiveHuman)) {
       if (publicRoom && publicRoom.botInterval) {
         clearInterval(publicRoom.botInterval);
+      }
+      if (publicRoom && publicRoom.countdownInterval) {
+        clearInterval(publicRoom.countdownInterval);
       }
       const roomId = 'MASA-101';
       const game = new OkeyGame(roomId, { mode: 'standard', targetRounds: 1 });
@@ -500,6 +505,7 @@ class RoomManager {
   handleDisconnect(playerId) {
     for (const [roomId, room] of this.rooms.entries()) {
       if (room.vsBots && room.hostId === playerId) {
+        if (room.botInterval) clearInterval(room.botInterval);
         this.rooms.delete(roomId);
         continue;
       }
@@ -509,11 +515,24 @@ class RoomManager {
         if (game.state === GAME_STATES.WAITING) {
           game.players[playerIndex] = null;
           if (room.hostId === playerId) {
-            const nextPlayer = game.players.find(Boolean);
+            const nextPlayer = game.players.find(p => p && !p.isBot);
             room.hostId = nextPlayer ? nextPlayer.id : null;
+          }
+          const remainingHumans = game.players.filter(p => p && !p.isBot);
+          if (remainingHumans.length === 0) {
+            this.cancelLobbyCountdown(room);
+            game.players = [null, null, null, null];
+            room.hostId = null;
           }
         } else {
           game.players[playerIndex].isBot = true;
+          const remainingHumans = game.players.filter(p => p && !p.isBot);
+          if (remainingHumans.length === 0) {
+            if (room.botInterval) clearInterval(room.botInterval);
+            this.rooms.delete(roomId);
+            this.broadcastLobbyState();
+            continue;
+          }
           game.addLog(`${game.players[playerIndex].name} bağlantısı koptu (Yapay Zeka devraldı).`);
           if (room.triggerBotStep) room.triggerBotStep();
         }

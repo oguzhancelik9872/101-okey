@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (seatInfo) {
         // Seat is occupied
-        const isMe = (mySeatedIndex === seatIdx);
+        const isMe = (mySeatedIndex === seatIdx) || (currentUser && seatInfo.userId === currentUser.id) || (seatInfo.id === socket.id);
         const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
           ? window.getPlayerAvatarSVG(seatInfo.name, seatInfo.gender, seatInfo.avatarIndex)
           : '👤';
@@ -382,9 +382,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="lobby-occupied-avatar">${avatarSvg}</div>
             <div class="lobby-occupied-info">
               <span class="lobby-occupied-name" title="${seatInfo.name}">${seatInfo.name}${isMe ? ' (Siz)' : ''}</span>
-              <span class="lobby-occupied-badge">${seatInfo.isBot ? '🤖 Bot' : '🟢 Hazır'}</span>
+              <span class="lobby-occupied-badge">${seatInfo.isBot ? '🤖 Bot' : (tableData.state === 'PLAYING' ? '🎮 Oynuyor' : '🟢 Hazır')}</span>
             </div>
             ${isMe && tableData.state === 'WAITING' ? '<button class="btn-leave-seat-pill" title="Koltuktan Kalk">❌ Kalk</button>' : ''}
+            ${isMe && tableData.state === 'PLAYING' ? '<button class="btn-rejoin-seat-pill" title="Oyuna Geri Dön">🎯 Oyuna Dön</button>' : ''}
             ${!isMe && seatInfo.isBot && mySeatedIndex !== null && tableData.state === 'WAITING' ? `<button class="btn-remove-bot-pill" data-seat="${seatIdx}" title="Botu Kaldır">❌ Kaldır</button>` : ''}
           </div>
         `;
@@ -398,6 +399,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (res.success) {
                   mySeatedIndex = null;
                   roomId = null;
+                }
+              });
+            });
+          }
+        }
+
+        if (isMe && tableData.state === 'PLAYING') {
+          const btnRejoin = podEl.querySelector('.btn-rejoin-seat-pill');
+          if (btnRejoin) {
+            btnRejoin.addEventListener('click', (e) => {
+              e.stopPropagation();
+              socket.emit('reconnectRoom', { roomId: currentLobbyTableId, userId: getUserId() }, (res) => {
+                if (res.success) {
+                  setupGameRoom(res.roomId, res.seatIndex, res.isHost);
+                  if (res.gameState) {
+                    table.update(res.gameState);
+                    const me = res.gameState.players[res.seatIndex];
+                    if (me && me.hand) {
+                      istaka.setHand(me.hand, true);
+                    }
+                  }
+                  ui.showToast('🎯 Masanıza geri döndünüz!', 'success');
+                } else {
+                  ui.showToast(res.reason, 'error');
                 }
               });
             });

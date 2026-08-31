@@ -378,6 +378,23 @@ body.plus-theme {
   color: #fff;
   transform: scale(1.05);
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+.btn-rejoin-seat-pill {
+  background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%);
+  border: 1.5px solid #f9e79f;
+  color: #1a1a1a;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 5px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(241, 196, 15, 0.4);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-rejoin-seat-pill:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(241, 196, 15, 0.7);
 }
 
 .lobby-seat-busy {
