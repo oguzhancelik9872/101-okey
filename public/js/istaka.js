@@ -584,73 +584,65 @@ class IstakaManager {
   _placeTilesSafely(groups, leftovers, allTiles) {
     this.clearGrid();
 
-    // 1. Try placing groups and leftovers with 1-slot gaps
-    let fitsWithGaps = true;
     let r = 0;
     let c = 0;
-    const testGrid = [
-      new Array(this.COLS).fill(null),
-      new Array(this.COLS).fill(null)
-    ];
+    const unplacedLeftovers = [...leftovers];
 
+    // Place all meld/pair groups onto the rack (A group is NEVER split across rows!)
     for (const group of groups) {
+      if (!group || group.length === 0) continue;
+
+      // If group does not fit in remaining columns of current row, move to row 1
       if (c + group.length > this.COLS) {
         r++;
         c = 0;
       }
+
+      // If exceeding 2 rows, place tightly on row 1
       if (r >= this.ROWS) {
-        fitsWithGaps = false;
-        break;
+        r = this.ROWS - 1;
+        c = Math.max(0, this.COLS - group.length);
       }
+
+      // Place all tiles of this group contiguously
       for (const t of group) {
-        testGrid[r][c++] = t;
+        if (c < this.COLS && r < this.ROWS) {
+          this.grid[r][c++] = t;
+        }
       }
-      if (c < this.COLS) c++; // gap
-    }
 
-    if (fitsWithGaps) {
-      for (const t of leftovers) {
-        if (c >= this.COLS) {
-          r++;
-          c = 0;
-        }
-        if (r >= this.ROWS) {
-          fitsWithGaps = false;
-          break;
-        }
-        testGrid[r][c++] = t;
+      // Leave a 1-slot gap after the group if there is still room on the row
+      if (c < this.COLS) {
+        c++;
       }
     }
 
-    if (fitsWithGaps) {
-      this.grid = testGrid;
-    } else {
-      // 2. If gaps cause overflow, pack tightly so ALL tiles fit comfortably in the 32 slots!
-      this.clearGrid();
-      let index = 0;
-      for (const group of groups) {
-        for (const t of group) {
-          const row = Math.floor(index / this.COLS);
-          const col = index % this.COLS;
-          if (row < this.ROWS) this.grid[row][col] = t;
-          index++;
-        }
-        // Add 1 gap if space permits
-        const remainingTiles = allTiles.length - index;
-        const remainingSlots = (this.ROWS * this.COLS) - index;
-        if (remainingSlots > remainingTiles && index % this.COLS !== 0) {
-          index++;
-        }
+    // Place leftovers into remaining available empty slots
+    // 1. First, place on the current row/col after the last placed group
+    while (unplacedLeftovers.length > 0 && r < this.ROWS) {
+      if (c >= this.COLS) {
+        r++;
+        c = 0;
+        continue;
       }
-      for (const t of leftovers) {
-        const row = Math.floor(index / this.COLS);
-        const col = index % this.COLS;
-        if (row < this.ROWS) this.grid[row][col] = t;
-        index++;
+      if (r < this.ROWS && !this.grid[r][c]) {
+        this.grid[r][c] = unplacedLeftovers.shift();
+      }
+      c++;
+    }
+
+    // 2. If any leftovers remain (e.g. gaps left on row 0 before row wrap), fill any remaining empty slots
+    if (unplacedLeftovers.length > 0) {
+      for (let row = 0; row < this.ROWS && unplacedLeftovers.length > 0; row++) {
+        for (let col = 0; col < this.COLS && unplacedLeftovers.length > 0; col++) {
+          if (!this.grid[row][col]) {
+            this.grid[row][col] = unplacedLeftovers.shift();
+          }
+        }
       }
     }
 
-    // 3. Absolute Safety check: make sure every single tile is in the grid
+    // Final safety verification: Ensure 100% of all tiles exist on the rack
     const placedIds = new Set();
     for (let row = 0; row < this.ROWS; row++) {
       for (let col = 0; col < this.COLS; col++) {
