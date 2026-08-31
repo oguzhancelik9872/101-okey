@@ -71,7 +71,7 @@ class RoomManager {
 
   broadcastLobbyState() {
     if (this.io) {
-      this.io.to('lobby').emit('lobby:stateUpdate', this.getLobbyState());
+      this.io.emit('lobby:stateUpdate', this.getLobbyState());
     }
   }
 
@@ -126,7 +126,10 @@ class RoomManager {
   }
 
   joinRoom(roomId, playerId, playerName, userId = null, targetSeatIndex = null, gender = null, avatarIndex = null) {
-    const room = this.rooms.get(roomId);
+    let room = this.rooms.get(roomId);
+    if (!room && (roomId === 'MASA-101' || !roomId)) {
+      room = this.getOrCreatePublicRoom();
+    }
     if (!room) return { success: false, reason: 'Oda bulunamadı.' };
 
     const game = room.game;
@@ -184,7 +187,7 @@ class RoomManager {
     return { success: true, room, player };
   }
 
-  switchSeat(socketId, newSeatIndex) {
+  switchSeat(socketId, newSeatIndex, userId = null) {
     const publicRoom = this.getOrCreatePublicRoom();
     const game = publicRoom.game;
     if (game.state !== GAME_STATES.WAITING) {
@@ -195,12 +198,13 @@ class RoomManager {
       return { success: false, reason: 'Seçtiğiniz koltuk dolu veya geçersiz.' };
     }
 
-    const currentSeatIdx = game.players.findIndex(p => p && p.id === socketId);
+    const currentSeatIdx = game.players.findIndex(p => p && ((userId && p.userId === userId) || p.id === socketId));
     if (currentSeatIdx === -1) {
       return { success: false, reason: 'Masada oturmuyorsunuz.' };
     }
 
     const player = game.players[currentSeatIdx];
+    player.id = socketId;
     player.seatIndex = newSeatIndex;
     game.players[currentSeatIdx] = null;
     game.players[newSeatIndex] = player;
@@ -209,17 +213,17 @@ class RoomManager {
     return { success: true, seatIndex: newSeatIndex };
   }
 
-  leaveSeat(socketId) {
+  leaveSeat(socketId, userId = null) {
     const publicRoom = this.getOrCreatePublicRoom();
     const game = publicRoom.game;
     if (game.state !== GAME_STATES.WAITING) {
       return { success: false, reason: 'Oyun başladıktan sonra ayrılamazsınız.' };
     }
 
-    const currentSeatIdx = game.players.findIndex(p => p && p.id === socketId);
+    const currentSeatIdx = game.players.findIndex(p => p && ((userId && p.userId === userId) || p.id === socketId));
     if (currentSeatIdx !== -1) {
       game.players[currentSeatIdx] = null;
-      if (publicRoom.hostId === socketId) {
+      if (publicRoom.hostId === socketId || (userId && publicRoom.hostId === userId)) {
         const next = game.players.find(Boolean);
         publicRoom.hostId = next ? next.id : null;
       }

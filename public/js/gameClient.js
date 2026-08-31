@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (btnLeaveSeat) {
             btnLeaveSeat.addEventListener('click', (e) => {
               e.stopPropagation();
-              socket.emit('lobby:leaveSeat', (res) => {
+              socket.emit('lobby:leaveSeat', { userId: getUserId() }, (res) => {
                 if (res.success) {
                   mySeatedIndex = null;
                   roomId = null;
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnSit.addEventListener('click', () => {
               if (mySeatedIndex !== null) {
                 // Switch seat
-                socket.emit('lobby:switchSeat', { targetSeatIndex: seatIdx }, (res) => {
+                socket.emit('lobby:switchSeat', { targetSeatIndex: seatIdx, userId: getUserId() }, (res) => {
                   if (res.success) {
                     mySeatedIndex = res.seatIndex;
                   } else {
@@ -666,6 +666,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Socket.IO Game State Updates ---
   socket.on('gameStateUpdate', (state) => {
     currentGameState = state;
+
+    // Transition from lobby to game table when round starts
+    if (state.state === 'PLAYING') {
+      const mySeat = state.players.findIndex(p => p && ((currentUser && p.userId === currentUser.id) || p.id === socket.id));
+      if (mySeat !== -1) {
+        viewerSeatIndex = mySeat;
+        roomId = state.id || currentLobbyTableId;
+        localStorage.setItem('okey101_active_room', roomId);
+        table.setViewerSeatIndex(viewerSeatIndex);
+        if (authView) authView.classList.add('hidden');
+        if (lobbyView) lobbyView.classList.add('hidden');
+        if (gameView) gameView.classList.remove('hidden');
+      }
+    }
+
     table.setViewerSeatIndex(viewerSeatIndex);
     istaka.setIndicator(state.indicator);
 

@@ -207,7 +207,6 @@ io.on('connection', (socket) => {
         return;
       }
 
-      socket.leave('lobby');
       socket.join(result.room.id);
       socket.roomId = result.room.id;
       if (uId) db.updateActiveRoom(uId, result.room.id);
@@ -231,7 +230,8 @@ io.on('connection', (socket) => {
   // Switch Seat in Lobby
   socket.on('lobby:switchSeat', (data, callback) => {
     try {
-      const res = roomManager.switchSeat(socket.id, data.targetSeatIndex);
+      const uId = (data && data.userId) || socket.userId;
+      const res = roomManager.switchSeat(socket.id, data.targetSeatIndex, uId);
       if (callback) callback(res);
     } catch (err) {
       if (callback) callback({ success: false, reason: err.message });
@@ -239,13 +239,15 @@ io.on('connection', (socket) => {
   });
 
   // Leave Seat in Lobby
-  socket.on('lobby:leaveSeat', (callback) => {
+  socket.on('lobby:leaveSeat', (data, callback) => {
+    const cb = typeof data === 'function' ? data : callback;
+    const uId = (data && data.userId) || socket.userId;
     try {
-      const res = roomManager.leaveSeat(socket.id);
+      const res = roomManager.leaveSeat(socket.id, uId);
       if (socket.userId) db.updateActiveRoom(socket.userId, null);
-      if (callback) callback(res);
+      if (cb) cb(res);
     } catch (err) {
-      if (callback) callback({ success: false, reason: err.message });
+      if (cb) cb({ success: false, reason: err.message });
     }
   });
 
