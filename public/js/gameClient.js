@@ -167,15 +167,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.emit('auth:selectName', { name: nameToSelect }, (res) => {
       clearTimeout(resetTimer);
-      if (btnEnter) {
-        btnEnter.textContent = '🚀 OYUNA GİRİŞ YAP';
-        btnEnter.classList.remove('disabled');
-        btnEnter.removeAttribute('disabled');
-      }
-
       if (res && res.success && res.user) {
+        if (res.token) {
+          localStorage.setItem('okey101_auth_token', res.token);
+        }
+        localStorage.setItem('okey101_user', JSON.stringify(res.user));
         ui.showToast(`Hoş geldin, ${res.user.displayName || res.user.username}!`, 'success');
-        handleLoginSuccess(res.user, res.token, false);
+        setTimeout(() => {
+          window.location.reload();
+        }, 150);
       } else {
         ui.showToast((res && res.reason) || 'Giriş yapılamadı. Tekrar deneyin.', 'error');
         socket.emit('auth:getAvailableNames', (data) => {
