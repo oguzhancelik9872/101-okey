@@ -29,6 +29,28 @@ document.addEventListener('DOMContentLoaded', () => {
     onProcessTileDragDrop: (tileId, targetMeldId) => handleProcessTileById(tileId, targetMeldId)
   });
 
+  // --- Dynamic Title & LocalStorage Sync ---
+  let currentActivePlayerName = localStorage.getItem('okey101_player_name') || 'Oyuncu';
+  let titleBlinkInterval = null;
+
+  function updateDocumentTitle(isMyTurn = false) {
+    if (titleBlinkInterval) {
+      clearInterval(titleBlinkInterval);
+      titleBlinkInterval = null;
+    }
+
+    if (isMyTurn) {
+      let blink = false;
+      document.title = `🎯 SIRA SİZDE! - ${currentActivePlayerName}`;
+      titleBlinkInterval = setInterval(() => {
+        blink = !blink;
+        document.title = blink ? `🔔 SIRA SİZDE! (${currentActivePlayerName})` : `🎯 SIRA SİZDE! - ${currentActivePlayerName}`;
+      }, 1000);
+    } else {
+      document.title = `101 - ${currentActivePlayerName}`;
+    }
+  }
+
   // --- Lobby Setup & Connection ---
   const playerNameInput = document.getElementById('player-name-input');
   const lobbyAvatarImg = document.getElementById('lobby-avatar-img');
@@ -36,20 +58,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load saved player name from localStorage
   const savedPlayerName = localStorage.getItem('okey101_player_name');
   if (savedPlayerName && playerNameInput) {
+    currentActivePlayerName = savedPlayerName;
     playerNameInput.value = savedPlayerName;
-    document.title = `101 - ${savedPlayerName}`;
   }
+  updateDocumentTitle(false);
 
   if (playerNameInput && lobbyAvatarImg) {
     const updateLobbyAvatar = () => {
       const name = playerNameInput.value.trim() || 'Oyuncu';
+      currentActivePlayerName = name;
       if (typeof window.getPlayerAvatarSVG === 'function') {
         lobbyAvatarImg.innerHTML = window.getPlayerAvatarSVG(name);
       }
       if (playerNameInput.value.trim()) {
         localStorage.setItem('okey101_player_name', playerNameInput.value.trim());
-        document.title = `101 - ${playerNameInput.value.trim()}`;
       }
+      updateDocumentTitle(false);
     };
     playerNameInput.addEventListener('input', updateLobbyAvatar);
     updateLobbyAvatar();
@@ -220,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
       viewerSeatIndex = 0;
       isHost = false;
       if (dropdownMenu) dropdownMenu.classList.add('hidden');
+      updateDocumentTitle(false);
       ui.showView('lobby');
       ui.showToast('Masadan ayrıldınız.', 'info');
     });
@@ -281,10 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Turn change sound alert
-    if (state.currentTurn === viewerSeatIndex && lastTurn !== viewerSeatIndex && state.state === 'PLAYING') {
+    // Turn change sound alert & dynamic title
+    const isMyTurn = state.currentTurn === viewerSeatIndex && state.state === 'PLAYING';
+    updateDocumentTitle(isMyTurn);
+
+    if (isMyTurn && lastTurn !== viewerSeatIndex) {
       window.soundEngine.playYourTurn();
-      ui.showToast('Sıra Sizde!', 'info', 2000);
     }
     lastTurn = state.currentTurn;
 
