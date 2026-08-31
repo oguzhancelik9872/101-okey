@@ -1449,21 +1449,22 @@ body.plus-theme {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 8px 75px 4px 75px;
+  justify-content: center;
+  padding: 56px 125px;
   width: 100%;
+  box-sizing: border-box;
   overflow: visible;
 }
 
 .table-felt-mat {
   width: 100%;
-  max-width: 1540px;
-  height: calc(100% - 58px);
-  max-height: 560px;
+  max-width: 1420px;
+  height: 100%;
+  max-height: 520px;
   margin: 0 auto;
   background: radial-gradient(ellipse at center, #10663a 0%, #0c4d2c 55%, #072e1a 100%);
   border: 7px solid #241108;
-  border-radius: 95px;
+  border-radius: 80px;
   box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.85), 0 12px 45px rgba(0, 0, 0, 0.9), 0 0 0 2px rgba(241, 196, 15, 0.4);
   position: relative;
   display: flex;
@@ -1568,15 +1569,15 @@ body.plus-theme {
   transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
 }
 
-/* Top Balanced Outer Bar */
+/* Top Balanced Outer Bar (In Canvas Above Oval Table) */
 .bar-top {
-  top: 6px;
+  top: 5px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 5px 14px 5px 6px;
+  padding: 4px 14px 4px 6px;
   border-radius: 28px;
   width: auto;
   min-width: 170px;
@@ -1584,32 +1585,32 @@ body.plus-theme {
   justify-content: center;
 }
 
-/* Left & Right Vertical Outer Bars (Balanced Sizing) */
+/* Left & Right Vertical Outer Bars (In Canvas to Left/Right of Oval Table) */
 .bar-left {
-  left: 8px;
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 10px;
+  gap: 5px;
+  padding: 10px 8px;
   border-radius: 18px;
-  width: 110px;
+  width: 105px;
   text-align: center;
 }
 
 .bar-right {
-  right: 8px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 10px;
+  gap: 5px;
+  padding: 10px 8px;
   border-radius: 18px;
-  width: 110px;
+  width: 105px;
   text-align: center;
 }
 
@@ -2330,9 +2331,9 @@ body.plus-theme {
   left: 0;
   right: 0;
   width: 100%;
-  max-width: 1540px;
+  max-width: 1420px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
