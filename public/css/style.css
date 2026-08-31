@@ -2581,10 +2581,7 @@ body.plus-theme {
   transition: background 0.15s, border-color 0.15s;
 }
 
-.istaka-slot.slot-in-valid-meld {
-  background: rgba(39, 174, 96, 0.18);
-  border-color: rgba(46, 204, 113, 0.4);
-}
+
 
 .istaka-slot.drag-over {
   background: rgba(241, 196, 15, 0.25);

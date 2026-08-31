@@ -334,13 +334,8 @@ class IstakaManager {
 
         const tile = this.grid[r][c];
         if (tile) {
-          const isPartOfValidMeld = rackAnalysis.validTileIds.has(tile.id);
-          const tileEl = this.createTileElement(tile, r, c, isPartOfValidMeld);
+          const tileEl = this.createTileElement(tile, r, c);
           slotEl.appendChild(tileEl);
-
-          if (isPartOfValidMeld) {
-            slotEl.classList.add('slot-in-valid-meld');
-          }
         }
       }
     }
