@@ -1605,16 +1605,17 @@ body.plus-theme {
    ========================================================= */
 
 .center-table-zone {
-  width: 90%;
-  max-width: 1200px;
-  height: 94%;
+  width: 92%;
+  max-width: 1250px;
+  height: 96%;
   display: flex;
   align-items: stretch;
   justify-content: center;
   gap: 10px;
   position: relative;
   z-index: 10;
-  padding: 6px 8px;
+  padding: 4px 6px;
+  box-sizing: border-box;
 }
 
 /* Sol ve Orta: 2 Tane Yan Yana 13x13 Seri Açma Bölmesi */
@@ -1678,17 +1679,18 @@ body.plus-theme {
   min-height: 0;
   display: grid;
   grid-template-rows: repeat(13, 1fr);
-  gap: 1px;
+  gap: 2.5px;
   overflow: hidden !important;
   z-index: 2;
   box-sizing: border-box;
+  padding: 1px;
 }
 
 /* 13-Column Meld Row (Natural Board Slots) */
 .table-grid-row {
   display: grid;
   grid-template-columns: repeat(13, 1fr);
-  gap: 1px;
+  gap: 1.5px;
   height: 100%;
   min-height: 0;
   max-height: 100%;
@@ -1707,9 +1709,9 @@ body.plus-theme {
   height: 100%;
   min-height: 0;
   max-height: 100%;
-  border-radius: 2px;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   min-width: 0;
   box-sizing: border-box;
   transition: all 0.15s;
@@ -1722,11 +1724,12 @@ body.plus-theme {
 
 .grid-cell-slot .tile {
   height: 100% !important;
-  max-height: 25px !important;
+  max-height: 100% !important;
   width: auto !important;
   aspect-ratio: 24/32 !important;
   min-width: 0 !important;
   padding: 0 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.6);
 }
 
 .grid-cell-slot .tile .tile-number {
@@ -1901,10 +1904,11 @@ body.plus-theme {
   min-height: 0;
   display: grid;
   grid-template-rows: repeat(13, 1fr);
-  gap: 1px;
+  gap: 2.5px;
   overflow: hidden !important;
   z-index: 2;
   box-sizing: border-box;
+  padding: 1px;
 }
 
 /* 2-Column Pairs Row (Natural Board Slots) */
@@ -2658,4 +2662,109 @@ body.plus-theme {
 
 .animate-bounce-float {
   animation: floatBounce 2.5s forwards ease-out;
+}
+
+/* =========================================================
+   SOUND SETTINGS MODAL
+   ========================================================= */
+.sound-settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.sound-setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.sound-label-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sound-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f1c40f;
+  letter-spacing: 0.5px;
+}
+
+.sound-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: #2ecc71;
+}
+
+.sound-hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+.sound-control-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sound-range-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.sound-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f1c40f;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(241, 196, 15, 0.8);
+  transition: transform 0.1s;
+}
+
+.sound-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.btn-sound-toggle {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 64px;
+  text-align: center;
+}
+
+.btn-sound-toggle.active {
+  background: rgba(46, 204, 113, 0.25);
+  border-color: #2ecc71;
+  color: #2ecc71;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+}
+
+.btn-sound-toggle.muted {
+  background: rgba(231, 76, 60, 0.25);
+  border-color: #e74c3c;
+  color: #e74c3c;
 }

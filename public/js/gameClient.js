@@ -797,6 +797,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Audio events for table actions
+    if (lastGameState && lastGameState.state === 'PLAYING' && state.state === 'PLAYING') {
+      // 1. Someone opened hand (tableMelds count increased)
+      const lastMeldsCount = lastGameState.tableMelds ? lastGameState.tableMelds.length : 0;
+      const currentMeldsCount = state.tableMelds ? state.tableMelds.length : 0;
+      if (currentMeldsCount > lastMeldsCount) {
+        window.soundEngine.playOpenHand();
+      }
+
+      // 2. Someone discarded a tile (discards pile total count increased)
+      const countDiscards = (s) => (s && s.discards) ? s.discards.reduce((acc, p) => acc + (p ? p.length : 0), 0) : 0;
+      const lastDiscardCount = countDiscards(lastGameState);
+      const currentDiscardCount = countDiscards(state);
+      if (currentDiscardCount > lastDiscardCount) {
+        window.soundEngine.playDiscard();
+      }
+    }
+    lastGameState = state;
+
     // Turn change sound alert & dynamic title
     const isMyTurn = state.currentTurn === viewerSeatIndex && state.state === 'PLAYING';
     updateDocumentTitle(isMyTurn);
@@ -805,6 +824,13 @@ document.addEventListener('DOMContentLoaded', () => {
       window.soundEngine.playYourTurn();
     }
     lastTurn = state.currentTurn;
+
+    // Start/Stop ambient cafe audio
+    if (state.state === 'PLAYING') {
+      window.soundEngine.startAmbient();
+    } else {
+      window.soundEngine.stopAmbient();
+    }
 
     // Check round over
     if ((state.state === 'ROUND_OVER' || state.state === 'GAME_OVER') && state.roundResults) {
@@ -838,10 +864,12 @@ document.addEventListener('DOMContentLoaded', () => {
     updateActionBarUI();
   });
 
-  // Turn Timer Animation Loop (For active turn countdown on 60s clock)
+  // Turn Timer Animation Loop (For active turn countdown on 60s clock with warning tick)
   let turnTimerLoop = null;
+  let lastTickedSecond = null;
   function startTurnTimerLoop() {
     if (turnTimerLoop) return;
+    lastTickedSecond = null;
     turnTimerLoop = setInterval(() => {
       if (!currentGameState || currentGameState.state !== 'PLAYING') {
         const myTimerBar = document.getElementById('my-turn-timer-bar');
@@ -854,6 +882,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const elapsed = Date.now() - turnStartTime;
       const progress = Math.max(0, Math.min(1, elapsed / turnDuration));
       const remainingRatio = Math.max(0, Math.min(1, 1 - progress));
+      const remainingSeconds = Math.ceil((turnDuration - elapsed) / 1000);
 
       // 1. My Turn Timer Flow Bar (Between Green Felt Canvas & Brown Istaka)
       const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
@@ -870,9 +899,18 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             myTimerBar.classList.remove('warning');
           }
+
+          // Son 10 saniye uyarı tınısı
+          if (remainingSeconds <= 10 && remainingSeconds > 0) {
+            if (lastTickedSecond !== remainingSeconds) {
+              lastTickedSecond = remainingSeconds;
+              window.soundEngine.playTimerTick(remainingSeconds);
+            }
+          }
         } else {
           myTimerBar.classList.add('hidden');
           myTimerBar.classList.remove('warning');
+          lastTickedSecond = null;
         }
       }
 
@@ -897,6 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clearInterval(turnTimerLoop);
       turnTimerLoop = null;
     }
+    lastTickedSecond = null;
     const myTimerBar = document.getElementById('my-turn-timer-bar');
     if (myTimerBar) {
       myTimerBar.classList.add('hidden');
@@ -1083,7 +1122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     socket.emit('drawTile', { roomId, source: 'deck' }, (res) => {
       if (res.success) {
-        window.soundEngine.playDraw();
+        window.soundEngine.playDrawDeck();
       } else {
         ui.showToast(res.reason, 'error');
       }
@@ -1099,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     socket.emit('drawTile', { roomId, source: 'discard' }, (res) => {
       if (res.success) {
-        window.soundEngine.playDraw();
+        window.soundEngine.playDrawDiscard();
       } else {
         ui.showToast(res.reason, 'error');
       }
@@ -1131,7 +1170,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.emit('discardTile', { roomId, tileId: activeTile.id }, (res) => {
       if (res.success) {
-        window.soundEngine.playTilePlace();
+        window.soundEngine.playDiscard();
         istaka.clearSelection();
       } else {
         ui.showToast(res.reason, 'error');
@@ -1159,7 +1198,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.emit('discardTile', { roomId, tileId: tile.id }, (res) => {
       if (res.success) {
-        window.soundEngine.playTilePlace();
+        window.soundEngine.playDiscard();
         istaka.clearSelection();
       } else {
         ui.showToast(res.reason, 'error');
@@ -1190,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ui.showToast('✨ Tebrikler! Perdeki Okey yerine taş işlediniz ve OKEY elinize geçti!', 'success', 3500);
           window.soundEngine.playVictory();
         } else {
-          window.soundEngine.playTilePlace();
+          window.soundEngine.playDiscard();
         }
         istaka.clearSelection();
       } else {
@@ -1384,7 +1423,25 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.triggerReaction(pos, data.reaction, data.label);
   });
 
-  // Sound toggle buttons (Synchronized between Lobby & Table)
+  // Sound Settings Modal & Controls (Synchronized between Lobby & Table)
+  const soundModal = document.getElementById('sound-settings-modal');
+  const btnCloseSound = document.getElementById('btn-close-sound-settings');
+  const btnSaveSound = document.getElementById('btn-save-sound-settings');
+
+  const sliderMaster = document.getElementById('slider-master-volume');
+  const labelMaster = document.getElementById('label-master-volume');
+  const btnMasterMute = document.getElementById('btn-toggle-master-mute');
+
+  const sliderSfx = document.getElementById('slider-sfx-volume');
+  const labelSfx = document.getElementById('label-sfx-volume');
+  const btnToggleSfx = document.getElementById('btn-toggle-sfx');
+
+  const sliderAmbient = document.getElementById('slider-ambient-volume');
+  const labelAmbient = document.getElementById('label-ambient-volume');
+  const btnToggleAmbient = document.getElementById('btn-toggle-ambient');
+
+  const btnToggleTimerTick = document.getElementById('btn-toggle-timer-tick');
+
   const btnMute = document.getElementById('btn-toggle-sound');
   const btnLobbyMute = document.getElementById('btn-lobby-toggle-sound');
   const lobbySoundIcon = document.getElementById('lobby-sound-icon');
@@ -1392,27 +1449,136 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateSoundUI(isMuted) {
     if (btnMute) {
-      btnMute.innerHTML = isMuted ? '<span>🔇 Ses: Kapalı</span>' : '<span>🔊 Ses: Açık</span>';
+      btnMute.innerHTML = isMuted ? '<span>🔇 Ses Ayarları (Kapalı)</span>' : '<span>🔊 Ses Ayarları</span>';
     }
     if (lobbySoundIcon) {
       lobbySoundIcon.textContent = isMuted ? '🔇' : '🔊';
     }
     if (lobbySoundText) {
-      lobbySoundText.textContent = isMuted ? 'Ses: Kapalı' : 'Ses: Açık';
+      lobbySoundText.textContent = isMuted ? 'Ses: Kapalı' : 'Ses Ayarları';
     }
   }
 
-  if (btnMute) {
-    btnMute.addEventListener('click', () => {
-      const isMuted = window.soundEngine.toggleMute();
-      updateSoundUI(isMuted);
+  function syncSoundSettingsModal() {
+    const s = window.soundEngine.settings;
+    if (sliderMaster) {
+      sliderMaster.value = Math.round(s.masterVolume * 100);
+      if (labelMaster) labelMaster.textContent = `${sliderMaster.value}%`;
+    }
+    if (btnMasterMute) {
+      btnMasterMute.textContent = s.muted ? 'Kapalı' : 'Açık';
+      btnMasterMute.className = 'btn-sound-toggle ' + (s.muted ? 'muted' : 'active');
+    }
+
+    if (sliderSfx) {
+      sliderSfx.value = Math.round(s.sfxVolume * 100);
+      if (labelSfx) labelSfx.textContent = `${sliderSfx.value}%`;
+    }
+    if (btnToggleSfx) {
+      btnToggleSfx.textContent = s.sfxEnabled ? 'Açık' : 'Kapalı';
+      btnToggleSfx.className = 'btn-sound-toggle ' + (s.sfxEnabled ? 'active' : 'muted');
+    }
+
+    if (sliderAmbient) {
+      sliderAmbient.value = Math.round(s.ambientVolume * 100);
+      if (labelAmbient) labelAmbient.textContent = `${sliderAmbient.value}%`;
+    }
+    if (btnToggleAmbient) {
+      btnToggleAmbient.textContent = s.ambientEnabled ? 'Açık' : 'Kapalı';
+      btnToggleAmbient.className = 'btn-sound-toggle ' + (s.ambientEnabled ? 'active' : 'muted');
+    }
+
+    if (btnToggleTimerTick) {
+      btnToggleTimerTick.textContent = s.timerAlertEnabled ? 'Açık' : 'Kapalı';
+      btnToggleTimerTick.className = 'btn-sound-toggle ' + (s.timerAlertEnabled ? 'active' : 'muted');
+    }
+
+    updateSoundUI(s.muted);
+  }
+
+  function openSoundSettingsModal() {
+    window.soundEngine.init();
+    syncSoundSettingsModal();
+    if (soundModal) soundModal.classList.remove('hidden');
+  }
+
+  function closeSoundSettingsModal() {
+    if (soundModal) soundModal.classList.add('hidden');
+  }
+
+  if (sliderMaster) {
+    sliderMaster.addEventListener('input', () => {
+      window.soundEngine.settings.masterVolume = parseInt(sliderMaster.value) / 100;
+      if (labelMaster) labelMaster.textContent = `${sliderMaster.value}%`;
+      window.soundEngine.saveSettings();
+      window.soundEngine.updateAmbientVolume();
     });
   }
 
-  if (btnLobbyMute) {
-    btnLobbyMute.addEventListener('click', () => {
-      const isMuted = window.soundEngine.toggleMute();
-      updateSoundUI(isMuted);
+  if (btnMasterMute) {
+    btnMasterMute.addEventListener('click', () => {
+      window.soundEngine.toggleMute();
+      syncSoundSettingsModal();
     });
   }
+
+  if (sliderSfx) {
+    sliderSfx.addEventListener('input', () => {
+      window.soundEngine.settings.sfxVolume = parseInt(sliderSfx.value) / 100;
+      if (labelSfx) labelSfx.textContent = `${sliderSfx.value}%`;
+      window.soundEngine.saveSettings();
+    });
+  }
+
+  if (btnToggleSfx) {
+    btnToggleSfx.addEventListener('click', () => {
+      window.soundEngine.settings.sfxEnabled = !window.soundEngine.settings.sfxEnabled;
+      window.soundEngine.saveSettings();
+      syncSoundSettingsModal();
+    });
+  }
+
+  if (sliderAmbient) {
+    sliderAmbient.addEventListener('input', () => {
+      window.soundEngine.settings.ambientVolume = parseInt(sliderAmbient.value) / 100;
+      if (labelAmbient) labelAmbient.textContent = `${sliderAmbient.value}%`;
+      window.soundEngine.saveSettings();
+      window.soundEngine.updateAmbientVolume();
+    });
+  }
+
+  if (btnToggleAmbient) {
+    btnToggleAmbient.addEventListener('click', () => {
+      window.soundEngine.settings.ambientEnabled = !window.soundEngine.settings.ambientEnabled;
+      window.soundEngine.saveSettings();
+      if (window.soundEngine.settings.ambientEnabled && !window.soundEngine.settings.muted) {
+        window.soundEngine.startAmbient();
+      } else {
+        window.soundEngine.stopAmbient();
+      }
+      syncSoundSettingsModal();
+    });
+  }
+
+  if (btnToggleTimerTick) {
+    btnToggleTimerTick.addEventListener('click', () => {
+      window.soundEngine.settings.timerAlertEnabled = !window.soundEngine.settings.timerAlertEnabled;
+      window.soundEngine.saveSettings();
+      syncSoundSettingsModal();
+    });
+  }
+
+  if (btnCloseSound) btnCloseSound.addEventListener('click', closeSoundSettingsModal);
+  if (btnSaveSound) btnSaveSound.addEventListener('click', closeSoundSettingsModal);
+  if (soundModal) {
+    soundModal.addEventListener('click', (e) => {
+      if (e.target === soundModal) closeSoundSettingsModal();
+    });
+  }
+
+  if (btnMute) btnMute.addEventListener('click', openSoundSettingsModal);
+  if (btnLobbyMute) btnLobbyMute.addEventListener('click', openSoundSettingsModal);
+
+  // Initialize Sound UI on load
+  syncSoundSettingsModal();
 });

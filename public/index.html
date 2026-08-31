@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=14">
+  <link rel="stylesheet" href="css/style.css?v=15">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -397,6 +397,69 @@
       </div>
     </div>
 
+    <!-- Sound Settings Modal -->
+    <div id="sound-settings-modal" class="modal-backdrop hidden">
+      <div class="plus-modal-card" style="max-width: 480px;">
+        <div class="plus-modal-header">
+          <h3>🔊 SES AYARLARI</h3>
+          <button id="btn-close-sound-settings" class="btn-modal-close" title="Kapat">✕</button>
+        </div>
+
+        <div class="sound-settings-body">
+          <!-- 1. Master Volume (Genel Ses) -->
+          <div class="sound-setting-row">
+            <div class="sound-label-group">
+              <span class="sound-title">🔊 Genel Ses Düzeyi</span>
+              <span id="label-master-volume" class="sound-value">85%</span>
+            </div>
+            <div class="sound-control-group">
+              <input type="range" id="slider-master-volume" min="0" max="100" value="85" class="sound-range-slider">
+              <button id="btn-toggle-master-mute" class="btn-sound-toggle active" title="Sesi Aç/Kapat">Açık</button>
+            </div>
+          </div>
+
+          <!-- 2. Game SFX Volume (Taş Vurma, Çekme, El Açma) -->
+          <div class="sound-setting-row">
+            <div class="sound-label-group">
+              <span class="sound-title">🎲 Oyun Sesleri (Taş & Efektler)</span>
+              <span id="label-sfx-volume" class="sound-value">90%</span>
+            </div>
+            <div class="sound-control-group">
+              <input type="range" id="slider-sfx-volume" min="0" max="100" value="90" class="sound-range-slider">
+              <button id="btn-toggle-sfx" class="btn-sound-toggle active">Açık</button>
+            </div>
+          </div>
+
+          <!-- 3. Cafe Ambient Sound (Kahvehane Ambiyansı & Çay Tınısı) -->
+          <div class="sound-setting-row">
+            <div class="sound-label-group">
+              <span class="sound-title">☕ Kafe Ortam Sesi (Ambiyans)</span>
+              <span id="label-ambient-volume" class="sound-value">35%</span>
+            </div>
+            <div class="sound-control-group">
+              <input type="range" id="slider-ambient-volume" min="0" max="100" value="35" class="sound-range-slider">
+              <button id="btn-toggle-ambient" class="btn-sound-toggle active">Açık</button>
+            </div>
+          </div>
+
+          <!-- 4. Turn Countdown Warning Tick (Son 10sn Süre Tınısı) -->
+          <div class="sound-setting-row">
+            <div class="sound-label-group">
+              <span class="sound-title">⏱️ Son 10sn Süre Uyarı Tınısı</span>
+              <span class="sound-hint">Sıranız bitmek üzereyken tını çalar</span>
+            </div>
+            <div class="sound-control-group">
+              <button id="btn-toggle-timer-tick" class="btn-sound-toggle active">Açık</button>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-save-sound-settings" class="btn-plus-gold" style="width: 100%; margin-top: 20px;">
+          <span>✓ TAMAM</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Round Result Modal -->
     <div id="round-result-modal" class="modal-backdrop hidden">
       <div class="plus-modal-card" style="max-width: 550px;">
@@ -417,11 +480,11 @@
 
   <!-- Socket.IO & Application Scripts (Cache Busted) -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/audio.js?v=14"></script>
-  <script src="js/validator.js?v=14"></script>
-  <script src="js/istaka.js?v=14"></script>
-  <script src="js/table.js?v=14"></script>
-  <script src="js/ui.js?v=14"></script>
-  <script src="js/gameClient.js?v=14"></script>
+  <script src="js/audio.js?v=15"></script>
+  <script src="js/validator.js?v=15"></script>
+  <script src="js/istaka.js?v=15"></script>
+  <script src="js/table.js?v=15"></script>
+  <script src="js/ui.js?v=15"></script>
+  <script src="js/gameClient.js?v=15"></script>
 </body>
 </html>

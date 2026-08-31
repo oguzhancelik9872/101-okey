@@ -76,7 +76,6 @@ class IstakaManager {
 
           this.draggedSource = null;
           this.activeTile = null;
-          window.soundEngine.playTilePlace();
           this.render();
         });
 
@@ -439,7 +438,6 @@ class IstakaManager {
       requestAnimationFrame(() => {
         el.classList.add('dragging');
       });
-      window.soundEngine.playTileClick();
     });
 
     el.addEventListener('dragend', () => {
@@ -488,7 +486,6 @@ class IstakaManager {
 
       this.draggedSource = null;
       this.activeTile = null;
-      window.soundEngine.playTilePlace();
       this.render();
     });
 
@@ -526,14 +523,12 @@ class IstakaManager {
           const movingTile = this.activeTile;
           this.activeTile = null;
           this.insertTileAt(srcR, srcC, row, col, movingTile);
-          window.soundEngine.playTilePlace();
           this.render();
           return;
         }
       }
 
       this.activeTile = (this.activeTile && this.activeTile.id === tile.id) ? null : tile;
-      window.soundEngine.playTileClick();
       this.render();
     });
 
@@ -569,7 +564,6 @@ class IstakaManager {
       const movingTile = this.activeTile;
       this.activeTile = null;
       this.insertTileAt(srcR, srcC, row, col, movingTile);
-      window.soundEngine.playTilePlace();
       this.render();
     }
   }
@@ -678,7 +672,6 @@ class IstakaManager {
     this._placeTilesSafely(melds, leftovers, allTiles);
 
     this.clearSelection();
-    window.soundEngine.playTilePlace();
     this.render();
   }
 
@@ -699,7 +692,6 @@ class IstakaManager {
     this._placeTilesSafely(pairs, leftovers, allTiles);
 
     this.clearSelection();
-    window.soundEngine.playTilePlace();
     this.render();
   }
 

@@ -207,6 +207,14 @@ class TableManager {
       if (pile && pile.length > 0) {
         const topTile = pile[pile.length - 1];
         const tileEl = this.createTileDOM(topTile, false);
+
+        // Highlight if this discard tile is an İşlek Taş (Masaya işlenebilir)
+        const isProcessable = (this.gameState.tableMelds && this.gameState.tableMelds.length > 0 && typeof ClientValidator !== 'undefined' && ClientValidator.isPlayableToTable(topTile, this.gameState.tableMelds, this.gameState.indicator));
+        if (isProcessable) {
+          tileEl.classList.add('is-processable-tile');
+          tileEl.title = 'İşlek Taş (Masaya İşlenebilir)';
+        }
+
         discardSlot.appendChild(tileEl);
       }
 
