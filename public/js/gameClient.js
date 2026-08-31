@@ -760,6 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentGameState = state;
     table.setViewerSeatIndex(viewerSeatIndex);
     istaka.setIndicator(state.indicator);
+    istaka.setTableMelds(state.tableMelds || []);
 
     // Waiting lobby overlay
     const waitingOverlay = document.getElementById('waiting-lobby-overlay');
@@ -783,6 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update Istaka hand if viewer hand is provided
     const me = state.players[viewerSeatIndex];
+    istaka.setViewerOpened(me ? me.opened : false);
     if (me && me.hand) {
       const isInitialDeal = !roundStartedHandSorted && state.state === 'PLAYING' && me.hand.length >= 21;
       if (isInitialDeal) {

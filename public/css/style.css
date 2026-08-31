@@ -2184,6 +2184,46 @@ body.plus-theme {
   animation: pulse 1.2s infinite;
 }
 
+/* Processable Tile (İşlek Taş) Radiant Green Glow & Pulse */
+.okey-tile.is-processable-tile {
+  outline: 2.5px solid #2ecc71 !important;
+  box-shadow: 0 0 14px rgba(46, 204, 113, 0.95), 0 0 24px rgba(39, 174, 96, 0.6), inset 0 0 6px rgba(46, 204, 113, 0.45), var(--tile-shadow) !important;
+  animation: processableGreenPulse 1.6s infinite alternate ease-in-out;
+  cursor: grab;
+}
+
+.okey-tile.is-processable-tile::after {
+  content: '⚡';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 15px;
+  height: 15px;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 900;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7), 0 0 8px #2ecc71;
+  border: 1.5px solid #ffffff;
+  z-index: 12;
+  pointer-events: none;
+}
+
+@keyframes processableGreenPulse {
+  0% {
+    outline-color: #27ae60;
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.7), inset 0 0 4px rgba(46, 204, 113, 0.35), var(--tile-shadow);
+  }
+  100% {
+    outline-color: #2ecc71;
+    box-shadow: 0 0 18px rgba(46, 204, 113, 1), 0 0 28px rgba(46, 204, 113, 0.7), inset 0 0 8px rgba(46, 204, 113, 0.6), var(--tile-shadow);
+  }
+}
+
 /* =========================================================
    ISTAKA SECTION & WOODEN BOARD (PLUS 2-SHELF RACK)
    ========================================================= */

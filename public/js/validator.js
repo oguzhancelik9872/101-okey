@@ -587,6 +587,24 @@ class ClientValidator {
 
     return { canProcess: false };
   }
+
+  /**
+   * Checks if a tile can be processed onto any opened melds on the table (İşlek Taş)
+   */
+  static isPlayableToTable(tile, allOpenedMelds, indicator) {
+    if (!tile || !allOpenedMelds || allOpenedMelds.length === 0) {
+      return false;
+    }
+
+    for (const meld of allOpenedMelds) {
+      const processResult = this.canProcessTile(tile, meld, indicator);
+      if (processResult && processResult.canProcess) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 }
 
 window.ClientValidator = ClientValidator;

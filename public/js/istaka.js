@@ -23,6 +23,8 @@ class IstakaManager {
     this.draggedSource = null; // { row, col, tile }
     this.indicator = null;
     this.activeTile = null;
+    this.tableMelds = [];
+    this.viewerOpened = false;
 
     this.initDOM();
   }
@@ -227,6 +229,14 @@ class IstakaManager {
     this.indicator = indicator;
   }
 
+  setTableMelds(tableMelds) {
+    this.tableMelds = tableMelds || [];
+  }
+
+  setViewerOpened(opened) {
+    this.viewerOpened = !!opened;
+  }
+
   /**
    * Loads incoming hand tiles into the rack
    */
@@ -358,6 +368,15 @@ class IstakaManager {
     if (this.drawnFromDiscardTileId && tile.id === this.drawnFromDiscardTileId) el.classList.add('drawn-discard-tile');
     if (isPartOfValidMeld) el.classList.add('tile-in-meld');
     if (this.activeTile && this.activeTile.id === tile.id) el.classList.add('active-focus');
+
+    // Check if this tile can be processed onto table melds (İşlek Taş - Masaya İşlenebilir)
+    const isPlayable = (this.tableMelds && this.tableMelds.length > 0 && typeof ClientValidator !== 'undefined' && ClientValidator.isPlayableToTable(tile, this.tableMelds, this.indicator));
+    if (isPlayable) {
+      el.classList.add('is-processable-tile');
+      el.title = this.viewerOpened 
+        ? 'İşlek Taş: Masadaki pere işlemek için per üzerine sürükleyin' 
+        : 'İşlek Taş: Masaya işlenebilir (Yana atarsanız 101 ceza alırsınız!)';
+    }
 
     // Number & Symbol display
     if (tile.isOkey) {
