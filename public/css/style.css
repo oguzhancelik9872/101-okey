@@ -1485,6 +1485,8 @@ body.plus-theme {
   border: 1.5px solid #e74c3c !important;
   color: #fff !important;
   box-shadow: 0 0 16px rgba(231, 76, 60, 0.8) !important;
+}
+
 /* Turn Indicator Badge */
 .turn-indicator-badge {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
