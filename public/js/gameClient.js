@@ -797,9 +797,67 @@ document.addEventListener('DOMContentLoaded', () => {
       window.roundResultModalActive = false;
     }
 
+    if (state.state === 'PLAYING') {
+      startTurnTimerLoop();
+    }
+
     // Update Action Bar States
     updateActionBarUI();
   });
+
+  // Turn Timer Animation Loop (For active turn countdown on 60s clock)
+  let turnTimerLoop = null;
+  function startTurnTimerLoop() {
+    if (turnTimerLoop) return;
+    turnTimerLoop = setInterval(() => {
+      if (!currentGameState || currentGameState.state !== 'PLAYING') {
+        const myTimerBar = document.getElementById('my-turn-timer-bar');
+        if (myTimerBar) myTimerBar.classList.add('hidden');
+        return;
+      }
+
+      const turnStartTime = currentGameState.turnStartTime || Date.now();
+      const turnDuration = currentGameState.turnDuration || 60000;
+      const elapsed = Date.now() - turnStartTime;
+      const progress = Math.max(0, Math.min(1, elapsed / turnDuration));
+      const remainingRatio = Math.max(0, Math.min(1, 1 - progress));
+
+      // 1. My Turn Timer Flow Bar (Between Green Felt Canvas & Brown Istaka)
+      const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
+      const myTimerBar = document.getElementById('my-turn-timer-bar');
+      const myTimerFill = document.getElementById('my-turn-timer-fill');
+
+      if (myTimerBar && myTimerFill) {
+        if (isMyTurn) {
+          myTimerBar.classList.remove('hidden');
+          // Smooth flow from left to right: expands across width as turn progresses
+          myTimerFill.style.width = (progress * 100) + '%';
+          if (progress >= 0.75) {
+            myTimerBar.classList.add('warning');
+          } else {
+            myTimerBar.classList.remove('warning');
+          }
+        } else {
+          myTimerBar.classList.add('hidden');
+          myTimerBar.classList.remove('warning');
+        }
+      }
+
+      // 2. Other Players Turn Progress Bars
+      ['top', 'left', 'right'].forEach(pos => {
+        const seatEl = document.getElementById('seat-' + pos);
+        if (!seatEl) return;
+        const fillEl = seatEl.querySelector('.player-turn-progress-fill');
+        if (!fillEl) return;
+
+        if (seatEl.classList.contains('active-turn')) {
+          fillEl.style.width = (remainingRatio * 100) + '%';
+        } else {
+          fillEl.style.width = '100%';
+        }
+      });
+    }, 100);
+  }
 
   // --- Action Bar & In-Game Controls ---
   const btnSortRuns = document.getElementById('btn-sort-runs');

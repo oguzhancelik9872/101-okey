@@ -439,8 +439,8 @@ class RoomManager {
             this.broadcastGameState(room.id);
           }
         } else {
-          // Inactive human player watchdog (30 seconds)
-          if (now - room.turnStartTime >= 30000) {
+          // Inactive human player watchdog (60 seconds / 1 minute)
+          if (now - room.turnStartTime >= 60000) {
             room.turnStartTime = now;
             try {
               game.executeEmergencyTurn(currentIdx);

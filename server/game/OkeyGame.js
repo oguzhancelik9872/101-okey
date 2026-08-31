@@ -169,6 +169,8 @@ class OkeyGame {
 
     // First player starts directly in DISCARD state because they hold 22 tiles
     this.turnState = 'DISCARD';
+    this.turnStartTime = Date.now();
+    this.turnDuration = 60000;
     this.addLog(`El ${this.currentRound} başladı! Gösterge: ${this.indicator.color.toUpperCase()} ${this.indicator.number}. Başlayan: ${this.players[this.firstPlayerIndex].name}`);
 
     // Check Gösterge bonus for players holding it
@@ -529,6 +531,9 @@ class OkeyGame {
     // Next turn
     this.currentTurn = (this.currentTurn + 1) % 4;
     this.turnState = 'DRAW';
+    this.drawnFromDiscard = null;
+    this.turnStartTime = Date.now();
+    this.turnDuration = 60000;
 
     return {
       success: true,
@@ -905,6 +910,8 @@ class OkeyGame {
       targetRounds: this.targetRounds,
       currentTurn: this.currentTurn,
       turnState: this.turnState,
+      turnStartTime: this.turnStartTime || Date.now(),
+      turnDuration: this.turnDuration || 60000,
       firstPlayerIndex: this.firstPlayerIndex,
       remainingDeckCount: this.deck ? this.deck.remainingCount() : 0,
       indicator: this.indicator ? this.indicator.toJSON() : null,
