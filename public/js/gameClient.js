@@ -1108,22 +1108,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
     const turnState = currentGameState.turnState;
     const viewerPlayer = currentGameState.players[viewerSeatIndex];
+    const isFirstOpen = viewerPlayer ? !viewerPlayer.opened : true;
+    const minScore = isFirstOpen ? (currentGameState.minOpenScore || 101) : 0;
+    const minPairs = isFirstOpen ? (currentGameState.minOpenPairs || 5) : 1;
 
     const cannotOpenSeri = viewerPlayer && viewerPlayer.opened && viewerPlayer.openType === 'pairs';
     const hasPairsOnTable = currentGameState.tableMelds.some(m => m.type === 'pairs') || currentGameState.players.some(p => p.opened && p.openType === 'pairs');
     const cannotOpenPairs = viewerPlayer && viewerPlayer.opened && viewerPlayer.openType === 'seri' && !hasPairsOnTable;
 
+    const hasDrawnFromDiscard = isMyTurn && turnState === 'DISCARD' && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;
+    const requiredId = (hasDrawnFromDiscard && isFirstOpen) ? currentGameState.drawnFromDiscard.tileId : null;
+
+    let canOpenSeri = false;
+    let canOpenPairs = false;
+
+    if (isMyTurn && turnState === 'DISCARD' && !cannotOpenSeri) {
+      const rackAnalysis = istaka.analyzeRackMelds();
+      const containsRequired = !requiredId || !isFirstOpen || rackAnalysis.validTileIds.has(requiredId);
+      if (rackAnalysis.validMelds.length > 0 && rackAnalysis.totalScore >= minScore && containsRequired) {
+        canOpenSeri = true;
+      } else {
+        const best = istaka.getBestHandMelds(isFirstOpen ? requiredId : null);
+        if (best && best.melds && best.melds.length > 0 && (best.score >= minScore || !isFirstOpen)) {
+          canOpenSeri = true;
+        }
+      }
+    }
+
+    if (isMyTurn && turnState === 'DISCARD' && !cannotOpenPairs) {
+      const allPairs = ClientValidator.findAllPairs(istaka.getAllTiles(), currentGameState.indicator, isFirstOpen ? requiredId : null);
+      const containsRequiredPair = !requiredId || !isFirstOpen || allPairs.some(p => p[0].id === requiredId || p[1].id === requiredId);
+      if (allPairs.length >= minPairs && containsRequiredPair) {
+        canOpenPairs = true;
+      }
+    }
+
     if (btnOpenHand) {
-      btnOpenHand.disabled = !(isMyTurn && turnState === 'DISCARD') || cannotOpenSeri;
-      btnOpenHand.title = cannotOpenSeri ? 'Çift açtığınız için seri açamazsınız' : '';
+      btnOpenHand.disabled = !canOpenSeri;
+      btnOpenHand.title = cannotOpenSeri
+        ? 'Çift açtığınız için seri açamazsınız'
+        : (canOpenSeri ? 'Elinizi seri olarak açın' : (isFirstOpen ? `Seri açmak için en az ${minScore} puanlık per oluşturmalısınız` : 'Geçerli bir per oluşturmalısınız'));
     }
     if (btnOpenPairs) {
-      btnOpenPairs.disabled = !(isMyTurn && turnState === 'DISCARD') || cannotOpenPairs;
-      btnOpenPairs.title = cannotOpenPairs ? 'Masada çift açmış bir oyuncu olmadığı için çift açamazsınız' : '';
+      btnOpenPairs.disabled = !canOpenPairs;
+      btnOpenPairs.title = cannotOpenPairs
+        ? 'Masada çift açmış bir oyuncu olmadığı için çift açamazsınız'
+        : (canOpenPairs ? 'Elinizi çift olarak açın' : (isFirstOpen ? `Çift açmak için en az ${minPairs} çiftiniz olmalıdır` : 'En az 1 çiftiniz olmalıdır'));
     }
 
     // Show "Taşı Geri Bırak" only if viewer has drawn from discard and hasn't opened/discarded yet
-    const hasDrawnFromDiscard = isMyTurn && turnState === 'DISCARD' && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;
     const btnReturnDiscard = document.getElementById('btn-return-discard');
     if (btnReturnDiscard) {
       btnReturnDiscard.classList.toggle('hidden', !hasDrawnFromDiscard);
@@ -1157,6 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pointsBadge.className = 'points-badge points-valid';
         pointsBadge.innerHTML = `Per: <strong>${score}</strong> Puan`;
       }
+      updateActionBarUI();
       return;
     }
 
@@ -1178,6 +1212,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       pointsBadge.className = 'points-badge points-penalty-active';
       pointsBadge.innerHTML = `💎 5 Çift (Kalan Ceza: <strong>${penaltyScore}</strong> Puan)`;
+      updateActionBarUI();
       return;
     }
 
@@ -1189,6 +1224,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pointsBadge.className = 'points-badge points-empty';
       pointsBadge.innerHTML = `Per: <strong>0</strong> Puan`;
     }
+    updateActionBarUI();
   }
 
   // --- Chat & Emoji Reactions ---

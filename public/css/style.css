@@ -2461,15 +2461,15 @@ body.plus-theme {
 
 /* Toast Container - Docked to Left above Istaka */
 #toast-container {
-  position: fixed;
-  bottom: 195px;
-  left: 24px;
+  position: absolute;
+  bottom: 185px;
+  left: 20px;
   display: flex;
   flex-direction: column-reverse;
   gap: 8px;
   z-index: 200;
   pointer-events: none;
-  max-width: 360px;
+  max-width: 380px;
 }
 
 .toast {
