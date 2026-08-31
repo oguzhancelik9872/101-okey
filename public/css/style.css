@@ -2036,30 +2036,37 @@ body.plus-theme {
   font-weight: 900;
 }
 
-/* Toast Container */
+/* Toast Container - Docked to Left above Istaka */
 #toast-container {
   position: fixed;
-  top: 65px;
-  right: 20px;
+  bottom: 195px;
+  left: 24px;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: column-reverse;
+  gap: 8px;
   z-index: 200;
   pointer-events: none;
+  max-width: 360px;
 }
 
 .toast {
   background: rgba(8, 28, 16, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid #f1c40f;
-  border-radius: 14px;
-  padding: 12px 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid #f1c40f;
+  border-radius: 12px;
+  padding: 10px 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.75), 0 0 15px rgba(0,0,0,0.5);
   pointer-events: auto;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   color: #fff;
   transition: all 0.3s;
+  animation: slideInLeft 0.25s ease-out;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 .toast-error {

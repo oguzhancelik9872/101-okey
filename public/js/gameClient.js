@@ -698,14 +698,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Smart Open Hand Button
   if (btnOpenHand) {
     btnOpenHand.addEventListener('click', () => {
-      if (!currentGameState) return;
+      if (!currentGameState || btnOpenHand.disabled) return;
 
       const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
       const viewerPlayer = currentGameState.players[viewerSeatIndex];
       const isFirstOpen = viewerPlayer ? !viewerPlayer.opened : true;
 
       if (!isFirstOpen && viewerPlayer.openType === 'pairs') {
-        ui.showToast('Çift açtığınız için yeni seri açamazsınız. Yalnızca yeni çiftler açabilir veya masadaki perlere taş işleyebilirsiniz.', 'error');
         return;
       }
 
@@ -728,28 +727,18 @@ document.addEventListener('DOMContentLoaded', () => {
           meldIdArrays = best.melds.map(m => m.map(t => t.id));
         } else {
           if (requiredId && isFirstOpen) {
-            ui.showToast(`Yandan aldığınız taş dahil edilerek en az ${minRequired} puanlık geçerli per oluşturulamıyor. Lütfen "Taşı Geri Bırak" butonuna basarak desteden çekiniz.`, 'error', 4000);
-          } else if (isFirstOpen) {
-            ui.showToast(`İlk kez el açmak için en az ${minRequired} puanlık geçerli per gereklidir. (Şu anki: ${best.score} Puan)`, 'error');
-          } else {
-            ui.showToast('Elinizde masaya açılabilecek en az 3 taşlık geçerli bir per (seri veya grup) bulunamadı.', 'error');
+            ui.showToast('Yandan çektiğiniz taşı kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
           }
           return;
         }
       }
 
       if (meldIdArrays.length === 0) {
-        ui.showToast('Açılacak geçerli per bulunamadı.', 'error');
         return;
       }
 
       socket.emit('openHand', { roomId, melds: meldIdArrays }, (res) => {
         if (res.success) {
-          if (isFirstOpen) {
-            ui.showToast(`Tebrikler! ${res.score} puan ile el açtınız.`, 'success');
-          } else {
-            ui.showToast(`Yeni per masaya başarıyla açıldı! (+${res.score} Puan)`, 'success');
-          }
           window.soundEngine.playOpenHand();
           istaka.clearSelection();
         } else {
@@ -762,16 +751,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Smart Open Pairs Button
   if (btnOpenPairs) {
     btnOpenPairs.addEventListener('click', () => {
-      if (!currentGameState) return;
+      if (!currentGameState || btnOpenPairs.disabled) return;
 
       const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
       const viewerPlayer = currentGameState.players[viewerSeatIndex];
       const isFirstOpen = viewerPlayer ? !viewerPlayer.opened : true;
 
-      // Rule: Seri açan oyuncu masada çift açmış bir oyuncu yoksa çift açamaz
       const hasPairsOnTable = currentGameState.tableMelds.some(m => m.type === 'pairs') || currentGameState.players.some(p => p.opened && p.openType === 'pairs');
       if (!isFirstOpen && viewerPlayer && viewerPlayer.openType === 'seri' && !hasPairsOnTable) {
-        ui.showToast('Masada çift açmış bir oyuncu bulunmadığı sürece çift açamazsınız.', 'error');
         return;
       }
 
@@ -791,22 +778,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (pairIdArrays.length < minPairs) {
         if (requiredId && isFirstOpen) {
-          ui.showToast(`Yandan aldığınız taş ile ${minPairs} çift oluşturulamıyor. Lütfen "Taşı Geri Bırak" butonuna basınız.`, 'error', 3500);
-        } else if (isFirstOpen) {
-          ui.showToast(`İlk kez çift açmak için en az ${minPairs} çift (10 taş) açmalısınız.`, 'error');
-        } else {
-          ui.showToast('Masaya açılacak geçerli çift bulunamadı.', 'error');
+          ui.showToast('Yandan çektiğiniz taşı kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
         }
         return;
       }
 
       socket.emit('openPairs', { roomId, pairs: pairIdArrays }, (res) => {
         if (res.success) {
-          if (isFirstOpen) {
-            ui.showToast(`Tebrikler! ${res.count} çift açtınız.`, 'success');
-          } else {
-            ui.showToast(`Yeni çift masaya açıldı!`, 'success');
-          }
           window.soundEngine.playOpenHand();
           istaka.clearSelection();
         } else {
@@ -818,6 +796,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleDrawDeck() {
     if (!currentGameState) return;
+    const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
+    if (!isMyTurn) {
+      ui.showToast('Sıra sizde değilken taş çekemezsiniz.', 'error');
+      return;
+    }
     socket.emit('drawTile', { roomId, source: 'deck' }, (res) => {
       if (res.success) {
         window.soundEngine.playDraw();
@@ -829,10 +812,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleDrawDiscard() {
     if (!currentGameState) return;
+    const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
+    if (!isMyTurn) {
+      ui.showToast('Sıra sizde değilken taş çekemezsiniz.', 'error');
+      return;
+    }
     socket.emit('drawTile', { roomId, source: 'discard' }, (res) => {
       if (res.success) {
         window.soundEngine.playDraw();
-        ui.showToast('Yandan taş aldınız! Bu taşı kullanarak el açmalı, işlemeli veya "Taşı Geri Bırak" ile iade etmelisiniz.', 'warning', 4000);
       } else {
         ui.showToast(res.reason, 'error');
       }
@@ -842,16 +829,23 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleDiscardTile() {
     if (!currentGameState) return;
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
-    const hasDrawnDiscard = isMyTurn && currentGameState.turnState === 'DISCARD' && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;
+    if (!isMyTurn) {
+      ui.showToast('Sıra sizde değilken taş atamazsınız.', 'error');
+      return;
+    }
+    if (currentGameState.turnState !== 'DISCARD') {
+      ui.showToast('Taş çekmeden taş atamazsınız.', 'error');
+      return;
+    }
 
+    const hasDrawnDiscard = currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;
     if (hasDrawnDiscard) {
-      ui.showToast('Yandan aldığınız taşı el açarak veya masaya işleyerek kullanmak zorundasınız! Kullanmayacaksanız "Taşı Geri Bırak" butonuna basarak desteden çekiniz.', 'error', 4000);
+      ui.showToast('Yandan çektiğiniz taşı kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
       return;
     }
 
     const activeTile = istaka.activeTile;
     if (!activeTile) {
-      ui.showToast('Atmak istediğiniz taşa tıklayın veya sürükleyip taş atma alanına bırakın.', 'error');
       return;
     }
 
@@ -868,14 +862,18 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleQuickDiscard(tile) {
     if (!currentGameState) return;
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
-    if (!isMyTurn || currentGameState.turnState !== 'DISCARD') {
-      ui.showToast('Sıra sizde değilken veya taş çekmeden taş atamazsınız.', 'error');
+    if (!isMyTurn) {
+      ui.showToast('Sıra sizde değilken taş atamazsınız.', 'error');
+      return;
+    }
+    if (currentGameState.turnState !== 'DISCARD') {
+      ui.showToast('Taş çekmeden taş atamazsınız.', 'error');
       return;
     }
 
     const hasDrawnDiscard = currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;
     if (hasDrawnDiscard) {
-      ui.showToast('Yandan aldığınız taşı el açarak veya masaya işleyerek kullanmak zorundasınız! Kullanmayacaksanız "Taşı Geri Bırak" butonuna basarak desteden çekiniz.', 'error', 4000);
+      ui.showToast('Yandan çektiğiniz taşı kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
       return;
     }
 
@@ -892,8 +890,12 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleProcessTileById(tileId, targetMeldId) {
     if (!currentGameState) return;
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
-    if (!isMyTurn || currentGameState.turnState !== 'DISCARD') {
-      ui.showToast('Sıra sizde değilken veya taş çekmeden taş işleyemezsiniz.', 'error');
+    if (!isMyTurn) {
+      ui.showToast('Sıra sizde değilken taş işleyemezsiniz.', 'error');
+      return;
+    }
+    if (currentGameState.turnState !== 'DISCARD') {
+      ui.showToast('Taş çekmeden taş işleyemezsiniz.', 'error');
       return;
     }
     const viewerPlayer = currentGameState.players[viewerSeatIndex];
@@ -905,10 +907,9 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.emit('processTile', { roomId, tileId, targetMeldId }, (res) => {
       if (res.success) {
         if (res.okeyStolen) {
-          ui.showToast('✨ Tebrikler! Perdeki Okey yerine taş işlediniz ve OKEY elinize geçti!', 'success', 4000);
+          ui.showToast('✨ Tebrikler! Perdeki Okey yerine taş işlediniz ve OKEY elinize geçti!', 'success', 3500);
           window.soundEngine.playVictory();
         } else {
-          ui.showToast('Taş başarıyla pere işlendi!', 'success');
           window.soundEngine.playTilePlace();
         }
         istaka.clearSelection();
@@ -922,7 +923,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentGameState) return;
     const activeTile = istaka.activeTile;
     if (!activeTile) {
-      ui.showToast('İşlemek istediğiniz taşa ıstakanızdan tıklayıp masaya tıklayın veya taşı doğrudan pere sürükleyin.', 'error');
       return;
     }
     handleProcessTileById(activeTile.id, targetMeldId);
