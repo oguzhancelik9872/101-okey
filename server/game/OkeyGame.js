@@ -224,9 +224,13 @@ class OkeyGame {
       return { success: true, tile, source: 'discard' };
     } else {
       // Draw from middle deck
+      if (this.deck.remainingCount() === 0) {
+        this.endRoundNoWinner();
+        return { success: false, reason: 'Deste bitti, el sona erdi.' };
+      }
+
       const tile = this.deck.draw();
       if (!tile) {
-        // Deck exhausted, end round
         this.endRoundNoWinner();
         return { success: false, reason: 'Deste bitti, el sona erdi.' };
       }
@@ -526,6 +530,16 @@ class OkeyGame {
       player.score += PENALTIES.DISCARDED_PLAYABLE;
       player.penalties.push({ type: 'DISCARDED_PLAYABLE', points: PENALTIES.DISCARDED_PLAYABLE, desc: 'İşlek taş atma cezası (+101)' });
       this.addLog(`⚠️ ${player.name} masaya işlenebilecek işlek bir taş attığı için 101 ceza puanı aldı!`);
+    }
+
+    // Check if the deck was exhausted (Son taş çekilmişti ve o son taşı çeken oyuncu artık taşını attı -> Oyun Bitti!)
+    if (this.deck && this.deck.remainingCount() === 0) {
+      this.endRoundNoWinner();
+      return {
+        success: true,
+        finished: true,
+        deckExhausted: true
+      };
     }
 
     // Next turn
