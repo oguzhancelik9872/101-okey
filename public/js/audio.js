@@ -1,7 +1,8 @@
 /**
- * Professional Acoustic Web Audio Synthesizer for 101 Okey
- * Features realistic bone-on-stone clacks, Turkish cafe ambient atmosphere,
- * turn alerts, countdown warning ticks, and granular audio controls.
+ * Professional Deep Acoustic Web Audio Synthesizer for 101 Okey
+ * Features deep & satisfying "tok" wooden & bone stone clacks,
+ * authentic Turkish cafe conversation chatter atmosphere, turn prompts,
+ * countdown ticks, and "İşlek Taş Fail" blunder sound effect.
  */
 class OkeyAudio {
   constructor() {
@@ -12,7 +13,7 @@ class OkeyAudio {
     this.settings = {
       masterVolume: 0.85,
       sfxVolume: 0.9,
-      ambientVolume: 0.35,
+      ambientVolume: 0.4,
       ambientEnabled: true,
       timerAlertEnabled: true,
       sfxEnabled: true,
@@ -21,11 +22,10 @@ class OkeyAudio {
 
     this.loadSettings();
 
-    // Ambient Cafe generator state
+    // Ambient Cafe Chatter state
     this.ambientGainNode = null;
     this.ambientRunning = false;
     this.ambientNodes = [];
-    this.ambientTimerId = null;
   }
 
   loadSettings() {
@@ -62,17 +62,18 @@ class OkeyAudio {
 
   _createNoiseBuffer() {
     if (!this.ctx) return;
-    const bufferSize = this.ctx.sampleRate * 2; // 2 seconds of pink/white noise
+    const bufferSize = this.ctx.sampleRate * 3; // 3 seconds of warm pink/brown noise
     this.noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const output = this.noiseBuffer.getChannelData(0);
-    let b0 = 0, b1 = 0, b2 = 0;
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0;
     for (let i = 0; i < bufferSize; i++) {
       const white = Math.random() * 2 - 1;
-      // Filter towards pink noise for warmth
+      // Filter heavily towards warm brown/pink noise
       b0 = 0.99886 * b0 + white * 0.0555179;
       b1 = 0.99332 * b1 + white * 0.0750759;
       b2 = 0.96900 * b2 + white * 0.1538520;
-      output[i] = (b0 + b1 + b2 + white * 0.5362) * 0.18;
+      b3 = 0.86650 * b3 + white * 0.3104856;
+      output[i] = (b0 + b1 + b2 + b3 + white * 0.2) * 0.15;
     }
   }
 
@@ -97,11 +98,11 @@ class OkeyAudio {
   }
 
   // =========================================================================
-  // 1. GAMEPLAY SOUND EFFECTS (Taş taşa vurma, ele alma, yandan alma)
+  // 1. GAMEPLAY SOUND EFFECTS (Tok, derin, ahşap & kemik vuruşları)
   // =========================================================================
 
   /**
-   * Yana Taş Atma (Discard) - Authentic crisp bone-on-stone & wood impact
+   * Yana Taş Atma (Discard) - Tok, pürüzsüz ve doyurucu ahşap-kemik vuruşu
    */
   playDiscard() {
     const vol = this.getEffectiveVolume('sfx');
@@ -111,65 +112,65 @@ class OkeyAudio {
 
     const t = this.ctx.currentTime;
 
-    // Layer A: Sharp bone snap (filtered noise click)
+    // 1. Tok kemik gövdesi (Warm low body)
+    const oscBody = this.ctx.createOscillator();
+    const gainBody = this.ctx.createGain();
+    const filterBody = this.ctx.createBiquadFilter();
+
+    filterBody.type = 'lowpass';
+    filterBody.frequency.setValueAtTime(450, t);
+
+    oscBody.type = 'sine';
+    oscBody.frequency.setValueAtTime(220, t);
+    oscBody.frequency.exponentialRampToValueAtTime(80, t + 0.06);
+
+    gainBody.gain.setValueAtTime(vol * 0.85, t);
+    gainBody.gain.exponentialRampToValueAtTime(0.0001, t + 0.065);
+
+    oscBody.connect(filterBody);
+    filterBody.connect(gainBody);
+    gainBody.connect(this.ctx.destination);
+
+    oscBody.start(t);
+    oscBody.stop(t + 0.07);
+
+    // 2. Derin ahşap rezonansı (Hollow wood table thump)
+    const oscWood = this.ctx.createOscillator();
+    const gainWood = this.ctx.createGain();
+    oscWood.type = 'triangle';
+    oscWood.frequency.setValueAtTime(140, t);
+    oscWood.frequency.exponentialRampToValueAtTime(55, t + 0.08);
+
+    gainWood.gain.setValueAtTime(vol * 0.65, t);
+    gainWood.gain.exponentialRampToValueAtTime(0.0001, t + 0.085);
+
+    oscWood.connect(gainWood);
+    gainWood.connect(this.ctx.destination);
+
+    oscWood.start(t);
+    oscWood.stop(t + 0.09);
+
+    // 3. Yumuşak temas çıtlatması (Muted tactile snap - no harsh treble)
     if (this.noiseBuffer) {
       const noise = this.ctx.createBufferSource();
       noise.buffer = this.noiseBuffer;
 
-      const noiseFilter = this.ctx.createBiquadFilter();
-      noiseFilter.type = 'bandpass';
-      noiseFilter.frequency.setValueAtTime(2800, t);
-      noiseFilter.Q.setValueAtTime(3.0, t);
+      const nFilter = this.ctx.createBiquadFilter();
+      nFilter.type = 'bandpass';
+      nFilter.frequency.setValueAtTime(900, t);
+      nFilter.Q.setValueAtTime(1.8, t);
 
-      const noiseGain = this.ctx.createGain();
-      noiseGain.gain.setValueAtTime(vol * 0.45, t);
-      noiseGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+      const nGain = this.ctx.createGain();
+      nGain.gain.setValueAtTime(vol * 0.35, t);
+      nGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
 
-      noise.connect(noiseFilter);
-      noiseFilter.connect(noiseGain);
-      noiseGain.connect(this.ctx.destination);
+      noise.connect(nFilter);
+      nFilter.connect(nGain);
+      nGain.connect(this.ctx.destination);
 
       noise.start(t);
-      noise.stop(t + 0.03);
+      noise.stop(t + 0.035);
     }
-
-    // Layer B: Heavy ceramic stone knock
-    const osc1 = this.ctx.createOscillator();
-    const gain1 = this.ctx.createGain();
-    const filter1 = this.ctx.createBiquadFilter();
-
-    filter1.type = 'lowpass';
-    filter1.frequency.setValueAtTime(1200, t);
-
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(560, t);
-    osc1.frequency.exponentialRampToValueAtTime(140, t + 0.05);
-
-    gain1.gain.setValueAtTime(vol * 0.55, t);
-    gain1.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
-
-    osc1.connect(filter1);
-    filter1.connect(gain1);
-    gain1.connect(this.ctx.destination);
-
-    osc1.start(t);
-    osc1.stop(t + 0.065);
-
-    // Layer C: Low wooden table resonance
-    const woodOsc = this.ctx.createOscillator();
-    const woodGain = this.ctx.createGain();
-    woodOsc.type = 'triangle';
-    woodOsc.frequency.setValueAtTime(180, t);
-    woodOsc.frequency.exponentialRampToValueAtTime(75, t + 0.08);
-
-    woodGain.gain.setValueAtTime(vol * 0.35, t);
-    woodGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
-
-    woodOsc.connect(woodGain);
-    woodGain.connect(this.ctx.destination);
-
-    woodOsc.start(t);
-    woodOsc.stop(t + 0.095);
   }
 
   // Alias for backward compatibility
@@ -178,7 +179,7 @@ class OkeyAudio {
   }
 
   /**
-   * Desteden Taş Alma (Draw from Deck) - Natural bone tile pickup and slide
+   * Desteden Taş Alma (Draw from Deck) - Çuhada yumuşak kayma ve hafif ahşap dokunuşu
    */
   playDrawDeck() {
     const vol = this.getEffectiveVolume('sfx');
@@ -188,44 +189,44 @@ class OkeyAudio {
 
     const t = this.ctx.currentTime;
 
-    // Felt & bone slide
+    // Yumuşak çuha sürtünmesi
     if (this.noiseBuffer) {
       const noise = this.ctx.createBufferSource();
       noise.buffer = this.noiseBuffer;
 
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(900, t);
-      filter.frequency.exponentialRampToValueAtTime(1600, t + 0.05);
-      filter.Q.setValueAtTime(2.5, t);
+      filter.frequency.setValueAtTime(550, t);
+      filter.frequency.exponentialRampToValueAtTime(1100, t + 0.05);
+      filter.Q.setValueAtTime(2.0, t);
 
       const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(vol * 0.3, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+      gain.gain.setValueAtTime(vol * 0.4, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
 
       noise.connect(filter);
       filter.connect(gain);
       gain.connect(this.ctx.destination);
 
       noise.start(t);
-      noise.stop(t + 0.065);
+      noise.stop(t + 0.06);
     }
 
-    // Light stone pickup click
+    // Tok hafif kaldırma tonu
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(460, t + 0.015);
-    osc.frequency.exponentialRampToValueAtTime(220, t + 0.055);
+    osc.frequency.setValueAtTime(180, t + 0.01);
+    osc.frequency.exponentialRampToValueAtTime(95, t + 0.05);
 
-    gain.gain.setValueAtTime(vol * 0.35, t + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    gain.gain.setValueAtTime(vol * 0.45, t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
-    osc.start(t + 0.015);
-    osc.stop(t + 0.065);
+    osc.start(t + 0.01);
+    osc.stop(t + 0.06);
   }
 
   playDraw() {
@@ -233,7 +234,7 @@ class OkeyAudio {
   }
 
   /**
-   * Yandan Taş Alma (Draw from Discard) - Quick double-snap stone grab
+   * Yandan Taş Alma (Draw from Discard) - Çift vuruşlu tok taş kavrama sesi
    */
   playDrawDiscard() {
     const vol = this.getEffectiveVolume('sfx');
@@ -243,29 +244,36 @@ class OkeyAudio {
 
     const t = this.ctx.currentTime;
 
-    // Double stone click
-    [0, 0.04].forEach((offset, idx) => {
+    [
+      { offset: 0.00, freq: 190, gainVal: 0.5 },
+      { offset: 0.035, freq: 240, gainVal: 0.7 }
+    ].forEach(({ offset, freq, gainVal }) => {
       const clickTime = t + offset;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(500, clickTime);
+
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(idx === 0 ? 380 : 540, clickTime);
-      osc.frequency.exponentialRampToValueAtTime(180, clickTime + 0.035);
+      osc.frequency.setValueAtTime(freq, clickTime);
+      osc.frequency.exponentialRampToValueAtTime(85, clickTime + 0.045);
 
-      gain.gain.setValueAtTime(vol * (idx === 0 ? 0.3 : 0.45), clickTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, clickTime + 0.04);
+      gain.gain.setValueAtTime(vol * gainVal, clickTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, clickTime + 0.05);
 
-      osc.connect(gain);
+      osc.connect(filter);
+      filter.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(clickTime);
-      osc.stop(clickTime + 0.045);
+      osc.stop(clickTime + 0.055);
     });
   }
 
   /**
-   * Birisi El Açtığında (Open Hand) - "Daha kalabalık ve tok taş vurma sesi"
-   * Satisfying multi-tile cascade slam onto the wooden board
+   * Birisi El Açtığında (Open Hand) - Kalabalık ve tok taş yığını efekti
    */
   playOpenHand() {
     const vol = this.getEffectiveVolume('sfx');
@@ -275,27 +283,24 @@ class OkeyAudio {
 
     const t = this.ctx.currentTime;
     const clacks = [
-      { time: 0.00, freq: 520, decay: 0.04, gain: 0.35 },
-      { time: 0.03, freq: 410, decay: 0.045, gain: 0.4 },
-      { time: 0.06, freq: 620, decay: 0.05, gain: 0.45 },
-      { time: 0.09, freq: 360, decay: 0.055, gain: 0.5 },
-      { time: 0.12, freq: 240, decay: 0.12, gain: 0.65 } // Final heavy table slam
+      { time: 0.00, freq: 230, decay: 0.05, gVal: 0.5 },
+      { time: 0.03, freq: 190, decay: 0.05, gVal: 0.6 },
+      { time: 0.06, freq: 260, decay: 0.06, gVal: 0.7 },
+      { time: 0.09, freq: 140, decay: 0.12, gVal: 0.9 } // Tok masa çarpması
     ];
 
-    clacks.forEach(({ time, freq, decay, gain: gVal }) => {
+    clacks.forEach(({ time, freq, decay, gVal }) => {
       const clackT = t + time;
-
-      // Stone body
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       const filter = this.ctx.createBiquadFilter();
 
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1600, clackT);
+      filter.frequency.setValueAtTime(550, clackT);
 
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, clackT);
-      osc.frequency.exponentialRampToValueAtTime(90, clackT + decay);
+      osc.frequency.exponentialRampToValueAtTime(65, clackT + decay);
 
       gain.gain.setValueAtTime(vol * gVal, clackT);
       gain.gain.exponentialRampToValueAtTime(0.0001, clackT + decay);
@@ -310,7 +315,7 @@ class OkeyAudio {
   }
 
   /**
-   * Sıra Sizde Uyarısı (Your Turn) - Pleasant acoustic notification chime
+   * Sıra Sizde Uyarısı (Your Turn) - Yumuşak, tok marimba tınısı
    */
   playYourTurn() {
     const vol = this.getEffectiveVolume('sfx');
@@ -318,35 +323,35 @@ class OkeyAudio {
     this.init();
     if (!this.ctx) return;
 
-    const notes = [659.25, 987.77]; // E5 -> B5 (Warm pleasant major 5th)
+    const notes = [349.23, 523.25]; // F4 -> C5 (Tok ve sıcak 5'li akor)
     notes.forEach((freq, i) => {
-      const t = this.ctx.currentTime + (i * 0.08);
+      const t = this.ctx.currentTime + (i * 0.09);
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       const filter = this.ctx.createBiquadFilter();
 
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(2400, t);
+      filter.frequency.setValueAtTime(1100, t);
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, t);
 
-      gain.gain.setValueAtTime(vol * 0.28, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+      gain.gain.setValueAtTime(vol * 0.45, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
 
       osc.connect(filter);
       filter.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(t);
-      osc.stop(t + 0.28);
+      osc.stop(t + 0.32);
     });
   }
 
   /**
-   * Son 10 Saniye Uyarı Tınısı (Turn Timer Warning Tick)
+   * Son 5 Saniye Nazik Uyarı Tınısı (Sadece hamlenin son 5 saniyesinde çalar)
    */
-  playTimerTick(secondsLeft = 10) {
+  playTimerTick(secondsLeft = 5) {
     if (!this.settings.timerAlertEnabled) return;
     const vol = this.getEffectiveVolume('sfx');
     if (vol <= 0) return;
@@ -354,24 +359,79 @@ class OkeyAudio {
     if (!this.ctx) return;
 
     const t = this.ctx.currentTime;
-    const isUrgent = secondsLeft <= 5;
-    const freq = isUrgent ? 680 : 480;
-
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(600, t);
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, t);
-    osc.frequency.exponentialRampToValueAtTime(freq * 0.7, t + 0.04);
+    osc.frequency.setValueAtTime(320, t);
+    osc.frequency.exponentialRampToValueAtTime(140, t + 0.04);
 
-    gain.gain.setValueAtTime(vol * (isUrgent ? 0.35 : 0.2), t);
+    gain.gain.setValueAtTime(vol * 0.3, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
 
-    osc.connect(gain);
+    osc.connect(filter);
+    filter.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(t);
     osc.stop(t + 0.05);
+  }
+
+  /**
+   * Oyuncu İşlek Taş Attığında Çalacak Fail / Blunder Sesi
+   */
+  playIslekFail() {
+    const vol = this.getEffectiveVolume('sfx');
+    if (vol <= 0) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const failNotes = [260, 210, 160, 110]; // İnen komik fail gamı
+
+    failNotes.forEach((freq, idx) => {
+      const noteT = t + (idx * 0.07);
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(800, noteT);
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, noteT);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.8, noteT + 0.08);
+
+      gain.gain.setValueAtTime(vol * 0.55, noteT);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteT + 0.09);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(noteT);
+      osc.stop(noteT + 0.095);
+    });
+
+    // Tok tahta çökme efekti
+    const woodOsc = this.ctx.createOscillator();
+    const woodGain = this.ctx.createGain();
+    woodOsc.type = 'sine';
+    woodOsc.frequency.setValueAtTime(120, t + 0.22);
+    woodOsc.frequency.exponentialRampToValueAtTime(50, t + 0.35);
+
+    woodGain.gain.setValueAtTime(vol * 0.6, t + 0.22);
+    woodGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.36);
+
+    woodOsc.connect(woodGain);
+    woodGain.connect(this.ctx.destination);
+
+    woodOsc.start(t + 0.22);
+    woodOsc.stop(t + 0.37);
   }
 
   /**
@@ -383,23 +443,28 @@ class OkeyAudio {
     this.init();
     if (!this.ctx) return;
 
-    const notes = [392.00, 523.25, 659.25, 783.99, 1046.50]; // G4, C5, E5, G5, C6
+    const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5 (Tok sıcak C Major)
     notes.forEach((freq, i) => {
       const t = this.ctx.currentTime + (i * 0.08);
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(900, t);
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, t);
 
-      gain.gain.setValueAtTime(vol * 0.32, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+      gain.gain.setValueAtTime(vol * 0.45, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
 
-      osc.connect(gain);
+      osc.connect(filter);
+      filter.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(t);
-      osc.stop(t + 0.42);
+      osc.stop(t + 0.37);
     });
   }
 
@@ -417,10 +482,10 @@ class OkeyAudio {
     const gain = this.ctx.createGain();
 
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(140, t);
-    osc.frequency.exponentialRampToValueAtTime(70, t + 0.16);
+    osc.frequency.setValueAtTime(130, t);
+    osc.frequency.exponentialRampToValueAtTime(60, t + 0.16);
 
-    gain.gain.setValueAtTime(vol * 0.38, t);
+    gain.gain.setValueAtTime(vol * 0.45, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
 
     osc.connect(gain);
@@ -431,7 +496,7 @@ class OkeyAudio {
   }
 
   // =========================================================================
-  // 2. ORTAM SESİ / KAHVEHANE AMBİYANSI (Turkish Cafe Atmosphere)
+  // 2. ORTAM SESİ / KAHVEHANE KONUŞMA VE KAFE AMBİYANSI (Cafe Chatter)
   // =========================================================================
 
   startAmbient() {
@@ -444,78 +509,66 @@ class OkeyAudio {
       this.ambientGainNode.gain.setValueAtTime(this.getEffectiveVolume('ambient'), this.ctx.currentTime);
       this.ambientGainNode.connect(this.ctx.destination);
 
-      // Layer 1: Cozy room air murmur (dual lowpass filtered noise)
-      const noise1 = this.ctx.createBufferSource();
-      noise1.buffer = this.noiseBuffer;
-      noise1.loop = true;
+      // Layer 1: İnsan ses formanı uğultusu (Distant human speech vowel formant resonance)
+      // Formants simulating natural Turkish cafe conversation murmurs
+      const formants = [
+        { freq: 480, Q: 3.5, gainVal: 0.35 },  // F1 vowel formant
+        { freq: 1250, Q: 3.0, gainVal: 0.25 }, // F2 vowel formant
+        { freq: 2100, Q: 2.5, gainVal: 0.18 }  // F3 vowel formant
+      ];
 
-      const filter1 = this.ctx.createBiquadFilter();
-      filter1.type = 'lowpass';
-      filter1.frequency.setValueAtTime(280, this.ctx.currentTime);
+      const nodes = [];
 
-      const subGain = this.ctx.createGain();
-      subGain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+      formants.forEach(({ freq, Q, gainVal }) => {
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = this.noiseBuffer;
+        noise.loop = true;
 
-      noise1.connect(filter1);
-      filter1.connect(subGain);
-      subGain.connect(this.ambientGainNode);
-      noise1.start(0);
+        const bpFilter = this.ctx.createBiquadFilter();
+        bpFilter.type = 'bandpass';
+        bpFilter.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        bpFilter.Q.setValueAtTime(Q, this.ctx.currentTime);
 
-      this.ambientNodes = [noise1, filter1, subGain];
+        // Slow speech cadence modulation
+        const modGain = this.ctx.createGain();
+        modGain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+
+        noise.connect(bpFilter);
+        bpFilter.connect(modGain);
+        modGain.connect(this.ambientGainNode);
+        noise.start(0);
+
+        nodes.push(noise, bpFilter, modGain);
+      });
+
+      // Layer 2: Cozy room tone / Kahvehane mekan bas tınısı
+      const roomNoise = this.ctx.createBufferSource();
+      roomNoise.buffer = this.noiseBuffer;
+      roomNoise.loop = true;
+
+      const lpFilter = this.ctx.createBiquadFilter();
+      lpFilter.type = 'lowpass';
+      lpFilter.frequency.setValueAtTime(180, this.ctx.currentTime);
+
+      const lpGain = this.ctx.createGain();
+      lpGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+
+      roomNoise.connect(lpFilter);
+      lpFilter.connect(lpGain);
+      lpGain.connect(this.ambientGainNode);
+      roomNoise.start(0);
+
+      nodes.push(roomNoise, lpFilter, lpGain);
+
+      this.ambientNodes = nodes;
       this.ambientRunning = true;
-
-      // Start periodic gentle tea glass & spoon tinkles
-      this._scheduleTeaTinkle();
     } catch (e) {
       console.warn('Could not start ambient audio', e);
     }
   }
 
-  _scheduleTeaTinkle() {
-    if (!this.ambientRunning) return;
-    const nextInterval = 4000 + Math.random() * 6000; // Random 4-10 seconds
-    this.ambientTimerId = setTimeout(() => {
-      if (!this.ambientRunning) return;
-      this._playTeaTinkle();
-      this._scheduleTeaTinkle();
-    }, nextInterval);
-  }
-
-  _playTeaTinkle() {
-    const vol = this.getEffectiveVolume('ambient');
-    if (vol <= 0 || !this.ctx) return;
-
-    const t = this.ctx.currentTime;
-    const pingFreq = 2600 + Math.random() * 800; // 2.6kHz - 3.4kHz crystal glass ping
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(pingFreq, t);
-    filter.Q.setValueAtTime(8.0, t);
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(pingFreq, t);
-
-    gain.gain.setValueAtTime(vol * 0.18, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(t);
-    osc.stop(t + 0.15);
-  }
-
   stopAmbient() {
     this.ambientRunning = false;
-    if (this.ambientTimerId) {
-      clearTimeout(this.ambientTimerId);
-      this.ambientTimerId = null;
-    }
     if (this.ambientNodes) {
       this.ambientNodes.forEach(node => {
         try {

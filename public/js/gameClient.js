@@ -812,7 +812,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const lastDiscardCount = countDiscards(lastGameState);
       const currentDiscardCount = countDiscards(state);
       if (currentDiscardCount > lastDiscardCount) {
-        window.soundEngine.playDiscard();
+        // Check if the discarded tile is playable to the table (işlek taş)
+        let islekDiscarded = false;
+        let discardedByPlayer = null;
+        if (state.discards && lastGameState.discards) {
+          for (let p = 0; p < 4; p++) {
+            const curPile = state.discards[p] || [];
+            const lastPile = lastGameState.discards[p] || [];
+            if (curPile.length > lastPile.length) {
+              discardedByPlayer = p;
+              const newTile = curPile[curPile.length - 1];
+              if (newTile && window.ClientValidator && window.ClientValidator.isPlayableToTable(newTile, state.tableMelds || [], state.indicator)) {
+                islekDiscarded = true;
+              }
+              break;
+            }
+          }
+        }
+
+        if (islekDiscarded) {
+          window.soundEngine.playIslekFail();
+          if (discardedByPlayer === viewerSeatIndex) {
+            ui.showToast('⚠️ İşlek Taş Attınız! (Masaya işlenebilecek taştı)', 'error', 3500);
+          }
+        } else {
+          window.soundEngine.playDiscard();
+        }
       }
     }
     lastGameState = state;
@@ -865,7 +890,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateActionBarUI();
   });
 
-  // Turn Timer Animation Loop (For active turn countdown on 60s clock with warning tick)
+  // Turn Timer Animation Loop (30s clock with last 5s gentle countdown tick)
   let turnTimerLoop = null;
   let lastTickedSecond = null;
   function startTurnTimerLoop() {
@@ -879,7 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const turnStartTime = currentGameState.turnStartTime || Date.now();
-      const turnDuration = currentGameState.turnDuration || 60000;
+      const turnDuration = currentGameState.turnDuration || 30000;
       const elapsed = Date.now() - turnStartTime;
       const progress = Math.max(0, Math.min(1, elapsed / turnDuration));
       const remainingRatio = Math.max(0, Math.min(1, 1 - progress));
@@ -901,8 +926,8 @@ document.addEventListener('DOMContentLoaded', () => {
             myTimerBar.classList.remove('warning');
           }
 
-          // Son 10 saniye uyarı tınısı
-          if (remainingSeconds <= 10 && remainingSeconds > 0) {
+          // Son 5 saniye nazik uyarı tınısı (Yalnızca sıra bendeyken ve son 5 saniyede)
+          if (remainingSeconds <= 5 && remainingSeconds > 0) {
             if (lastTickedSecond !== remainingSeconds) {
               lastTickedSecond = remainingSeconds;
               window.soundEngine.playTimerTick(remainingSeconds);
@@ -1171,7 +1196,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.emit('discardTile', { roomId, tileId: activeTile.id }, (res) => {
       if (res.success) {
-        window.soundEngine.playDiscard();
         istaka.clearSelection();
       } else {
         ui.showToast(res.reason, 'error');
@@ -1199,7 +1223,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.emit('discardTile', { roomId, tileId: tile.id }, (res) => {
       if (res.success) {
-        window.soundEngine.playDiscard();
         istaka.clearSelection();
       } else {
         ui.showToast(res.reason, 'error');
