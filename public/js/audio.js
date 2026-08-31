@@ -8,6 +8,8 @@ class OkeyAudio {
   constructor() {
     this.ctx = null;
     this.noiseBuffer = null;
+    this.mp3Audios = {};  // Preloaded HTML5 Audio objects
+    this.mp3Missing = {}; // Track missing MP3s to avoid repeated requests
 
     // Granular Settings
     this.settings = {
@@ -26,6 +28,47 @@ class OkeyAudio {
     this.ambientGainNode = null;
     this.ambientRunning = false;
     this.ambientNodes = [];
+    this.ambientAudioElement = null;
+
+    // Check & preload MP3 files from /audio/
+    this._preloadMP3s();
+  }
+
+  _preloadMP3s() {
+    const soundNames = ['discard', 'draw', 'draw_discard', 'open_hand', 'your_turn', 'fail', 'ambient', 'tick', 'win', 'penalty'];
+    soundNames.forEach(name => {
+      const audio = new Audio(`/audio/${name}.mp3`);
+      audio.preload = 'auto';
+      audio.addEventListener('canplaythrough', () => {
+        this.mp3Audios[name] = audio;
+      }, { once: true });
+      audio.addEventListener('error', () => {
+        this.mp3Missing[name] = true;
+      }, { once: true });
+      audio.load();
+    });
+  }
+
+  _playMP3OrFallback(name, type = 'sfx', fallbackFn = null) {
+    const vol = this.getEffectiveVolume(type);
+    if (vol <= 0) return;
+
+    if (this.mp3Audios[name] && !this.mp3Missing[name]) {
+      try {
+        const sound = this.mp3Audios[name].cloneNode();
+        sound.volume = Math.max(0, Math.min(1, vol));
+        sound.play().catch(() => {
+          if (fallbackFn) fallbackFn.call(this);
+        });
+        return;
+      } catch (e) {
+        // Fallback
+      }
+    }
+
+    if (fallbackFn) {
+      fallbackFn.call(this);
+    }
   }
 
   loadSettings() {
@@ -98,13 +141,17 @@ class OkeyAudio {
   }
 
   // =========================================================================
-  // 1. GAMEPLAY SOUND EFFECTS (Tok, derin, ahşap & kemik vuruşları)
+  // 1. GAMEPLAY SOUND EFFECTS (Tok, derin, ahşap & kemik vuruşları / MP3)
   // =========================================================================
 
   /**
    * Yana Taş Atma (Discard) - Tok, pürüzsüz ve doyurucu ahşap-kemik vuruşu
    */
   playDiscard() {
+    this._playMP3OrFallback('discard', 'sfx', this._synthDiscard);
+  }
+
+  _synthDiscard() {
     const vol = this.getEffectiveVolume('sfx');
     if (vol <= 0) return;
     this.init();
@@ -182,6 +229,10 @@ class OkeyAudio {
    * Desteden Taş Alma (Draw from Deck) - Çuhada yumuşak kayma ve hafif ahşap dokunuşu
    */
   playDrawDeck() {
+    this._playMP3OrFallback('draw', 'sfx', this._synthDrawDeck);
+  }
+
+  _synthDrawDeck() {
     const vol = this.getEffectiveVolume('sfx');
     if (vol <= 0) return;
     this.init();
@@ -237,6 +288,10 @@ class OkeyAudio {
    * Yandan Taş Alma (Draw from Discard) - Çift vuruşlu tok taş kavrama sesi
    */
   playDrawDiscard() {
+    this._playMP3OrFallback('draw_discard', 'sfx', this._synthDrawDiscard);
+  }
+
+  _synthDrawDiscard() {
     const vol = this.getEffectiveVolume('sfx');
     if (vol <= 0) return;
     this.init();
@@ -276,6 +331,10 @@ class OkeyAudio {
    * Birisi El Açtığında (Open Hand) - Kalabalık ve tok taş yığını efekti
    */
   playOpenHand() {
+    this._playMP3OrFallback('open_hand', 'sfx', this._synthOpenHand);
+  }
+
+  _synthOpenHand() {
     const vol = this.getEffectiveVolume('sfx');
     if (vol <= 0) return;
     this.init();
@@ -318,6 +377,10 @@ class OkeyAudio {
    * Sıra Sizde Uyarısı (Your Turn) - Yumuşak, tok marimba tınısı
    */
   playYourTurn() {
+    this._playMP3OrFallback('your_turn', 'sfx', this._synthYourTurn);
+  }
+
+  _synthYourTurn() {
     const vol = this.getEffectiveVolume('sfx');
     if (vol <= 0) return;
     this.init();
@@ -353,6 +416,10 @@ class OkeyAudio {
    */
   playTimerTick(secondsLeft = 5) {
     if (!this.settings.timerAlertEnabled) return;
+    this._playMP3OrFallback('tick', 'sfx', () => this._synthTimerTick(secondsLeft));
+  }
+
+  _synthTimerTick(secondsLeft = 5) {
     const vol = this.getEffectiveVolume('sfx');
     if (vol <= 0) return;
     this.init();
@@ -385,6 +452,10 @@ class OkeyAudio {
    * Oyuncu İşlek Taş Attığında Çalacak Fail / Blunder Sesi
    */
   playIslekFail() {
+    this._playMP3OrFallback('fail', 'sfx', this._synthIslekFail);
+  }
+
+  _synthIslekFail() {
     const vol = this.getEffectiveVolume('sfx');
     if (vol <= 0) return;
     this.init();
@@ -438,6 +509,10 @@ class OkeyAudio {
    * Zafer / El Bitirme Sesi
    */
   playVictory() {
+    this._playMP3OrFallback('win', 'sfx', this._synthVictory);
+  }
+
+  _synthVictory() {
     const vol = this.getEffectiveVolume('sfx');
     if (vol <= 0) return;
     this.init();
@@ -472,6 +547,10 @@ class OkeyAudio {
    * Ceza Alma Sesi (Penalty)
    */
   playPenalty() {
+    this._playMP3OrFallback('penalty', 'sfx', this._synthPenalty);
+  }
+
+  _synthPenalty() {
     const vol = this.getEffectiveVolume('sfx');
     if (vol <= 0) return;
     this.init();
@@ -496,12 +575,36 @@ class OkeyAudio {
   }
 
   // =========================================================================
-  // 2. ORTAM SESİ / KAHVEHANE KONUŞMA VE KAFE AMBİYANSI (Cafe Chatter)
+  // 2. ORTAM SESİ / KAHVEHANE KONUŞMA VE KAFE AMBİYANSI (Cafe Chatter / MP3)
   // =========================================================================
 
   startAmbient() {
     if (this.ambientRunning || !this.settings.ambientEnabled || this.settings.muted) return;
     this.init();
+
+    // Check if MP3 ambient is available
+    if (this.mp3Audios['ambient'] && !this.mp3Missing['ambient']) {
+      try {
+        if (!this.ambientAudioElement) {
+          this.ambientAudioElement = this.mp3Audios['ambient'].cloneNode();
+          this.ambientAudioElement.loop = true;
+        }
+        this.ambientAudioElement.volume = Math.max(0, Math.min(1, this.getEffectiveVolume('ambient')));
+        this.ambientAudioElement.play().then(() => {
+          this.ambientRunning = true;
+        }).catch(() => {
+          this._synthAmbient();
+        });
+        return;
+      } catch (e) {
+        // Fallback to synth
+      }
+    }
+
+    this._synthAmbient();
+  }
+
+  _synthAmbient() {
     if (!this.ctx || !this.noiseBuffer) return;
 
     try {
@@ -510,7 +613,6 @@ class OkeyAudio {
       this.ambientGainNode.connect(this.ctx.destination);
 
       // Layer 1: İnsan ses formanı uğultusu (Distant human speech vowel formant resonance)
-      // Formants simulating natural Turkish cafe conversation murmurs
       const formants = [
         { freq: 480, Q: 3.5, gainVal: 0.35 },  // F1 vowel formant
         { freq: 1250, Q: 3.0, gainVal: 0.25 }, // F2 vowel formant
@@ -529,7 +631,6 @@ class OkeyAudio {
         bpFilter.frequency.setValueAtTime(freq, this.ctx.currentTime);
         bpFilter.Q.setValueAtTime(Q, this.ctx.currentTime);
 
-        // Slow speech cadence modulation
         const modGain = this.ctx.createGain();
         modGain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
 
@@ -569,6 +670,12 @@ class OkeyAudio {
 
   stopAmbient() {
     this.ambientRunning = false;
+    if (this.ambientAudioElement) {
+      try {
+        this.ambientAudioElement.pause();
+        this.ambientAudioElement.currentTime = 0;
+      } catch (e) {}
+    }
     if (this.ambientNodes) {
       this.ambientNodes.forEach(node => {
         try {
@@ -585,8 +692,11 @@ class OkeyAudio {
   }
 
   updateAmbientVolume() {
+    const vol = this.getEffectiveVolume('ambient');
+    if (this.ambientAudioElement) {
+      this.ambientAudioElement.volume = Math.max(0, Math.min(1, vol));
+    }
     if (this.ambientGainNode && this.ctx) {
-      const vol = this.getEffectiveVolume('ambient');
       this.ambientGainNode.gain.setValueAtTime(vol, this.ctx.currentTime);
     }
   }
