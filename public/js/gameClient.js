@@ -313,21 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Auto-login on Page Load
-  const storedToken = localStorage.getItem('okey101_auth_token');
-  if (storedToken) {
-    socket.emit('auth:autoLogin', { token: storedToken }, (res) => {
-      if (res.success) {
-        handleLoginSuccess(res.user, null);
-      } else {
-        localStorage.removeItem('okey101_auth_token');
-        showAuth();
-      }
-    });
-  } else {
-    showAuth();
-  }
-
   function getPlayerName() {
     return currentUser ? (currentUser.displayName || currentUser.username) : 'Oyuncu';
   }
