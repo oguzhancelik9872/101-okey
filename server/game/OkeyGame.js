@@ -86,24 +86,20 @@ class OkeyGame {
   }
 
   addSingleBot(preferredSeat = null) {
-    const maleNames = [
-      'Ahmet', 'Mehmet', 'Mustafa', 'Burak', 'Emre', 'Kemal', 'Barış',
-      'Hakan', 'Serkan', 'Murat', 'Tolga', 'Onur',
-      'Kaan', 'Kerem', 'Volkan', 'Batuhan', 'Eren', 'Tarkan', 'Sedat', 'Mert', 'Can'
-    ];
     const femaleNames = [
       'Zeynep', 'Ayşe', 'Fatma', 'Elif', 'Merve', 'Ece', 'Selin', 'Gizem',
       'Büşra', 'Derya', 'Seda', 'Ceren', 'İrem', 'Ebru', 'Gamze', 'Melis',
-      'Pınar', 'Tuğba', 'Hande', 'Aslı', 'Burcu', 'Damla', 'Sinem', 'Yasemin'
+      'Pınar', 'Tuğba', 'Hande', 'Aslı', 'Burcu', 'Damla', 'Sinem', 'Yasemin',
+      'Berna', 'Kübra', 'Hilal', 'Melike', 'Filiz', 'Hülya', 'Sevgi', 'Songül',
+      'Defne', 'Nehir', 'Deniz', 'Duru', 'Yağmur', 'Ada', 'Azra', 'Derin',
+      'Gökçe', 'Bade', 'Lara', 'Ela', 'Nisan', 'Irmak', 'Ceyda', 'Simge'
     ];
 
-    const isFemale = Math.random() < 0.5;
-    const baseNames = isFemale ? femaleNames : maleNames;
     const existingNames = this.players.filter(Boolean).map(p => p.name);
-    const available = baseNames.filter(n => !existingNames.includes(n + ' (Bot)'));
-    const baseName = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : baseNames[Math.floor(Math.random() * baseNames.length)];
+    const available = femaleNames.filter(n => !existingNames.includes(n + ' (Bot)'));
+    const baseName = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : femaleNames[Math.floor(Math.random() * femaleNames.length)];
     const fullName = `${baseName} (Bot)`;
-    const gender = isFemale ? 'female' : 'male';
+    const gender = 'female';
     const avatarIndex = Math.floor(Math.random() * 8);
 
     const botId = `bot_${Date.now()}_${preferredSeat || 0}_${Math.random().toString(36).substring(7)}`;
@@ -111,27 +107,22 @@ class OkeyGame {
   }
 
   fillWithBots() {
-    const maleNames = [
-      'Ahmet', 'Mehmet', 'Mustafa', 'Burak', 'Emre', 'Kemal', 'Barış',
-      'Hakan', 'Serkan', 'Murat', 'Tolga', 'Onur',
-      'Kaan', 'Kerem', 'Volkan', 'Batuhan', 'Eren', 'Tarkan', 'Sedat', 'Mert', 'Can'
-    ];
     const femaleNames = [
       'Zeynep', 'Ayşe', 'Fatma', 'Elif', 'Merve', 'Ece', 'Selin', 'Gizem',
       'Büşra', 'Derya', 'Seda', 'Ceren', 'İrem', 'Ebru', 'Gamze', 'Melis',
-      'Pınar', 'Tuğba', 'Hande', 'Aslı', 'Burcu', 'Damla', 'Sinem', 'Yasemin'
+      'Pınar', 'Tuğba', 'Hande', 'Aslı', 'Burcu', 'Damla', 'Sinem', 'Yasemin',
+      'Berna', 'Kübra', 'Hilal', 'Melike', 'Filiz', 'Hülya', 'Sevgi', 'Songül',
+      'Defne', 'Nehir', 'Deniz', 'Duru', 'Yağmur', 'Ada', 'Azra', 'Derin',
+      'Gökçe', 'Bade', 'Lara', 'Ela', 'Nisan', 'Irmak', 'Ceyda', 'Simge'
     ];
 
-    const shuffledMales = [...maleNames].sort(() => Math.random() - 0.5);
     const shuffledFemales = [...femaleNames].sort(() => Math.random() - 0.5);
-    let mIdx = 0;
     let fIdx = 0;
 
     for (let i = 0; i < 4; i++) {
       if (!this.players[i]) {
-        const isFemale = (i % 2 === 1);
-        const name = (isFemale ? shuffledFemales[fIdx++] : shuffledMales[mIdx++]) + ' (Bot)';
-        const gender = isFemale ? 'female' : 'male';
+        const name = shuffledFemales[fIdx++ % shuffledFemales.length] + ' (Bot)';
+        const gender = 'female';
         const avatarIndex = Math.floor(Math.random() * 8);
         this.addPlayer(`bot_${Date.now()}_${i}_${Math.random().toString(36).substring(7)}`, name, true, gender, null, i, avatarIndex);
       }
