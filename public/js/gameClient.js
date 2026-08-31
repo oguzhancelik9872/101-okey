@@ -275,6 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update Lobby Profile Card
     updateLobbyProfileUI();
 
+    // Immediately reveal lobby so the screen is NEVER blank
+    showLobby();
+
     // Check if user was in an active game session (Only for F5 reconnect checks)
     const savedActiveRoom = isReconnectCheck ? (localStorage.getItem('okey101_active_room') || user.currentRoomId) : null;
     if (savedActiveRoom) {
@@ -291,11 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
           ui.showToast('🎯 Masanıza geri bağlandınız!', 'success');
         } else {
           localStorage.removeItem('okey101_active_room');
-          showLobby();
         }
       });
-    } else {
-      showLobby();
     }
   }
 
