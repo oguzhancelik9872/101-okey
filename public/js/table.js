@@ -66,6 +66,10 @@ class TableManager {
     const positions = ['bottom', 'right', 'top', 'left'];
     const isMyTurn = this.gameState.currentTurn === this.viewerSeatIndex && this.gameState.state === 'PLAYING';
 
+    const istakaBoardEl = document.querySelector('.plus-istaka-board');
+    if (istakaBoardEl) {
+      istakaBoardEl.classList.toggle('your-turn-active', isMyTurn);
+    }
     const istakaEl = document.getElementById('player-istaka-container');
     if (istakaEl) {
       istakaEl.classList.toggle('your-turn-active', isMyTurn);
