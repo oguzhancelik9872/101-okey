@@ -42,31 +42,23 @@
 }
 
 body.plus-theme {
-  background: radial-gradient(ellipse at center, #1b2845 0%, #111a30 50%, #0a1120 100%);
+  background: #020f08;
   color: #ffffff;
   overflow: hidden;
   height: 100vh;
   width: 100vw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 24px;
-  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 #app-container {
-  width: 100%;
-  max-width: 1480px;
-  height: 100%;
-  max-height: 94vh;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
-  border-radius: 26px;
   overflow: hidden;
   background: #020f08;
-  border: 3px solid #233454;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 35px rgba(27, 40, 69, 0.5);
 }
 
 .hidden {
@@ -85,8 +77,8 @@ body.plus-theme {
   background: radial-gradient(circle at 50% 40%, var(--felt-green-light) 0%, var(--felt-green-mid) 45%, var(--felt-green-deep) 100%);
   position: relative;
   overflow-y: auto;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   padding: 30px 20px;
   box-sizing: border-box;
 }
@@ -117,8 +109,8 @@ body.plus-theme {
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   background: radial-gradient(circle at 50% 40%, var(--felt-green-light) 0%, var(--felt-green-mid) 45%, var(--felt-green-deep) 100%);
   position: relative;
   overflow: hidden;
@@ -2926,14 +2918,13 @@ body.plus-theme {
    ========================================================= */
 
 .drawer-backdrop {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
   z-index: 450;
   opacity: 1;
   transition: opacity 0.25s ease;
-  border-radius: 26px;
 }
 
 .drawer-backdrop.hidden {
