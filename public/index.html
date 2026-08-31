@@ -87,52 +87,106 @@
 
     <!-- ================= 101 OKEY LOBBY VIEW ================= -->
     <div id="lobby-view" class="hidden">
-      <div class="plus-lobby-wrapper">
-        <!-- Brand Logo Header -->
-        <div class="plus-logo-box" style="margin-bottom: 20px;">
-          <h1 class="plus-logo-title" style="font-size: 42px; font-weight: 900; letter-spacing: 3px; margin: 0; color: #f1c40f; text-shadow: 0 4px 15px rgba(0,0,0,0.8);">101 OKEY</h1>
+      <!-- Top Navigation Bar across the Lobby -->
+      <header class="lobby-top-bar">
+        <!-- Left: Profile Card & Bot Play Button -->
+        <div class="lobby-left-panel">
+          <div class="plus-profile-card">
+            <div class="plus-avatar-box" id="btn-edit-avatar-trigger" style="cursor: pointer;" title="Avatarı Değiştir">
+              <div id="lobby-avatar-img" class="plus-avatar-img">👨</div>
+              <div class="avatar-edit-badge" title="Düzenle">✏️</div>
+            </div>
+            <div class="plus-profile-details">
+              <div class="lobby-user-header">
+                <strong id="lobby-display-name" class="lobby-user-name">Oyuncu</strong>
+                <div class="lobby-header-btns">
+                  <button id="btn-open-profile" class="btn-profile-edit" title="Profili Düzenle">⚙️ Profil</button>
+                  <button id="btn-logout" class="btn-logout" title="Çıkış Yap">🚪 Çıkış</button>
+                </div>
+              </div>
+              <span id="lobby-username-tag" class="lobby-user-tag">@oyuncu</span>
+            </div>
+          </div>
+
+          <button id="btn-play-bots" class="btn-bot-quick-play" title="Tek Kişilik Antrenman Masası">
+            <span class="bot-icon">🤖</span>
+            <span class="bot-text">BOTLARLA OYNA</span>
+          </button>
         </div>
 
-        <!-- Logged-in User Profile Card in Lobby -->
-        <div class="plus-profile-card">
-          <div class="plus-avatar-box" id="btn-edit-avatar-trigger" style="cursor: pointer;" title="Avatarı Değiştir">
-            <div id="lobby-avatar-img" class="plus-avatar-img">👨</div>
-            <div class="avatar-edit-badge" title="Düzenle">✏️</div>
-          </div>
-          <div class="plus-profile-details">
-            <div class="lobby-user-header">
-              <strong id="lobby-display-name" class="lobby-user-name">Oyuncu</strong>
-              <div class="lobby-header-btns">
-                <button id="btn-open-profile" class="btn-profile-edit" title="Profili Düzenle">⚙️ Profil</button>
-                <button id="btn-logout" class="btn-logout" title="Çıkış Yap">🚪 Çıkış</button>
+        <!-- Center: Game Logo -->
+        <div class="plus-logo-box">
+          <h1 class="plus-logo-title" style="font-size: 32px; font-weight: 900; letter-spacing: 2px; margin: 0; color: #f1c40f;">101 OKEY</h1>
+        </div>
+
+        <!-- Right: Private Room Actions -->
+        <div class="lobby-right-panel">
+          <button id="btn-open-create-room" class="btn-plus-blue btn-sm">
+            <span>➕ ÖZEL MASA KUR</span>
+          </button>
+          <button id="btn-open-join-room" class="btn-plus-purple btn-sm">
+            <span>🔑 KODLA KATIL</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Center Virtual 4-Player Casino Table -->
+      <main class="lobby-center-stage">
+        <div class="lobby-table-wrapper">
+          <div class="lobby-virtual-felt">
+            
+            <!-- Top Seat (Koltuk 3 / Karşı Koltuk) -->
+            <div id="lobby-seat-2" class="lobby-seat-pod seat-top" data-seat="2">
+              <div class="seat-content empty">
+                <button class="btn-sit-seat" data-seat="2">
+                  <span class="sit-icon">➕</span>
+                  <span class="sit-label">KARŞIYA OTUR</span>
+                </button>
               </div>
             </div>
-            <span id="lobby-username-tag" class="lobby-user-tag">@oyuncu</span>
+
+            <!-- Left Seat (Koltuk 4 / Sol Koltuk) -->
+            <div id="lobby-seat-3" class="lobby-seat-pod seat-left" data-seat="3">
+              <div class="seat-content empty">
+                <button class="btn-sit-seat" data-seat="3">
+                  <span class="sit-icon">➕</span>
+                  <span class="sit-label">SOLA OTUR</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Seat (Koltuk 2 / Sağ Koltuk) -->
+            <div id="lobby-seat-1" class="lobby-seat-pod seat-right" data-seat="1">
+              <div class="seat-content empty">
+                <button class="btn-sit-seat" data-seat="1">
+                  <span class="sit-icon">➕</span>
+                  <span class="sit-label">SAĞA OTUR</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Bottom Seat (Koltuk 1 / Alt Koltuk) -->
+            <div id="lobby-seat-0" class="lobby-seat-pod seat-bottom" data-seat="0">
+              <div class="seat-content empty">
+                <button class="btn-sit-seat" data-seat="0">
+                  <span class="sit-icon">➕</span>
+                  <span class="sit-label">1. KOLTUĞA OTUR</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Center Table Hub Badge -->
+            <div class="lobby-table-center-hub">
+              <div class="table-brand-pill">
+                <span class="table-num-tag" id="lobby-table-title">MASA #101</span>
+                <span class="table-status-badge" id="lobby-table-status">⏳ 0/4 OYUNCU</span>
+              </div>
+              <p class="table-instruction">Oturmak istediğiniz koltuğa tıklayın</p>
+            </div>
+
           </div>
         </div>
-
-        <!-- Lobby Action Buttons -->
-        <div class="plus-actions-container">
-          <button id="btn-quick-play" class="btn-plus-gold">
-            <span class="btn-shine"></span>
-            <span class="btn-text">⚡ HEMEN OYNA (HIZLI MASA)</span>
-          </button>
-          
-          <button id="btn-play-bots" class="btn-plus-green">
-            <span class="btn-shine"></span>
-            <span class="btn-text">🤖 BOTLARA KARŞI OYNA</span>
-          </button>
-
-          <div class="plus-btn-row">
-            <button id="btn-open-create-room" class="btn-plus-blue">
-              <span>➕ ODA KUR</span>
-            </button>
-            <button id="btn-open-join-room" class="btn-plus-purple">
-              <span>🔑 ODAYA KATIL</span>
-            </button>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
 
     <!-- ================= 101 OKEY GAME TABLE VIEW ================= -->

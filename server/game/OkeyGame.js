@@ -11,7 +11,7 @@ class OkeyGame {
     this.currentRound = 1;
     this.state = GAME_STATES.WAITING;
 
-    this.players = [];
+    this.players = [null, null, null, null];
     this.deck = null;
     this.indicator = null;
     this.currentTurn = 0;
@@ -36,9 +36,25 @@ class OkeyGame {
     this.roundResults = null;
   }
 
-  addPlayer(id, name, isBot = false, gender = null, userId = null) {
-    if (this.players.length >= 4) return null;
-    const seatIndex = this.players.length;
+  addPlayer(id, name, isBot = false, gender = null, userId = null, preferredSeat = null, avatarIndex = null) {
+    let seatIndex = null;
+
+    if (preferredSeat !== null && preferredSeat !== undefined && preferredSeat >= 0 && preferredSeat < 4) {
+      if (!this.players[preferredSeat]) {
+        seatIndex = preferredSeat;
+      }
+    }
+
+    if (seatIndex === null) {
+      for (let i = 0; i < 4; i++) {
+        if (!this.players[i]) {
+          seatIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (seatIndex === null) return null;
     
     const FEMALE_NAMES = new Set([
       'zeynep', 'ayşe', 'fatma', 'elif', 'merve', 'ece', 'selin', 'gizem', 'büşra',
@@ -56,6 +72,7 @@ class OkeyGame {
       seatIndex,
       isBot,
       gender: detectedGender,
+      avatarIndex: (avatarIndex !== undefined && avatarIndex !== null) ? avatarIndex : null,
       hand: [],
       opened: false,
       openType: null, // 'seri' | 'pairs'
@@ -64,7 +81,7 @@ class OkeyGame {
       roundScore: 0,  // Score in current round
       penalties: []
     };
-    this.players.push(player);
+    this.players[seatIndex] = player;
     return player;
   }
 
@@ -85,12 +102,13 @@ class OkeyGame {
     let mIdx = 0;
     let fIdx = 0;
 
-    while (this.players.length < 4) {
-      // Alternate male and female bots
-      const isFemale = (this.players.length % 2 === 1);
-      const name = isFemale ? shuffledFemales[fIdx++] : shuffledMales[mIdx++];
-      const gender = isFemale ? 'female' : 'male';
-      this.addPlayer(`bot_${Date.now()}_${this.players.length}_${Math.random().toString(36).substring(7)}`, name, true, gender);
+    for (let i = 0; i < 4; i++) {
+      if (!this.players[i]) {
+        const isFemale = (i % 2 === 1);
+        const name = isFemale ? shuffledFemales[fIdx++] : shuffledMales[mIdx++];
+        const gender = isFemale ? 'female' : 'male';
+        this.addPlayer(`bot_${Date.now()}_${i}_${Math.random().toString(36).substring(7)}`, name, true, gender, null, i);
+      }
     }
   }
 
@@ -883,28 +901,29 @@ class OkeyGame {
         effectiveValue: t.getValue(this.indicator),
         isOkey: t.isOkey(this.indicator)
       }))),
-      players: this.players.map((p, idx) => ({
+      players: this.players.map((p, idx) => p ? ({
         id: p.id,
         name: p.name,
         seatIndex: p.seatIndex,
         isBot: p.isBot,
         gender: p.gender || 'male',
-        tileCount: p.hand.length,
-        opened: p.opened,
-        openType: p.openType,
+        avatarIndex: (p.avatarIndex !== undefined && p.avatarIndex !== null) ? p.avatarIndex : null,
+        tileCount: p.hand ? p.hand.length : 0,
+        opened: p.opened || false,
+        openType: p.openType || null,
         openedScore: p.openedMelds ? p.openedMelds.reduce((sum, m) => sum + (m.score || 0), 0) : 0,
         openedMeldsCount: p.openedMelds ? p.openedMelds.length : 0,
-        score: p.score,
-        roundScore: p.roundScore,
-        penalties: p.penalties,
+        score: p.score || 0,
+        roundScore: p.roundScore || 0,
+        penalties: p.penalties || [],
         // Only provide full hand details to the viewer
-        hand: (idx === viewerSeatIndex) ? p.hand.map(t => ({
+        hand: (idx === viewerSeatIndex && p.hand) ? p.hand.map(t => ({
           ...t.toJSON(),
           effectiveColor: t.getColor(this.indicator),
           effectiveValue: t.getValue(this.indicator),
           isOkey: t.isOkey(this.indicator)
         })) : null
-      })),
+      }) : null),
       roundResults: this.roundResults,
       drawnFromDiscard: this.drawnFromDiscard ? {
         playerIndex: this.drawnFromDiscard.playerIndex,

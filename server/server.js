@@ -27,6 +27,13 @@ const roomManager = new RoomManager(io);
 // Socket.IO Event Handlers
 io.on('connection', (socket) => {
   console.log(`[Socket] Client connected: ${socket.id}`);
+  socket.join('lobby');
+  socket.emit('lobby:stateUpdate', roomManager.getLobbyState());
+
+  socket.on('lobby:join', () => {
+    socket.join('lobby');
+    socket.emit('lobby:stateUpdate', roomManager.getLobbyState());
+  });
 
   // --- Auth Handlers ---
   socket.on('auth:register', (data, callback) => {
@@ -117,12 +124,49 @@ io.on('connection', (socket) => {
         hostId: socket.id,
         hostName: data.playerName || 'Oyuncu',
         userId: userId,
+        targetSeatIndex: data.seatIndex,
+        gender: data.gender,
+        avatarIndex: data.avatarIndex,
         isPrivate: data.isPrivate !== false,
         mode: data.mode || 'standard',
         targetRounds: data.targetRounds || 3,
         vsBots: data.vsBots === true
       });
 
+      socket.leave('lobby');
+      socket.join(room.id);
+      socket.roomId = room.id;
+      if (userId) db.updateActiveRoom(userId, room.id);
+
+      if (callback) {
+        callback({
+          success: true,
+          roomId: room.id,
+          seatIndex: data.seatIndex !== undefined ? data.seatIndex : 0,
+          isHost: true
+        });
+      }
+
+      roomManager.broadcastGameState(room.id);
+    } catch (err) {
+      console.error('Error creating room:', err);
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
+  // Create Single-player Bot Room
+  socket.on('createBotRoom', (data, callback) => {
+    try {
+      const userId = data.userId || socket.userId;
+      const room = roomManager.createBotRoom({
+        hostId: socket.id,
+        hostName: data.playerName || 'Oyuncu',
+        userId,
+        gender: data.gender,
+        avatarIndex: data.avatarIndex
+      });
+
+      socket.leave('lobby');
       socket.join(room.id);
       socket.roomId = room.id;
       if (userId) db.updateActiveRoom(userId, room.id);
@@ -138,7 +182,7 @@ io.on('connection', (socket) => {
 
       roomManager.broadcastGameState(room.id);
     } catch (err) {
-      console.error('Error creating room:', err);
+      console.error('Error creating bot room:', err);
       if (callback) callback({ success: false, reason: err.message });
     }
   });
@@ -146,15 +190,24 @@ io.on('connection', (socket) => {
   // Join Room
   socket.on('joinRoom', (data, callback) => {
     try {
-      const { roomId, playerName, userId } = data;
+      const { roomId, playerName, userId, seatIndex, gender, avatarIndex } = data;
       const uId = userId || socket.userId;
-      const result = roomManager.joinRoom(roomId.toUpperCase(), socket.id, playerName, uId);
+      const result = roomManager.joinRoom(
+        roomId.toUpperCase(),
+        socket.id,
+        playerName,
+        uId,
+        seatIndex,
+        gender,
+        avatarIndex
+      );
 
       if (!result.success) {
         if (callback) callback({ success: false, reason: result.reason });
         return;
       }
 
+      socket.leave('lobby');
       socket.join(result.room.id);
       socket.roomId = result.room.id;
       if (uId) db.updateActiveRoom(uId, result.room.id);

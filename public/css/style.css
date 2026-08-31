@@ -66,8 +66,7 @@ body.plus-theme {
    101 OKEY PLUS - AUTH & LOBBY VIEWS
    ========================================================= */
 
-#auth-view,
-#lobby-view {
+#auth-view {
   flex: 1;
   display: flex;
   align-items: center;
@@ -81,7 +80,28 @@ body.plus-theme {
   box-sizing: border-box;
 }
 
-#auth-view::before,
+#auth-view::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(241, 196, 15, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+#lobby-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-height: 100vh;
+  width: 100%;
+  background: radial-gradient(circle at 50% 40%, var(--felt-green-light) 0%, var(--felt-green-mid) 45%, var(--felt-green-deep) 100%);
+  position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
 #lobby-view::before {
   content: '';
   position: absolute;
@@ -90,46 +110,266 @@ body.plus-theme {
   pointer-events: none;
 }
 
-.plus-lobby-wrapper {
-  background: rgba(8, 30, 18, 0.92);
-  backdrop-filter: blur(14px);
-  border: 3px solid rgba(241, 196, 15, 0.5);
-  border-radius: 24px;
-  padding: 35px 40px;
-  width: 90%;
-  max-width: 480px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+/* Lobby Top Bar */
+.lobby-top-bar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 22px;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(5, 20, 12, 0.88);
+  backdrop-filter: blur(14px);
+  border-bottom: 2px solid rgba(241, 196, 15, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  z-index: 50;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.lobby-left-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-bot-quick-play {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  border: 1.5px solid #34d399;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+  letter-spacing: 0.5px;
+}
+
+.btn-bot-quick-play:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.6);
+  border-color: #6ee7b7;
+}
+
+.btn-bot-quick-play:active {
+  transform: translateY(1px);
+}
+
+.lobby-right-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 10px;
+}
+
+/* Center Virtual 4-Player Casino Table */
+.lobby-center-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  width: 100%;
+  box-sizing: border-box;
   position: relative;
   z-index: 10;
-  animation: lobbyFloat 4s ease-in-out infinite alternate;
 }
 
-@keyframes lobbyFloat {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-6px); }
+.lobby-table-wrapper {
+  position: relative;
+  width: 90%;
+  max-width: 760px;
+  height: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Logo Box */
-.plus-logo-box {
+.lobby-virtual-felt {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, #1b7a43 0%, #0d4a27 60%, #072a16 100%);
+  border: 16px solid #4a2810;
+  border-radius: 220px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.15);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Positional Seat Pods around Virtual Table */
+.lobby-seat-pod {
+  position: absolute;
+  z-index: 20;
+  transition: all 0.25s;
+}
+
+.lobby-seat-pod.seat-top {
+  top: -38px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.lobby-seat-pod.seat-bottom {
+  bottom: -38px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.lobby-seat-pod.seat-left {
+  left: -38px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lobby-seat-pod.seat-right {
+  right: -38px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Empty Seat Button */
+.btn-sit-seat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(8, 28, 16, 0.9);
+  border: 2px dashed #f1c40f;
+  border-radius: 24px;
+  padding: 8px 16px;
+  color: #f1c40f;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  animation: seatPulse 2s infinite ease-in-out;
+}
+
+.btn-sit-seat:hover {
+  background: #f1c40f;
+  color: #1a0802;
+  border-style: solid;
+  transform: scale(1.08);
+  box-shadow: 0 0 20px rgba(241, 196, 15, 0.8);
+}
+
+@keyframes seatPulse {
+  0% { box-shadow: 0 0 6px rgba(241, 196, 15, 0.3); }
+  50% { box-shadow: 0 0 16px rgba(241, 196, 15, 0.7); }
+  100% { box-shadow: 0 0 6px rgba(241, 196, 15, 0.3); }
+}
+
+/* Occupied Seat Card in Lobby */
+.lobby-occupied-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(8, 28, 16, 0.95);
+  border: 2px solid #2ecc71;
+  border-radius: 24px;
+  padding: 6px 14px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.7), 0 0 12px rgba(46, 204, 113, 0.4);
+}
+
+.lobby-occupied-card.is-host {
+  border-color: #f1c40f;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.7), 0 0 14px rgba(241, 196, 15, 0.5);
+}
+
+.lobby-occupied-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1.5px solid rgba(255,255,255,0.4);
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lobby-occupied-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lobby-occupied-name {
+  font-size: 12px;
+  font-weight: 900;
+  color: #fff;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lobby-occupied-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #2ecc71;
+}
+
+.lobby-occupied-card.is-host .lobby-occupied-badge {
+  color: #f1c40f;
+}
+
+/* Center Table Hub */
+.lobby-table-center-hub {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
+  z-index: 10;
+  pointer-events: none;
 }
 
-.plus-logo-badge {
+.table-brand-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: linear-gradient(180deg, #d63031, #a71d2a);
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.75);
   border: 2px solid #f1c40f;
-  padding: 4px 18px;
-  border-radius: 30px;
-  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+  padding: 8px 20px;
+  border-radius: 24px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+}
+
+.table-num-tag {
+  font-family: 'Oswald', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #f1c40f;
+  letter-spacing: 1px;
+}
+
+.table-status-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.2);
+  padding: 3px 8px;
+  border-radius: 12px;
+  border: 1px solid #2ecc71;
+}
+
+.table-instruction {
+  font-size: 12px;
+  color: #a8d5ba;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+  margin: 0;
 }
 
 .plus-101 {

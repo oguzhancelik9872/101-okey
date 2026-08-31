@@ -16,14 +16,73 @@ class RoomManager {
     return code;
   }
 
-  createRoom({ hostId, hostName, userId = null, isPrivate = false, mode = 'standard', targetRounds = 3, vsBots = false }) {
+  getOrCreatePublicRoom() {
+    let publicRoom = Array.from(this.rooms.values()).find(r => !r.isPrivate && !r.vsBots && r.game.state === GAME_STATES.WAITING);
+    if (!publicRoom) {
+      publicRoom = Array.from(this.rooms.values()).find(r => !r.isPrivate && !r.vsBots && r.id === 'MASA-101');
+    }
+    if (!publicRoom) {
+      const roomId = 'MASA-101';
+      const game = new OkeyGame(roomId, { mode: 'standard', targetRounds: 1 });
+      publicRoom = {
+        id: roomId,
+        hostId: null,
+        game,
+        isPrivate: false,
+        mode: 'standard',
+        targetRounds: 1,
+        vsBots: false,
+        createdAt: Date.now(),
+        botLoopActive: false
+      };
+      this.rooms.set(roomId, publicRoom);
+    }
+    return publicRoom;
+  }
+
+  getLobbyState() {
+    const publicRoom = this.getOrCreatePublicRoom();
+    const game = publicRoom.game;
+    const seats = [0, 1, 2, 3].map(idx => {
+      const p = game.players[idx];
+      if (!p) return null;
+      return {
+        id: p.id,
+        userId: p.userId,
+        name: p.name,
+        gender: p.gender || 'male',
+        avatarIndex: p.avatarIndex,
+        seatIndex: idx,
+        isHost: publicRoom.hostId === p.id,
+        isBot: p.isBot
+      };
+    });
+
+    return {
+      publicTable: {
+        id: publicRoom.id,
+        state: game.state,
+        playerCount: game.players.filter(Boolean).length,
+        seats,
+        hostId: publicRoom.hostId
+      }
+    };
+  }
+
+  broadcastLobbyState() {
+    if (this.io) {
+      this.io.to('lobby').emit('lobby:stateUpdate', this.getLobbyState());
+    }
+  }
+
+  createRoom({ hostId, hostName, userId = null, targetSeatIndex = null, gender = null, avatarIndex = null, isPrivate = false, mode = 'standard', targetRounds = 3, vsBots = false }) {
     let roomId = this.generateRoomCode();
     while (this.rooms.has(roomId)) {
       roomId = this.generateRoomCode();
     }
 
     const game = new OkeyGame(roomId, { mode, targetRounds });
-    game.addPlayer(hostId, hostName || 'Oyuncu 1', false, null, userId);
+    game.addPlayer(hostId, hostName || 'Oyuncu 1', false, gender, userId, targetSeatIndex, avatarIndex);
 
     if (vsBots) {
       game.fillWithBots();
@@ -48,48 +107,72 @@ class RoomManager {
       this.startBotAutomation(room);
     }
 
+    this.broadcastLobbyState();
     return room;
   }
 
-  joinRoom(roomId, playerId, playerName, userId = null) {
+  createBotRoom({ hostId, hostName, userId = null, gender = null, avatarIndex = null }) {
+    return this.createRoom({
+      hostId,
+      hostName: hostName || 'Oyuncu',
+      userId,
+      gender,
+      avatarIndex,
+      isPrivate: true,
+      mode: 'standard',
+      targetRounds: 1,
+      vsBots: true
+    });
+  }
+
+  joinRoom(roomId, playerId, playerName, userId = null, targetSeatIndex = null, gender = null, avatarIndex = null) {
     const room = this.rooms.get(roomId);
     if (!room) return { success: false, reason: 'Oda bulunamadı.' };
 
     const game = room.game;
     
     // Check if player is reconnecting (by userId or socketId)
-    const existingPlayer = game.players.find(p => (userId && p.userId === userId) || p.id === playerId);
+    const existingPlayer = game.players.find(p => p && ((userId && p.userId === userId) || p.id === playerId));
     if (existingPlayer) {
       existingPlayer.id = playerId;
       existingPlayer.isBot = false;
-      if (room.hostId === existingPlayer.userId || existingPlayer.seatIndex === 0) {
+      if (gender) existingPlayer.gender = gender;
+      if (avatarIndex !== undefined && avatarIndex !== null) existingPlayer.avatarIndex = avatarIndex;
+      if (!room.hostId || room.hostId === existingPlayer.userId || existingPlayer.seatIndex === 0) {
         room.hostId = playerId;
       }
+      this.broadcastLobbyState();
       return { success: true, room, player: existingPlayer, isRejoin: true };
     }
 
-    if (game.players.length >= 4) {
+    const occupiedCount = game.players.filter(Boolean).length;
+    if (occupiedCount >= 4) {
       // Check if there's a bot slot we can replace
-      const botIndex = game.players.findIndex(p => p.isBot);
+      const botIndex = game.players.findIndex(p => p && p.isBot);
       if (botIndex !== -1) {
         game.players[botIndex].id = playerId;
         game.players[botIndex].userId = userId || playerId;
         game.players[botIndex].name = playerName || `Oyuncu ${botIndex + 1}`;
+        if (gender) game.players[botIndex].gender = gender;
+        if (avatarIndex !== undefined && avatarIndex !== null) game.players[botIndex].avatarIndex = avatarIndex;
         game.players[botIndex].isBot = false;
         game.addLog(`${game.players[botIndex].name} oyuna katıldı.`);
+        this.broadcastLobbyState();
         return { success: true, room, player: game.players[botIndex] };
       }
       return { success: false, reason: 'Oda tamamen dolu.' };
     }
 
-    const player = game.addPlayer(playerId, playerName || `Oyuncu ${game.players.length + 1}`, false, null, userId);
-
-    // If all 4 seats are now filled with human players, automatically start the game!
-    if (game.players.length === 4 && game.state === GAME_STATES.WAITING) {
-      game.startRound();
-      this.startBotAutomation(room);
+    const player = game.addPlayer(playerId, playerName || `Oyuncu`, false, gender, userId, targetSeatIndex, avatarIndex);
+    if (!player) {
+      return { success: false, reason: 'Seçilen koltuk dolu.' };
     }
 
+    if (!room.hostId) {
+      room.hostId = playerId;
+    }
+
+    this.broadcastLobbyState();
     return { success: true, room, player };
   }
 
@@ -223,19 +306,30 @@ class RoomManager {
     const room = this.rooms.get(roomId);
     if (!room) return;
 
-    if (room.vsBots || room.hostId === playerId) {
+    if (room.vsBots || (room.hostId === playerId && room.isPrivate)) {
       if (room.botInterval) clearInterval(room.botInterval);
       this.rooms.delete(roomId);
+      this.broadcastLobbyState();
       return;
     }
 
-    const player = room.game.players.find(p => p.id === playerId);
-    if (player) {
-      player.isBot = true;
-      room.game.addLog(`${player.name} masadan ayrıldı.`);
+    const playerIndex = room.game.players.findIndex(p => p && p.id === playerId);
+    if (playerIndex !== -1) {
+      if (room.game.state === GAME_STATES.WAITING) {
+        room.game.players[playerIndex] = null;
+        if (room.hostId === playerId) {
+          const nextPlayer = room.game.players.find(Boolean);
+          room.hostId = nextPlayer ? nextPlayer.id : null;
+        }
+      } else {
+        room.game.players[playerIndex].isBot = true;
+      }
+      room.game.addLog(`Oyuncu masadan ayrıldı.`);
       this.broadcastGameState(roomId);
       if (room.triggerBotStep) room.triggerBotStep();
     }
+
+    this.broadcastLobbyState();
   }
 
   handleDisconnect(playerId) {
@@ -245,15 +339,23 @@ class RoomManager {
         continue;
       }
       const game = room.game;
-      const player = game.players.find(p => p.id === playerId);
-      if (player) {
-        // Convert to bot to keep room running smoothly
-        player.isBot = true;
-        game.addLog(`${player.name} bağlantısı koptu (Yapay Zeka devraldı).`);
+      const playerIndex = game.players.findIndex(p => p && p.id === playerId);
+      if (playerIndex !== -1) {
+        if (game.state === GAME_STATES.WAITING) {
+          game.players[playerIndex] = null;
+          if (room.hostId === playerId) {
+            const nextPlayer = game.players.find(Boolean);
+            room.hostId = nextPlayer ? nextPlayer.id : null;
+          }
+        } else {
+          game.players[playerIndex].isBot = true;
+          game.addLog(`${game.players[playerIndex].name} bağlantısı koptu (Yapay Zeka devraldı).`);
+          if (room.triggerBotStep) room.triggerBotStep();
+        }
         this.broadcastGameState(roomId);
-        if (room.triggerBotStep) room.triggerBotStep();
       }
     }
+    this.broadcastLobbyState();
   }
 
   broadcastGameState(roomId) {

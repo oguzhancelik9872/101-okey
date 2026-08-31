@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (authView) authView.classList.add('hidden');
     if (gameView) gameView.classList.add('hidden');
     if (lobbyView) lobbyView.classList.remove('hidden');
+    socket.emit('lobby:join');
   }
 
   function showAuth() {
@@ -328,35 +329,108 @@ document.addEventListener('DOMContentLoaded', () => {
     return currentUser ? currentUser.id : null;
   }
 
-  // Quick Play (Matchmaking)
-  const btnQuickPlay = document.getElementById('btn-quick-play');
-  if (btnQuickPlay) {
-    btnQuickPlay.addEventListener('click', () => {
-      const name = getPlayerName();
-      const userId = getUserId();
-      socket.emit('quickMatch', { playerName: name, userId }, (res) => {
-        if (res.success) {
-          setupGameRoom(res.roomId, res.seatIndex, res.isHost);
-        } else {
-          ui.showToast(res.reason, 'error');
+  // --- Interactive Virtual Lobby Table & Seat Selection ---
+  let currentLobbyTableId = 'MASA-101';
+
+  function updateLobbyVirtualTable(lobbyState) {
+    if (!lobbyState || !lobbyState.publicTable) return;
+    const tableData = lobbyState.publicTable;
+    currentLobbyTableId = tableData.id || 'MASA-101';
+
+    const titleEl = document.getElementById('lobby-table-title');
+    const statusEl = document.getElementById('lobby-table-status');
+    if (titleEl) titleEl.textContent = `MASA #${currentLobbyTableId}`;
+    if (statusEl) {
+      if (tableData.state === 'PLAYING') {
+        statusEl.textContent = '🎮 OYUN SÜRÜYOR';
+        statusEl.style.borderColor = '#e67e22';
+        statusEl.style.color = '#f39c12';
+      } else {
+        statusEl.textContent = `⏳ ${tableData.playerCount || 0}/4 OYUNCU`;
+        statusEl.style.borderColor = '#2ecc71';
+        statusEl.style.color = '#2ecc71';
+      }
+    }
+
+    const seatLabels = ['1. KOLTUĞA OTUR', 'SAĞA OTUR', 'KARŞIYA OTUR', 'SOLA OTUR'];
+
+    [0, 1, 2, 3].forEach(seatIdx => {
+      const podEl = document.getElementById(`lobby-seat-${seatIdx}`);
+      if (!podEl) return;
+      const seatInfo = tableData.seats ? tableData.seats[seatIdx] : null;
+
+      if (seatInfo) {
+        // Seat is occupied
+        const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
+          ? window.getPlayerAvatarSVG(seatInfo.name, seatInfo.gender, seatInfo.avatarIndex)
+          : '👤';
+        const isHost = seatInfo.isHost || (tableData.hostId === seatInfo.id);
+
+        podEl.innerHTML = `
+          <div class="lobby-occupied-card ${isHost ? 'is-host' : ''}">
+            <div class="lobby-occupied-avatar">${avatarSvg}</div>
+            <div class="lobby-occupied-info">
+              <span class="lobby-occupied-name" title="${seatInfo.name}">${seatInfo.name}</span>
+              <span class="lobby-occupied-badge">${isHost ? '👑 Kurucu' : (seatInfo.isBot ? '🤖 Bot' : '🟢 Hazır')}</span>
+            </div>
+          </div>
+        `;
+      } else {
+        // Seat is empty
+        podEl.innerHTML = `
+          <button class="btn-sit-seat" data-seat="${seatIdx}">
+            <span class="sit-icon">➕</span>
+            <span class="sit-label">${seatLabels[seatIdx]}</span>
+          </button>
+        `;
+        const btnSit = podEl.querySelector('.btn-sit-seat');
+        if (btnSit) {
+          btnSit.addEventListener('click', () => {
+            handleSitAtSeat(currentLobbyTableId, seatIdx);
+          });
         }
-      });
+      }
     });
   }
 
-  // Play vs Bots (Single Round 101 Okey Plus)
+  function handleSitAtSeat(roomIdToJoin, targetSeatIndex) {
+    const name = getPlayerName();
+    const userId = getUserId();
+    const user = currentUser || {};
+
+    socket.emit('joinRoom', {
+      roomId: roomIdToJoin,
+      playerName: name,
+      userId,
+      seatIndex: targetSeatIndex,
+      gender: user.gender,
+      avatarIndex: user.avatarIndex
+    }, (res) => {
+      if (res.success) {
+        setupGameRoom(res.roomId, res.seatIndex, res.isHost);
+      } else {
+        ui.showToast(res.reason, 'error');
+      }
+    });
+  }
+
+  socket.on('lobby:stateUpdate', (data) => {
+    updateLobbyVirtualTable(data);
+  });
+
+  // Play vs Bots (Single Player Bot Practice)
   const btnPlayBots = document.getElementById('btn-play-bots');
   if (btnPlayBots) {
     btnPlayBots.addEventListener('click', () => {
       const name = getPlayerName();
       const userId = getUserId();
-      socket.emit('createRoom', {
+      const user = currentUser || {};
+
+      socket.emit('createBotRoom', {
         playerName: name,
         userId,
-        isPrivate: true,
-        mode: 'standard',
-        targetRounds: 1,
-        vsBots: true
+        gender: user.gender,
+        avatarIndex: user.avatarIndex
       }, (res) => {
         if (res.success) {
           setupGameRoom(res.roomId, res.seatIndex, res.isHost);
@@ -380,10 +454,13 @@ document.addEventListener('DOMContentLoaded', () => {
     btnConfirmCreate.addEventListener('click', () => {
       const name = getPlayerName();
       const userId = getUserId();
+      const user = currentUser || {};
 
       socket.emit('createRoom', {
         playerName: name,
         userId,
+        gender: user.gender,
+        avatarIndex: user.avatarIndex,
         isPrivate: true,
         mode: 'standard',
         targetRounds: 1,
@@ -412,6 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnConfirmJoin.addEventListener('click', () => {
       const name = getPlayerName();
       const userId = getUserId();
+      const user = currentUser || {};
       const codeEl = document.getElementById('input-room-code');
       const code = codeEl ? codeEl.value.trim().toUpperCase() : '';
 
@@ -420,7 +498,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      socket.emit('joinRoom', { roomId: code, playerName: name, userId }, (res) => {
+      socket.emit('joinRoom', {
+        roomId: code,
+        playerName: name,
+        userId,
+        gender: user.gender,
+        avatarIndex: user.avatarIndex
+      }, (res) => {
         ui.hideModal('modal-join-room');
         if (res.success) {
           setupGameRoom(res.roomId, res.seatIndex, res.isHost);
