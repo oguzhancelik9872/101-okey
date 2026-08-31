@@ -65,18 +65,26 @@ class RoomManager {
     }
 
     if (game.players.length >= 4) {
-      // Check if there's a bot slot we can replace
+      // Check if there's a bot slot we can replace (even in active games)
       const botIndex = game.players.findIndex(p => p.isBot);
-      if (botIndex !== -1 && game.state === GAME_STATES.WAITING) {
+      if (botIndex !== -1) {
         game.players[botIndex].id = playerId;
         game.players[botIndex].name = playerName || `Oyuncu ${botIndex + 1}`;
         game.players[botIndex].isBot = false;
+        game.addLog(`${game.players[botIndex].name} oyuna katıldı.`);
         return { success: true, room, player: game.players[botIndex] };
       }
       return { success: false, reason: 'Oda tamamen dolu.' };
     }
 
     const player = game.addPlayer(playerId, playerName || `Oyuncu ${game.players.length + 1}`, false);
+
+    // If all 4 seats are now filled with human players, automatically start the game!
+    if (game.players.length === 4 && game.state === GAME_STATES.WAITING) {
+      game.startRound();
+      this.startBotAutomation(room);
+    }
+
     return { success: true, room, player };
   }
 
@@ -102,10 +110,9 @@ class RoomManager {
     return { success: true, room: newRoom, player: newRoom.game.players[0] };
   }
 
-  startGame(roomId, hostId) {
+  startGame(roomId, playerId) {
     const room = this.rooms.get(roomId);
     if (!room) return { success: false, reason: 'Oda bulunamadı.' };
-    if (room.hostId !== hostId) return { success: false, reason: 'Yalnızca oda kurucusu oyunu başlatabilir.' };
 
     const game = room.game;
     if (game.state !== GAME_STATES.WAITING) return { success: false, reason: 'Oyun zaten başladı.' };
