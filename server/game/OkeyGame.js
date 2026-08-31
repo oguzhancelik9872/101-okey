@@ -7,7 +7,7 @@ class OkeyGame {
   constructor(id, options = {}) {
     this.id = id;
     this.mode = options.mode || GAME_MODES.STANDARD; // standard | folded
-    this.targetRounds = options.targetRounds || 1;
+    this.targetRounds = options.targetRounds || 3;
     this.currentRound = 1;
     this.state = GAME_STATES.WAITING;
 
@@ -74,8 +74,9 @@ class OkeyGame {
       opened: false,
       openType: null, // 'seri' | 'pairs'
       openedMelds: [],
-      score: 0,       // Total penalty score (lower is better)
-      roundScore: 0,  // Score in current round
+      score: 0,           // Total penalty score across rounds (lower is better)
+      roundScore: 0,      // Score in current round
+      penaltyPoints: 0,   // Accumulated penalty points in current round (+101, +202 etc)
       penalties: []
     };
     this.players[seatIndex] = player;
@@ -173,6 +174,7 @@ class OkeyGame {
       this.players[i].openType = null;
       this.players[i].openedMelds = [];
       this.players[i].roundScore = 0;
+      this.players[i].penaltyPoints = 0;
       this.players[i].penalties = [];
     }
 
@@ -355,6 +357,18 @@ class OkeyGame {
     player.opened = true;
     player.openType = 'seri';
 
+    if (firstTime && validation.score >= 153) {
+      const oppSeats = [(playerIndex + 1) % 4, (playerIndex + 3) % 4];
+      oppSeats.forEach(s => {
+        const oppP = this.players[s];
+        if (oppP) {
+          oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
+          oppP.penalties.push({ type: 'OPPONENT_HIGH_OPEN', points: 101, desc: '153+ açılış cezası (+101)' });
+        }
+      });
+      this.addLog(`🔥 ${player.name} ${validation.score} (153+) puanla açtı! Rakip takım +101 ceza aldı!`);
+    }
+
     if (firstTime && this.mode === GAME_MODES.FOLDED) {
       this.minOpenScore = Math.max(this.minOpenScore, validation.score + 1);
     }
@@ -434,6 +448,18 @@ class OkeyGame {
     if (firstTime) {
       player.opened = true;
       player.openType = 'pairs';
+
+      if (pairs.length >= 7) {
+        const oppSeats = [(playerIndex + 1) % 4, (playerIndex + 3) % 4];
+        oppSeats.forEach(s => {
+          const oppP = this.players[s];
+          if (oppP) {
+            oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
+            oppP.penalties.push({ type: 'OPPONENT_SEVEN_PAIRS', points: 101, desc: '7+ çift açılış cezası (+101)' });
+          }
+        });
+        this.addLog(`💎 ${player.name} ${pairs.length} (7+) çift açtı! Rakip takım +101 ceza aldı!`);
+      }
     }
 
     if (firstTime && this.mode === GAME_MODES.FOLDED) {
@@ -481,7 +507,21 @@ class OkeyGame {
     // If an Okey was replaced and retrieved from the table meld!
     if (processCheck.isOkeySteal && processCheck.stolenOkeyTile) {
       player.hand.push(processCheck.stolenOkeyTile);
-      this.addLog(`✨ ${player.name} perdeki Okey'in yerine taş işleyerek OKEY'i eline aldı!`);
+
+      // If stolen from opponent's meld, opponent team gets +101 penalty!
+      if (targetMeld && targetMeld.playerIndex !== undefined && (playerIndex % 2 !== targetMeld.playerIndex % 2)) {
+        const oppSeats = [targetMeld.playerIndex, (targetMeld.playerIndex + 2) % 4];
+        oppSeats.forEach(s => {
+          const oppP = this.players[s];
+          if (oppP) {
+            oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
+            oppP.penalties.push({ type: 'OKEY_STOLEN', points: 101, desc: 'Okey kaptırma cezası (+101)' });
+          }
+        });
+        this.addLog(`✨ ${player.name} perdeki Okey'i aldı! Rakip takım +101 ceza aldı!`);
+      } else {
+        this.addLog(`✨ ${player.name} perdeki Okey'in yerine taş işleyerek OKEY'i eline aldı!`);
+      }
     } else {
       this.addLog(`${player.name} masadaki pere taş işledi.`);
     }
@@ -536,9 +576,9 @@ class OkeyGame {
     // Check "İşlek Taş Atma" penalty
     const isPlayable = Validator.isPlayableToTable(tile, this.tableMelds, this.indicator);
     if (isPlayable) {
-      player.score += PENALTIES.DISCARDED_PLAYABLE;
-      player.penalties.push({ type: 'DISCARDED_PLAYABLE', points: PENALTIES.DISCARDED_PLAYABLE, desc: 'İşlek taş atma cezası (+101)' });
-      this.addLog(`⚠️ ${player.name} masaya işlenebilecek işlek bir taş attığı için 101 ceza puanı aldı!`);
+      player.penaltyPoints = (player.penaltyPoints || 0) + 101;
+      player.penalties.push({ type: 'DISCARDED_PLAYABLE', points: 101, desc: 'İşlek taş atma cezası (+101)' });
+      this.addLog(`⚠️ ${player.name} masaya işlenebilecek işlek bir taş attığı için +101 ceza puanı aldı!`);
     }
 
     // Check if the deck was exhausted (Son taş çekilmişti ve o son taşı çeken oyuncu artık taşını attı -> Oyun Bitti!)
@@ -569,7 +609,6 @@ class OkeyGame {
    * Handles hand finish
    */
   endRound(finishingPlayerIndex, isOkeyDiscard = false) {
-    this.state = GAME_STATES.ROUND_OVER;
     const finisher = this.players[finishingPlayerIndex];
     if (!finisher) return;
 
@@ -580,8 +619,8 @@ class OkeyGame {
 
     // Finisher gets -101 (or -202 / -404 if okey/pairs)
     const finisherPoints = -101 * totalMultiplier;
-    finisher.score += finisherPoints;
-    finisher.roundScore = finisherPoints;
+    finisher.roundScore = finisherPoints + (finisher.penaltyPoints || 0);
+    finisher.score += finisher.roundScore;
 
     const partnerIndex = (finishingPlayerIndex + 2) % 4;
     const roundScores = {};
@@ -591,14 +630,33 @@ class OkeyGame {
       if (!p) continue;
 
       if (i === finishingPlayerIndex) {
-        roundScores[p.id] = { name: p.name, points: finisherPoints, opened: true, openType: p.openType, handSum: 0, isFinisher: true };
+        roundScores[p.id] = {
+          name: p.name,
+          points: p.roundScore,
+          basePoints: finisherPoints,
+          penaltyPoints: p.penaltyPoints || 0,
+          opened: true,
+          openType: p.openType,
+          handSum: 0,
+          isFinisher: true
+        };
         continue;
       }
 
       if (i === partnerIndex) {
-        // Partner of finisher gets 0 penalty (Hand score zeroed out because partner finished)
-        p.roundScore = 0;
-        roundScores[p.id] = { name: p.name, points: 0, opened: p.opened, openType: p.openType, handSum: 0, isPartner: true };
+        // Partner of finisher gets 0 penalty from hand + any in-game penalties
+        p.roundScore = 0 + (p.penaltyPoints || 0);
+        p.score += p.roundScore;
+        roundScores[p.id] = {
+          name: p.name,
+          points: p.roundScore,
+          basePoints: 0,
+          penaltyPoints: p.penaltyPoints || 0,
+          opened: p.opened,
+          openType: p.openType,
+          handSum: 0,
+          isPartner: true
+        };
         continue;
       }
 
@@ -615,9 +673,17 @@ class OkeyGame {
         pPoints = handSum * playerPairsMultiplier * totalMultiplier;
       }
 
-      p.score += pPoints;
-      p.roundScore = pPoints;
-      roundScores[p.id] = { name: p.name, points: pPoints, opened: p.opened, openType: p.openType, handSum };
+      p.roundScore = pPoints + (p.penaltyPoints || 0);
+      p.score += p.roundScore;
+      roundScores[p.id] = {
+        name: p.name,
+        points: p.roundScore,
+        basePoints: pPoints,
+        penaltyPoints: p.penaltyPoints || 0,
+        opened: p.opened,
+        openType: p.openType,
+        handSum
+      };
     }
 
     const p0Name = this.players[0] ? this.players[0].name : 'Oyuncu 1';
@@ -625,11 +691,17 @@ class OkeyGame {
     const p2Name = this.players[2] ? this.players[2].name : 'Oyuncu 3';
     const p3Name = this.players[3] ? this.players[3].name : 'Oyuncu 4';
 
-    const team1Score = (this.players[0] ? this.players[0].roundScore : 0) + (this.players[2] ? this.players[2].roundScore : 0);
-    const team2Score = (this.players[1] ? this.players[1].roundScore : 0) + (this.players[3] ? this.players[3].roundScore : 0);
+    const team1Score = (this.players[0] ? this.players[0].score : 0) + (this.players[2] ? this.players[2].score : 0);
+    const team2Score = (this.players[1] ? this.players[1].score : 0) + (this.players[3] ? this.players[3].score : 0);
     const isTeam1Winner = team1Score <= team2Score;
 
+    const hasNextRound = this.currentRound < this.targetRounds;
+    this.state = hasNextRound ? GAME_STATES.ROUND_OVER : GAME_STATES.GAME_OVER;
+
     this.roundResults = {
+      currentRound: this.currentRound,
+      targetRounds: this.targetRounds,
+      hasNextRound,
       finisher: finisher.name,
       isOkeyDiscard,
       isPairsFinish,
@@ -652,18 +724,17 @@ class OkeyGame {
       totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
 
-    let finishMsg = `🎉 ${finisher.name} eli bitirdi (${finisherPoints} puan).`;
+    let finishMsg = `🎉 ${finisher.name} ${this.currentRound}. eli bitirdi (${finisherPoints} puan).`;
     if (isOkeyDiscard) finishMsg += ' 🔥 OKEY ATTI (Cezalar 2 katı)!';
     if (isPairsFinish) finishMsg += ' ✨ ÇİFT BİTTİ (Cezalar 2 katı)!';
-    finishMsg += isTeam1Winner ? ` 🏆 Kazanan: ${p0Name} & ${p2Name} (${team1Score} Puan)` : ` 🏆 Kazanan: ${p1Name} & ${p3Name} (${team2Score} Puan)`;
     this.addLog(finishMsg);
 
-    this.state = GAME_STATES.GAME_OVER;
-    this.addLog('🏆 Oyun tamamlandı!');
+    if (!hasNextRound) {
+      this.addLog(`🏆 3 El Tamamlandı! Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
+    }
   }
 
   endRoundNoWinner() {
-    this.state = GAME_STATES.ROUND_OVER;
     const roundScores = {};
 
     for (const p of this.players.filter(Boolean)) {
@@ -676,9 +747,17 @@ class OkeyGame {
         const playerPairsMultiplier = (p.openType === 'pairs') ? 2 : 1;
         pPoints = handSum * playerPairsMultiplier;
       }
-      p.score += pPoints;
-      p.roundScore = pPoints;
-      roundScores[p.id] = { name: p.name, points: pPoints, opened: p.opened, openType: p.openType, handSum };
+      p.roundScore = pPoints + (p.penaltyPoints || 0);
+      p.score += p.roundScore;
+      roundScores[p.id] = {
+        name: p.name,
+        points: p.roundScore,
+        basePoints: pPoints,
+        penaltyPoints: p.penaltyPoints || 0,
+        opened: p.opened,
+        openType: p.openType,
+        handSum
+      };
     }
 
     const p0Name = this.players[0] ? this.players[0].name : 'Oyuncu 1';
@@ -686,11 +765,17 @@ class OkeyGame {
     const p2Name = this.players[2] ? this.players[2].name : 'Oyuncu 3';
     const p3Name = this.players[3] ? this.players[3].name : 'Oyuncu 4';
 
-    const team1Score = (this.players[0] ? this.players[0].roundScore : 0) + (this.players[2] ? this.players[2].roundScore : 0);
-    const team2Score = (this.players[1] ? this.players[1].roundScore : 0) + (this.players[3] ? this.players[3].roundScore : 0);
+    const team1Score = (this.players[0] ? this.players[0].score : 0) + (this.players[2] ? this.players[2].score : 0);
+    const team2Score = (this.players[1] ? this.players[1].score : 0) + (this.players[3] ? this.players[3].score : 0);
     const isTeam1Winner = team1Score <= team2Score;
 
+    const hasNextRound = this.currentRound < this.targetRounds;
+    this.state = hasNextRound ? GAME_STATES.ROUND_OVER : GAME_STATES.GAME_OVER;
+
     this.roundResults = {
+      currentRound: this.currentRound,
+      targetRounds: this.targetRounds,
+      hasNextRound,
       finisher: null,
       reason: 'Deste bitti',
       roundScores,
@@ -711,9 +796,10 @@ class OkeyGame {
       totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
 
-    this.addLog('Deste bitti! Kalan eller sayıldı.');
-    this.state = GAME_STATES.GAME_OVER;
-    this.addLog('🏆 Oyun tamamlandı!');
+    this.addLog(`Deste bitti! ${this.currentRound}. elin kalan elleri sayıldı.`);
+    if (!hasNextRound) {
+      this.addLog(`🏆 3 El Tamamlandı! Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
+    }
   }
 
   nextRound() {
@@ -992,6 +1078,7 @@ class OkeyGame {
         openedMeldsCount: p.openedMelds ? p.openedMelds.length : 0,
         score: p.score || 0,
         roundScore: p.roundScore || 0,
+        penaltyPoints: p.penaltyPoints || 0,
         penalties: p.penalties || [],
         // Only provide full hand details to the viewer
         hand: (idx === viewerSeatIndex && p.hand) ? p.hand.map(t => ({

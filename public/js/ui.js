@@ -74,10 +74,16 @@ class UIManager {
 
     const t1 = results.teamResults ? results.teamResults.team1 : null;
     const t2 = results.teamResults ? results.teamResults.team2 : null;
+    const currentRound = results.currentRound || 1;
+    const targetRounds = results.targetRounds || 3;
+    const hasNext = !!results.hasNextRound;
 
     let html = `
       <div class="round-result-header">
-        <h3>${results.finisher ? `🎉 ${results.finisher} Eli Bitirdi!` : `⏸️ ${results.reason || 'El Berabere Bitti'}`}</h3>
+        <div style="font-size: 13px; font-weight: 800; color: #f1c40f; letter-spacing: 1px; margin-bottom: 4px;">
+          ${hasNext ? `EL ${currentRound} / ${targetRounds} TAMAMLANDI` : `🏆 3. EL TAMAMLANDI (MAÇ BİTTİ)`}
+        </div>
+        <h3 style="font-size: 20px;">${results.finisher ? `🎉 ${results.finisher} Eli Bitirdi!` : `⏸️ ${results.reason || 'El Berabere Bitti'}`}</h3>
         ${results.isOkeyDiscard ? '<span class="badge-okey-discard">🔥 OKEY ATTI (2x CEZA)</span>' : ''}
         ${results.isPairsFinish ? '<span class="badge-pairs-finish">✨ ÇİFT BİTTİ (2x CEZA)</span>' : ''}
       </div>
@@ -86,15 +92,15 @@ class UIManager {
     if (t1 && t2) {
       html += `
         <div class="team-results-box" style="background: rgba(0,0,0,0.6); border: 2px solid #f1c40f; border-radius: 14px; padding: 14px; margin: 14px 0; text-align: center;">
-          <h4 style="color: #f1c40f; font-size: 16px; margin-bottom: 10px; letter-spacing: 0.5px;">🏆 EŞLİ MAÇ SKORU</h4>
+          <h4 style="color: #f1c40f; font-size: 15px; margin-bottom: 10px; letter-spacing: 0.5px;">🏆 TOPLAM EŞLİ SKOR</h4>
           <div style="display: flex; justify-content: space-around; gap: 12px; font-size: 13px; font-weight: 800;">
             <div style="flex: 1; padding: 10px; border-radius: 10px; background: ${t1.isWinner ? 'rgba(46, 204, 113, 0.25)' : 'rgba(255,255,255,0.05)'}; border: 1.5px solid ${t1.isWinner ? '#2ecc71' : 'rgba(255,255,255,0.1)'};">
               <div style="color: #fff; font-size: 14px; font-weight: 900;">${t1.players.filter(Boolean).join(' & ')}</div>
-              <div style="font-size: 16px; color: ${t1.isWinner ? '#2ecc71' : '#f1c40f'}; margin-top: 6px;">${t1.score} Ceza ${t1.isWinner ? '👑 KAZANDI' : ''}</div>
+              <div style="font-size: 16px; color: ${t1.isWinner ? '#2ecc71' : '#f1c40f'}; margin-top: 6px;">${t1.score} Ceza ${t1.isWinner ? '👑 ÖNDE' : ''}</div>
             </div>
             <div style="flex: 1; padding: 10px; border-radius: 10px; background: ${t2.isWinner ? 'rgba(46, 204, 113, 0.25)' : 'rgba(255,255,255,0.05)'}; border: 1.5px solid ${t2.isWinner ? '#2ecc71' : 'rgba(255,255,255,0.1)'};">
               <div style="color: #fff; font-size: 14px; font-weight: 900;">${t2.players.filter(Boolean).join(' & ')}</div>
-              <div style="font-size: 16px; color: ${t2.isWinner ? '#2ecc71' : '#f1c40f'}; margin-top: 6px;">${t2.score} Ceza ${t2.isWinner ? '👑 KAZANDI' : ''}</div>
+              <div style="font-size: 16px; color: ${t2.isWinner ? '#2ecc71' : '#f1c40f'}; margin-top: 6px;">${t2.score} Ceza ${t2.isWinner ? '👑 ÖNDE' : ''}</div>
             </div>
           </div>
         </div>
@@ -107,7 +113,7 @@ class UIManager {
           <tr>
             <th>Sıra & Oyuncu</th>
             <th>Durum</th>
-            <th>Ceza Puanı</th>
+            <th>El Cezası</th>
           </tr>
         </thead>
         <tbody>
@@ -123,11 +129,15 @@ class UIManager {
       if (rData.points < 0) {
         statusText = '🏆 Bitti (-101)';
       } else if (rData.isPartner) {
-        statusText = '🤝 Ortağı Bitti (0 Ceza)';
+        statusText = '🤝 Ortağı Bitti (0)';
       } else if (rData.opened) {
-        statusText = rData.openType === 'pairs' ? `Çift Açtı (2x: ${(rData.handSum || 0) * 2})` : `Açtı (${rData.handSum || 0} Kalan)`;
+        statusText = rData.openType === 'pairs' ? `Çift (${(rData.handSum || 0) * 2})` : `Açtı (${rData.handSum || 0})`;
       } else {
         statusText = 'Açmadı (+202)';
+      }
+
+      if (rData.penaltyPoints && rData.penaltyPoints > 0) {
+        statusText += ` <span style="color: #ff7675; font-weight: 900;">(+${rData.penaltyPoints} Ceza)</span>`;
       }
 
       if (isWinner && rData.points >= 0 && !rData.isPartner) {
@@ -150,7 +160,9 @@ class UIManager {
         </tbody>
       </table>
       <div class="round-result-actions" style="margin-top: 14px; display: flex; justify-content: center;">
-        <button id="btn-next-round" class="btn-plus-gold" style="padding: 10px 24px; width: 100%;">Yeni Maça Başla</button>
+        <button id="btn-next-round" class="btn-plus-gold" style="padding: 12px 24px; width: 100%; font-size: 15px; font-weight: 900;">
+          ${hasNext ? `➡️ Sonraki Ele Geç (El ${currentRound + 1} / ${targetRounds})` : '🏆 Sonuçları Gör / Yeni Maça Başla'}
+        </button>
       </div>
     `;
 

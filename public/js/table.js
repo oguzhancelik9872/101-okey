@@ -148,15 +148,26 @@ class TableManager {
             statusEl.textContent = 'Hazır';
           } else if (player.opened) {
             statusEl.className = 'player-open-status opened';
-            if (player.openType === 'pairs') {
-              statusEl.textContent = (player.openedMeldsCount || 5) + ' Çift Açtı';
-            } else {
-              statusEl.textContent = player.openedScore ? (player.openedScore + ' Puanla Açtı') : 'Açtı';
-            }
+            statusEl.textContent = (player.openType === 'pairs') ? 'Çift Açtı' : 'Açtı';
           } else {
             statusEl.className = 'player-open-status not-opened';
             statusEl.textContent = 'Açmadı';
           }
+        }
+
+        // Red Penalty Pill e.g. +101, +202
+        let penaltyBadge = seatEl.querySelector('.player-penalty-pill');
+        if (player.penaltyPoints && player.penaltyPoints > 0) {
+          if (!penaltyBadge) {
+            penaltyBadge = document.createElement('span');
+            penaltyBadge.className = 'player-penalty-pill';
+            const infoEl = seatEl.querySelector('.bar-player-info') || seatEl;
+            infoEl.appendChild(penaltyBadge);
+          }
+          penaltyBadge.textContent = `+${player.penaltyPoints}`;
+          penaltyBadge.classList.remove('hidden');
+        } else if (penaltyBadge) {
+          penaltyBadge.classList.add('hidden');
         }
       } else {
         // Empty seat waiting for player
