@@ -1453,8 +1453,8 @@ body.plus-theme {
 
 .table-felt-mat {
   position: absolute;
-  top: 58px;
-  bottom: 56px;
+  top: 64px;
+  bottom: 60px;
   left: 125px;
   right: 125px;
   margin: 0;
@@ -1873,35 +1873,52 @@ body.plus-theme {
   min-height: 0;
   max-height: 100%;
   border-radius: 3px;
-  background: rgba(0, 0, 0, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   min-width: 0;
   box-sizing: border-box;
   transition: all 0.15s;
+  padding: 0;
+  overflow: hidden;
 }
 
 .grid-cell-slot.has-tile {
-  background: transparent;
-  border-color: transparent;
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
-.grid-cell-slot .tile {
+.grid-cell-slot .okey-tile,
+.grid-cell-slot .okey-tile.tile-small {
+  width: 100% !important;
   height: 100% !important;
+  max-width: 100% !important;
   max-height: 100% !important;
-  width: auto !important;
-  aspect-ratio: 24/32 !important;
   min-width: 0 !important;
+  min-height: 0 !important;
   padding: 0 !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  margin: 0 !important;
+  border-radius: 3px !important;
+  border: 1px solid #d5c8b5 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+  transform: none !important;
 }
 
-.grid-cell-slot .tile .tile-number {
-  font-size: 12px !important;
+.grid-cell-slot .okey-tile .tile-number {
+  font-size: 15px !important;
+  font-weight: 900 !important;
   line-height: 1 !important;
+  margin-top: -1px !important;
 }
 
-.grid-cell-slot .tile .tile-sub-symbol {
-  font-size: 7px !important;
+.grid-cell-slot .okey-tile .tile-dot {
+  width: 4px !important;
+  height: 4px !important;
+  margin-top: 1px !important;
+}
+
+.grid-cell-slot .okey-tile .fake-okey-emblem {
+  width: 16px !important;
+  height: 16px !important;
 }
 
 .table-grid-row.meld-drag-hover .grid-cell-slot.has-tile,
@@ -2918,11 +2935,12 @@ body.plus-theme {
   z-index: 500;
   background: linear-gradient(180deg, rgba(8, 28, 16, 0.98) 0%, rgba(4, 15, 8, 0.98) 100%);
   backdrop-filter: blur(18px);
-  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.85);
   border-left: 2px solid rgba(241, 196, 15, 0.4);
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  pointer-events: none;
+  box-shadow: none;
 }
 
 .slide-drawer.drawer-right {
@@ -2934,6 +2952,8 @@ body.plus-theme {
 
 .slide-drawer.open {
   transform: translateX(0) !important;
+  pointer-events: auto !important;
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.85);
 }
 
 .drawer-header {
