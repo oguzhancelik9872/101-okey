@@ -841,12 +841,14 @@ class OkeyGame {
 
       // GUARANTEED FAIL-SAFE: If turnState is still not finished, force advance turn
       if (this.currentTurn === botIndex && this.state === GAME_STATES.PLAYING) {
-        this.drawnFromDiscard = null;
+        if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === botIndex) {
+          this.returnDiscardTile(botIndex);
+        }
         if (this.turnState === 'DRAW') {
           this.drawTile(botIndex, 'deck');
         }
         if (bot.hand.length > 0) {
-          const emergencyTile = bot.hand[bot.hand.length - 1];
+          const emergencyTile = bot.hand.find(t => !t.isOkey(this.indicator)) || bot.hand[bot.hand.length - 1];
           this.discardTile(botIndex, emergencyTile.id);
         }
         if (this.currentTurn === botIndex) {
@@ -857,12 +859,14 @@ class OkeyGame {
     } catch (err) {
       console.error(`[BotAI] Fatal error during bot ${botIndex} turn:`, err);
       // Emergency turn progression
-      this.drawnFromDiscard = null;
+      if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === botIndex) {
+        this.returnDiscardTile(botIndex);
+      }
       if (this.turnState === 'DRAW') {
         this.drawTile(botIndex, 'deck');
       }
       if (bot.hand.length > 0) {
-        const emergencyTile = bot.hand[bot.hand.length - 1];
+        const emergencyTile = bot.hand.find(t => !t.isOkey(this.indicator)) || bot.hand[bot.hand.length - 1];
         this.discardTile(botIndex, emergencyTile.id);
       }
       if (this.currentTurn === botIndex) {
@@ -875,7 +879,7 @@ class OkeyGame {
   }
 
   /**
-   * Emergency Turn Executor for inactive/stuck players
+   * Emergency Turn Executor for inactive/stuck players (handles timeout exploit prevention)
    */
   executeEmergencyTurn(playerIndex) {
     if (this.state !== GAME_STATES.PLAYING) return;
@@ -885,18 +889,29 @@ class OkeyGame {
     if (!player) return;
 
     try {
-      this.drawnFromDiscard = null;
+      // 1. If player took a tile from discard and didn't use it, RETURN it back immediately!
+      if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
+        this.returnDiscardTile(playerIndex);
+        this.addLog(`⏳ ${player.name} süresi dolduğu için yandan aldığı taş masaya geri bırakıldı.`);
+      }
+
+      // 2. If turnState is still DRAW, draw from deck
       if (this.turnState === 'DRAW') {
         this.drawTile(playerIndex, 'deck');
       }
-      if (player.hand.length > 0) {
+
+      // 3. Auto-discard a non-Okey tile to conclude turn
+      if (this.turnState === 'DISCARD' && player.hand.length > 0) {
         const discardTile = player.hand.find(t => !t.isOkey(this.indicator)) || player.hand[player.hand.length - 1];
         this.discardTile(playerIndex, discardTile.id);
       }
     } catch (e) {
       console.error(`[EmergencyTurn] Error for player ${playerIndex}:`, e);
-      this.currentTurn = (this.currentTurn + 1) % 4;
-      this.turnState = 'DRAW';
+      if (this.currentTurn === playerIndex) {
+        this.currentTurn = (this.currentTurn + 1) % 4;
+        this.turnState = 'DRAW';
+        this.drawnFromDiscard = null;
+      }
     }
   }
 

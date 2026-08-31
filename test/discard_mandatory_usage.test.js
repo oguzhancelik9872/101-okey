@@ -104,4 +104,19 @@ assert.strictEqual(game.turnState, 'DRAW');
 assert.strictEqual(game.discards[1][game.discards[1].length - 1].id, 'extra1');
 console.log('6. Return Discard Tile (Taşı Geri Bırak): PASSED');
 
+// 7. Test Turn Timeout Exploit Prevention (Player draws discard, lets timer expire without opening)
+const p2DrawAgain = game.drawTile(2, 'discard');
+assert.strictEqual(p2DrawAgain.success, true);
+assert.strictEqual(game.drawnFromDiscard.tile.id, 'extra1');
+assert.strictEqual(game.turnState, 'DISCARD');
+
+// Timeout triggers executeEmergencyTurn
+game.executeEmergencyTurn(2);
+// The drawn tile 'extra1' MUST NOT remain in player 2's hand, and MUST be back in player 1's discard pile
+assert.strictEqual(game.players[2].hand.some(t => t.id === 'extra1'), false);
+assert.strictEqual(game.discards[1][game.discards[1].length - 1].id, 'extra1');
+assert.strictEqual(game.drawnFromDiscard, null);
+assert.strictEqual(game.currentTurn, 3); // Turn advanced
+console.log('7. Timeout with drawn discard tile auto-returns tile to discard: PASSED');
+
 console.log(' ALL MANDATORY DISCARD TILE USAGE TESTS PASSED!');
