@@ -17,11 +17,11 @@ class RoomManager {
   }
 
   getOrCreatePublicRoom() {
-    let publicRoom = Array.from(this.rooms.values()).find(r => !r.isPrivate && !r.vsBots && r.game.state === GAME_STATES.WAITING);
-    if (!publicRoom) {
-      publicRoom = Array.from(this.rooms.values()).find(r => !r.isPrivate && !r.vsBots && r.id === 'MASA-101');
-    }
-    if (!publicRoom) {
+    let publicRoom = this.rooms.get('MASA-101');
+    if (!publicRoom || publicRoom.game.state === GAME_STATES.GAME_OVER) {
+      if (publicRoom && publicRoom.botInterval) {
+        clearInterval(publicRoom.botInterval);
+      }
       const roomId = 'MASA-101';
       const game = new OkeyGame(roomId, { mode: 'standard', targetRounds: 1 });
       publicRoom = {
@@ -148,22 +148,14 @@ class RoomManager {
       return { success: true, room, player: existingPlayer, isRejoin: true };
     }
 
+    // If game has already started and player was not in it, do not allow joining
+    if (game.state !== GAME_STATES.WAITING) {
+      return { success: false, reason: 'Oyun şu an devam ediyor. Lütfen bitmesini bekleyin.' };
+    }
+
     const occupiedCount = game.players.filter(Boolean).length;
     if (occupiedCount >= 4) {
-      // Check if there's a bot slot we can replace
-      const botIndex = game.players.findIndex(p => p && p.isBot);
-      if (botIndex !== -1) {
-        game.players[botIndex].id = playerId;
-        game.players[botIndex].userId = userId || playerId;
-        game.players[botIndex].name = playerName || `Oyuncu ${botIndex + 1}`;
-        if (gender) game.players[botIndex].gender = gender;
-        if (avatarIndex !== undefined && avatarIndex !== null) game.players[botIndex].avatarIndex = avatarIndex;
-        game.players[botIndex].isBot = false;
-        game.addLog(`${game.players[botIndex].name} oyuna katıldı.`);
-        this.broadcastLobbyState();
-        return { success: true, room, player: game.players[botIndex] };
-      }
-      return { success: false, reason: 'Oda tamamen dolu.' };
+      return { success: false, reason: 'Masa tamamen dolu.' };
     }
 
     const player = game.addPlayer(playerId, playerName || `Oyuncu`, false, gender, userId, targetSeatIndex, avatarIndex);

@@ -543,6 +543,8 @@ class OkeyGame {
   endRound(finishingPlayerIndex, isOkeyDiscard = false) {
     this.state = GAME_STATES.ROUND_OVER;
     const finisher = this.players[finishingPlayerIndex];
+    if (!finisher) return;
+
     const isPairsFinish = finisher.openType === 'pairs';
     const okeyMultiplier = isOkeyDiscard ? 2 : 1;
     const pairsMultiplier = isPairsFinish ? 2 : 1;
@@ -558,6 +560,8 @@ class OkeyGame {
 
     for (let i = 0; i < 4; i++) {
       const p = this.players[i];
+      if (!p) continue;
+
       if (i === finishingPlayerIndex) {
         roundScores[p.id] = { name: p.name, points: finisherPoints, opened: true, openType: p.openType, handSum: 0, isFinisher: true };
         continue;
@@ -578,7 +582,7 @@ class OkeyGame {
         pPoints = 202 * totalMultiplier;
       } else {
         // Player opened: sum of leftover tiles. If opened as pairs, 2x leftover tiles
-        handSum = p.hand.reduce((sum, t) => sum + t.getValue(this.indicator), 0);
+        handSum = p.hand ? p.hand.reduce((sum, t) => sum + (t ? t.getValue(this.indicator) : 0), 0) : 0;
         const playerPairsMultiplier = (p.openType === 'pairs') ? 2 : 1;
         pPoints = handSum * playerPairsMultiplier * totalMultiplier;
       }
@@ -617,7 +621,7 @@ class OkeyGame {
           isWinner: !isTeam1Winner
         }
       },
-      totalScores: this.players.map(p => ({ id: p.id, name: p.name, score: p.score }))
+      totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
 
     let finishMsg = `🎉 ${finisher.name} eli bitirdi (${finisherPoints} puan).`;
@@ -634,13 +638,13 @@ class OkeyGame {
     this.state = GAME_STATES.ROUND_OVER;
     const roundScores = {};
 
-    for (const p of this.players) {
+    for (const p of this.players.filter(Boolean)) {
       let pPoints = 0;
       let handSum = 0;
       if (!p.opened) {
         pPoints = 202;
       } else {
-        handSum = p.hand.reduce((sum, t) => sum + t.getValue(this.indicator), 0);
+        handSum = p.hand ? p.hand.reduce((sum, t) => sum + (t ? t.getValue(this.indicator) : 0), 0) : 0;
         const playerPairsMultiplier = (p.openType === 'pairs') ? 2 : 1;
         pPoints = handSum * playerPairsMultiplier;
       }
@@ -676,7 +680,7 @@ class OkeyGame {
           isWinner: !isTeam1Winner
         }
       },
-      totalScores: this.players.map(p => ({ id: p.id, name: p.name, score: p.score }))
+      totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
 
     this.addLog('Deste bitti! Kalan eller sayıldı.');

@@ -104,8 +104,8 @@ class UIManager {
         <tbody>
     `;
 
-    const sortedEntries = Object.entries(results.roundScores).sort(([, a], [, b]) => a.points - b.points);
-    const minPoint = sortedEntries.length > 0 ? sortedEntries[0][1].points : 0;
+    const sortedEntries = Object.entries(results.roundScores || {}).sort(([, a], [, b]) => (a.points || 0) - (b.points || 0));
+    const minPoint = sortedEntries.length > 0 ? (sortedEntries[0][1].points || 0) : 0;
 
     sortedEntries.forEach(([id, rData], idx) => {
       let statusText = '';
@@ -116,7 +116,7 @@ class UIManager {
       } else if (rData.isPartner) {
         statusText = '🤝 Ortağı Bitti (0 Ceza)';
       } else if (rData.opened) {
-        statusText = rData.openType === 'pairs' ? `Çift Açtı (2x: ${rData.handSum * 2})` : `Açtı (${rData.handSum} Kalan)`;
+        statusText = rData.openType === 'pairs' ? `Çift Açtı (2x: ${(rData.handSum || 0) * 2})` : `Açtı (${rData.handSum || 0} Kalan)`;
       } else {
         statusText = 'Açmadı (+202)';
       }
@@ -156,7 +156,11 @@ class UIManager {
       });
     }
 
-    window.soundEngine.playVictory();
+    try {
+      if (window.soundEngine && typeof window.soundEngine.playVictory === 'function') {
+        window.soundEngine.playVictory();
+      }
+    } catch (e) {}
   }
 
   showGameOverModal(totalScores) {
