@@ -24,43 +24,22 @@ const db = require('./db/database');
 
 const roomManager = new RoomManager(io);
 
-// Live preview selections on Auth Screen (socketId -> characterName)
-const authPreviewSelections = new Map();
-
-function getPreviewList() {
-  return Array.from(authPreviewSelections.entries()).map(([socketId, name]) => ({ socketId, name }));
-}
-
 // Socket.IO Event Handlers
 io.on('connection', (socket) => {
   console.log(`[Socket] Client connected: ${socket.id}`);
   socket.join('lobby');
   socket.emit('lobby:stateUpdate', roomManager.getLobbyState());
-  socket.emit('auth:namesUpdate', db.getAvailableNames(socket.id));
-  socket.emit('auth:previewSelectUpdate', getPreviewList());
+  socket.emit('auth:namesUpdate', db.getAvailableNames());
 
   socket.on('lobby:join', () => {
     socket.join('lobby');
     socket.emit('lobby:stateUpdate', roomManager.getLobbyState());
-    socket.emit('auth:namesUpdate', db.getAvailableNames(socket.id));
-    socket.emit('auth:previewSelectUpdate', getPreviewList());
+    socket.emit('auth:namesUpdate', db.getAvailableNames());
   });
 
   // --- Auth Handlers (Fixed 8 Friends Profile Picker) ---
   socket.on('auth:getAvailableNames', (callback) => {
-    if (callback) callback({
-      names: db.getAvailableNames(socket.id),
-      previews: getPreviewList()
-    });
-  });
-
-  socket.on('auth:previewSelect', (data) => {
-    if (data && data.name) {
-      authPreviewSelections.set(socket.id, data.name);
-    } else {
-      authPreviewSelections.delete(socket.id);
-    }
-    io.emit('auth:previewSelectUpdate', getPreviewList());
+    if (callback) callback(db.getAvailableNames());
   });
 
   socket.on('auth:selectName', (data, callback) => {
@@ -68,8 +47,6 @@ io.on('connection', (socket) => {
       const res = db.selectPlayerName(data.name, socket.id);
       if (res.success) {
         socket.userId = res.user.id;
-        authPreviewSelections.delete(socket.id);
-        io.emit('auth:previewSelectUpdate', getPreviewList());
         io.emit('auth:namesUpdate', db.getAvailableNames());
         socket.emit('lobby:stateUpdate', roomManager.getLobbyState());
       }
@@ -99,8 +76,6 @@ io.on('connection', (socket) => {
     try {
       db.logout(socket.userId, socket.id);
       socket.userId = null;
-      authPreviewSelections.delete(socket.id);
-      io.emit('auth:previewSelectUpdate', getPreviewList());
       io.emit('auth:namesUpdate', db.getAvailableNames());
       if (callback) callback({ success: true });
     } catch (err) {

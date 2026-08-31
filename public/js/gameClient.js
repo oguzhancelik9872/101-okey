@@ -60,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let availableProfiles = [];
   let selectedCharName = null;
-  let livePreviewSelections = []; // [{ socketId, name }]
 
   function renderNamePicker(list) {
     if (list) {
@@ -68,20 +67,18 @@ document.addEventListener('DOMContentLoaded', () => {
         availableProfiles = list;
       } else if (list.names) {
         availableProfiles = list.names;
-        if (list.previews) livePreviewSelections = list.previews;
       }
     }
     const grid = document.getElementById('name-picker-grid');
     if (!grid) return;
     grid.innerHTML = '';
 
-    // If previously selected name is now occupied by someone else, deselect it
+    // If currently selected name is already taken by someone else online, deselect it
     if (selectedCharName) {
       const charItem = availableProfiles.find(p => p.name.toLowerCase() === selectedCharName.toLowerCase());
-      if (!charItem || (charItem.isOnline && !charItem.isSelf)) {
+      if (charItem && charItem.isOnline && charItem.activeSocketId !== socket.id) {
         selectedCharName = null;
-        socket.emit('auth:previewSelect', { name: null });
-        ui.showToast('Seçtiğiniz karakter az önce başka bir oyuncu tarafından alındı!', 'warning', 3500);
+        ui.showToast('Seçtiğiniz karakter az önce başka bir oyuncu tarafından alındı!', 'warning', 3000);
       }
     }
 
@@ -90,25 +87,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sorted.forEach((item, idx) => {
       const card = document.createElement('div');
-      const isOnline = item.isOnline && !item.isSelf;
+      const isOccupied = item.isOnline && item.activeSocketId !== socket.id;
       const isSelected = selectedCharName && selectedCharName.toLowerCase() === item.name.toLowerCase();
 
-      // Check if someone else on another socket is currently previewing/holding this character
-      const isBeingPreviewedByOther = !isOnline && !isSelected && livePreviewSelections.some(p => p.socketId !== socket.id && p.name && p.name.toLowerCase() === item.name.toLowerCase());
-
-      card.className = 'name-card' + (isOnline ? ' occupied' : ' available') + (isSelected ? ' selected' : '') + (isBeingPreviewedByOther ? ' previewed' : '');
+      card.className = 'name-card' + (isOccupied ? ' occupied' : ' available') + (isSelected ? ' selected' : '');
 
       const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
         ? window.getPlayerAvatarSVG(item.displayName || item.name, item.gender || 'male', (item.avatarIndex !== undefined && item.avatarIndex !== null) ? item.avatarIndex : idx % 8)
         : '👤';
 
       let statusHtml = '';
-      if (isOnline) {
+      if (isOccupied) {
         statusHtml = '<span class="name-card-status status-occupied">🔴 Dolu / Çevrimiçi</span>';
       } else if (isSelected) {
         statusHtml = '<span class="name-card-status status-selected">✨ Seçildi</span>';
-      } else if (isBeingPreviewedByOther) {
-        statusHtml = '<span class="name-card-status status-previewed">👤 Seçiliyor...</span>';
       } else {
         statusHtml = '<span class="name-card-status status-available">🟢 Seçilebilir</span>';
       }
@@ -121,10 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      if (!isOnline) {
+      if (!isOccupied) {
         card.addEventListener('click', () => {
           selectedCharName = item.name;
-          socket.emit('auth:previewSelect', { name: item.name });
           renderNamePicker();
         });
 
@@ -181,14 +172,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Real-time live synchronization of character availability & previews
+  // Real-time live synchronization of character availability
   socket.on('auth:namesUpdate', (names) => {
     renderNamePicker(names);
-  });
-
-  socket.on('auth:previewSelectUpdate', (previews) => {
-    livePreviewSelections = previews || [];
-    renderNamePicker();
   });
 
   function showLobby() {
@@ -223,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
       authView.style.display = 'flex';
     }
     selectedCharName = null;
-    socket.emit('auth:previewSelect', { name: null });
     socket.emit('auth:getAvailableNames', (data) => {
       renderNamePicker(data);
     });

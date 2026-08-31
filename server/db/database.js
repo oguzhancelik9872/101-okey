@@ -88,13 +88,12 @@ class Database {
     return token;
   }
 
-  getAvailableNames(currentSocketId = null) {
+  getAvailableNames() {
     return ALLOWED_PLAYERS.map(name => {
       const uname = name.toLowerCase();
       const activeSocketId = this.activeUsers.get(uname);
       const user = this.users.get(this.usernameIndex.get(uname));
-      const isSelf = Boolean(activeSocketId && currentSocketId && activeSocketId === currentSocketId);
-      const isOnline = Boolean(activeSocketId && !isSelf);
+      const isOnline = Boolean(activeSocketId);
 
       return {
         name,
@@ -102,7 +101,7 @@ class Database {
         gender: user ? user.gender : 'male',
         avatarIndex: user ? user.avatarIndex : 0,
         isOnline,
-        isSelf
+        activeSocketId: activeSocketId || null
       };
     });
   }
