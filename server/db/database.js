@@ -54,7 +54,7 @@ class Database {
           username: uname,
           displayName: name,
           gender: 'male',
-          avatarIndex: idx % 8,
+          avatarIndex: idx % 9,
           createdAt: Date.now(),
           lastLogin: Date.now(),
           stats: {

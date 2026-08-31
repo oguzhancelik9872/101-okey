@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Seat is occupied
         const isMe = (mySeatedIndex === seatIdx) || (currentUser && seatInfo.userId === currentUser.id) || (seatInfo.id === socket.id);
         const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
-          ? window.getPlayerAvatarSVG(seatInfo.name, seatInfo.gender, seatInfo.avatarIndex)
+          ? window.getPlayerAvatarSVG(seatInfo.name, seatInfo.gender, seatInfo.avatarIndex, seatInfo.isBot)
           : '👤';
 
         podEl.innerHTML = `

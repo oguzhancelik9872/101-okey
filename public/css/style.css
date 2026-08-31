@@ -732,27 +732,37 @@ body.plus-theme {
 /* Avatar Picker Grid in Profile Settings */
 .avatar-picker-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  max-height: 220px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  justify-items: center;
+  max-height: 240px;
   overflow-y: auto;
-  padding: 8px 4px;
+  padding: 12px 8px;
   background: rgba(0, 0, 0, 0.35);
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .avatar-pick-item {
-  width: 52px;
-  height: 52px;
+  width: 62px;
+  height: 62px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2.5px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   transition: all 0.15s;
   overflow: hidden;
   margin: 0 auto;
   background: rgba(0, 0, 0, 0.5);
   position: relative;
+}
+
+.avatar-pick-item img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .avatar-pick-item:hover {
@@ -782,6 +792,42 @@ body.plus-theme {
   align-items: center;
   justify-content: center;
   border: 1px solid #fff;
+}
+
+.avatar-img-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Bot Avatar Badges */
+.bot-avatar-badge {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+.bot-avatar-badge.bot-female {
+  background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+  border: 1.5px solid #ffb6c1;
+}
+
+.bot-avatar-badge.bot-male {
+  background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+  border: 1.5px solid #89f7fe;
+}
+
+.bot-glyph {
+  font-size: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  line-height: 1;
 }
 
 /* =========================================================
