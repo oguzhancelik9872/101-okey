@@ -335,6 +335,10 @@ class RoomManager {
     if (!room) return { success: false, reason: 'Oda bulunamadı veya oyun sona erdi.' };
 
     const game = room.game;
+    if (game.state !== GAME_STATES.PLAYING) {
+      return { success: false, reason: 'Oyun henüz başlamamış veya sona ermiş.' };
+    }
+
     const player = game.players.find(p => (userId && p.userId === userId) || p.id === userId || p.id === newSocketId);
     if (!player) {
       return { success: false, reason: 'Bu masada size ait bir koltuk bulunamadı.' };
@@ -549,7 +553,7 @@ class RoomManager {
     const game = room.game;
     for (let i = 0; i < game.players.length; i++) {
       const p = game.players[i];
-      if (!p.isBot) {
+      if (p && !p.isBot) {
         const clientState = game.getClientState(i);
         this.io.to(p.id).emit('gameStateUpdate', clientState);
       }

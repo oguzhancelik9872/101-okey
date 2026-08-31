@@ -277,10 +277,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnLogout = document.getElementById('btn-logout');
   if (btnLogout) {
     btnLogout.addEventListener('click', () => {
+      const uId = getUserId();
+      socket.emit('auth:logout', { userId: uId });
+      if (roomId) {
+        socket.emit('leaveRoom', { roomId, userId: uId });
+      }
+      socket.emit('lobby:leaveSeat', { userId: uId });
+
       localStorage.removeItem('okey101_auth_token');
       localStorage.removeItem('okey101_user');
       localStorage.removeItem('okey101_active_room');
       currentUser = null;
+      roomId = null;
+      currentGameState = null;
+      mySeatedIndex = null;
+      viewerSeatIndex = 0;
+      isHost = false;
       showAuth();
       ui.showToast('Oturum kapatıldı.', 'info');
     });
@@ -522,7 +534,6 @@ document.addEventListener('DOMContentLoaded', () => {
         viewerSeatIndex = res.seatIndex;
         isHost = res.isHost;
         mySeatedIndex = res.seatIndex;
-        localStorage.setItem('okey101_active_room', res.roomId);
         ui.showToast('Koltuğa oturdunuz. Diğer oyuncular bekleniyor...', 'info');
       } else {
         ui.showToast(res.reason, 'error');
