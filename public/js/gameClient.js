@@ -66,11 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
       turnTimerLoop = null;
     }
     lastTickedSecond = null;
-    const myTimerBar = document.getElementById('my-turn-timer-bar');
-    if (myTimerBar) {
-      myTimerBar.classList.add('hidden');
-      myTimerBar.classList.remove('warning');
-    }
   }
 
   function clearChatMessages() {
@@ -945,8 +940,6 @@ document.addEventListener('DOMContentLoaded', () => {
     lastTickedSecond = null;
     turnTimerLoop = setInterval(() => {
       if (!currentGameState || currentGameState.state !== 'PLAYING') {
-        const myTimerBar = document.getElementById('my-turn-timer-bar');
-        if (myTimerBar) myTimerBar.classList.add('hidden');
         return;
       }
 
@@ -957,38 +950,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const remainingRatio = Math.max(0, Math.min(1, 1 - progress));
       const remainingSeconds = Math.ceil((turnDuration - elapsed) / 1000);
 
-      // 1. My Turn Timer Flow Bar (Between Green Felt Canvas & Brown Istaka)
       const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
-      const myTimerBar = document.getElementById('my-turn-timer-bar');
-      const myTimerFill = document.getElementById('my-turn-timer-fill');
 
-      if (myTimerBar && myTimerFill) {
-        if (isMyTurn) {
-          myTimerBar.classList.remove('hidden');
-          // Smooth flow from left to right: expands across width as turn progresses
-          myTimerFill.style.width = (progress * 100) + '%';
-          if (progress >= 0.75) {
-            myTimerBar.classList.add('warning');
-          } else {
-            myTimerBar.classList.remove('warning');
-          }
-
-          // Son 5 saniye nazik uyarı tınısı (Yalnızca sıra bendeyken ve son 5 saniyede)
-          if (remainingSeconds <= 5 && remainingSeconds > 0) {
-            if (lastTickedSecond !== remainingSeconds) {
-              lastTickedSecond = remainingSeconds;
-              window.soundEngine.playTimerTick(remainingSeconds);
-            }
-          }
-        } else {
-          myTimerBar.classList.add('hidden');
-          myTimerBar.classList.remove('warning');
-          lastTickedSecond = null;
+      // Son 5 saniye nazik uyarı tınısı (Yalnızca sıra bendeyken ve son 5 saniyede)
+      if (isMyTurn && remainingSeconds <= 5 && remainingSeconds > 0) {
+        if (lastTickedSecond !== remainingSeconds) {
+          lastTickedSecond = remainingSeconds;
+          window.soundEngine.playTimerTick(remainingSeconds);
         }
+      } else if (!isMyTurn) {
+        lastTickedSecond = null;
       }
 
-      // 2. Other Players Turn Progress Bars
-      ['top', 'left', 'right'].forEach(pos => {
+      // All 4 Players (Bottom/Viewer, Top, Left, Right) Turn Progress Bars
+      ['bottom', 'top', 'left', 'right'].forEach(pos => {
         const seatEl = document.getElementById('seat-' + pos);
         if (!seatEl) return;
         const fillEl = seatEl.querySelector('.player-turn-progress-fill');

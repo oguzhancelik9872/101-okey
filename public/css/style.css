@@ -2334,16 +2334,35 @@ body.plus-theme {
   z-index: 30;
 }
 
-/* Action Bar - Docked to the Right */
+/* Action Bar - Balanced between Bottom Player Profile & Action Controls */
 .plus-action-bar {
   width: 100%;
-  max-width: 1160px;
+  max-width: 1240px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 14px;
   margin-bottom: 6px;
-  padding: 0 10px;
+  padding: 0 4px;
+}
+
+.action-bar-right-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Bottom Player (Viewer) Outer Bar */
+.bar-bottom {
+  position: static !important;
+  transform: none !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 14px 4px 6px;
+  border-radius: 28px;
+  width: auto;
+  min-width: 170px;
 }
 
 .play-actions {
@@ -2433,29 +2452,6 @@ body.plus-theme {
   border: 1.5px solid #e74c3c !important;
   color: #fff !important;
   box-shadow: 0 0 16px rgba(231, 76, 60, 0.8) !important;
-}
-
-/* Turn Indicator Badge */
-.turn-indicator-badge {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 900;
-  padding: 6px 18px;
-  border-radius: 20px;
-  border: 1.5px solid #34d399;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.7);
-  letter-spacing: 0.5px;
-  animation: turnPulse 1.2s infinite ease-in-out;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-@keyframes turnPulse {
-  0% { transform: scale(1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
-  50% { transform: scale(1.05); box-shadow: 0 0 22px rgba(16, 185, 129, 0.9), 0 0 30px rgba(241, 196, 15, 0.4); }
-  100% { transform: scale(1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
 }
 
 /* Istaka Turn Glow */
