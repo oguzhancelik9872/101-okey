@@ -12,22 +12,98 @@
 <body class="plus-theme">
   <div id="app-container">
     
-    <!-- ================= 101 OKEY LOBBY VIEW ================= -->
-    <div id="lobby-view">
+    <!-- ================= 101 OKEY AUTH VIEW (LOGIN / REGISTER) ================= -->
+    <div id="auth-view">
       <div class="plus-lobby-wrapper">
-        <!-- Brand Logo Header -->
-        <div class="plus-logo-box" style="margin-bottom: 25px;">
+        <div class="plus-logo-box" style="margin-bottom: 20px;">
           <h1 class="plus-logo-title" style="font-size: 48px; font-weight: 900; letter-spacing: 3px; margin: 0; color: #f1c40f; text-shadow: 0 4px 15px rgba(0,0,0,0.8);">101 OKEY</h1>
+          <p style="color: #a8d5ba; font-size: 13px; margin: 5px 0 0 0; font-weight: 700;">Giriş yapın ve kesintisiz oynamaya başlayın!</p>
         </div>
 
-        <!-- Player Profile Card in Lobby -->
+        <div class="auth-card">
+          <!-- Tabs -->
+          <div class="auth-tabs">
+            <button id="tab-login" class="auth-tab active">GİRİŞ YAP</button>
+            <button id="tab-register" class="auth-tab">KAYIT OL</button>
+          </div>
+
+          <!-- Login Form -->
+          <form id="form-login" class="auth-form">
+            <div class="input-group">
+              <label for="login-username">Kullanıcı Adı</label>
+              <input type="text" id="login-username" class="plus-input" placeholder="Kullanıcı adınız" required autocomplete="username" maxlength="16">
+            </div>
+            <div class="input-group">
+              <label for="login-password">Şifre</label>
+              <input type="password" id="login-password" class="plus-input" placeholder="Şifreniz" required autocomplete="current-password">
+            </div>
+            <button type="submit" id="btn-submit-login" class="btn-plus-gold btn-auth-submit">
+              <span>🚀 GİRİŞ YAP</span>
+            </button>
+          </form>
+
+          <!-- Register Form -->
+          <form id="form-register" class="auth-form hidden">
+            <div class="input-group">
+              <label for="reg-username">Kullanıcı Adı</label>
+              <input type="text" id="reg-username" class="plus-input" placeholder="Kullanıcı adı (harf ve rakam)" required autocomplete="username" maxlength="16">
+            </div>
+            <div class="input-group">
+              <label for="reg-nickname">Görünecek İsim</label>
+              <input type="text" id="reg-nickname" class="plus-input" placeholder="Masada görünecek adınız" required maxlength="14">
+            </div>
+            <div class="input-group">
+              <label for="reg-password">Şifre</label>
+              <input type="password" id="reg-password" class="plus-input" placeholder="En az 4 karakter" required autocomplete="new-password">
+            </div>
+            <div class="input-group">
+              <label>Cinsiyet / Avatar</label>
+              <div class="gender-selector">
+                <label class="gender-option">
+                  <input type="radio" name="reg-gender" value="male" checked>
+                  <span>👨 Erkek</span>
+                </label>
+                <label class="gender-option">
+                  <input type="radio" name="reg-gender" value="female">
+                  <span>👩 Kadın</span>
+                </label>
+              </div>
+            </div>
+            <button type="submit" id="btn-submit-register" class="btn-plus-green btn-auth-submit">
+              <span>✨ HESAP OLUŞTUR & BAŞLA</span>
+            </button>
+          </form>
+
+          <!-- Quick Guest Play Button -->
+          <div class="auth-divider">
+            <span>veya</span>
+          </div>
+          <button id="btn-guest-play" class="btn-guest-play">
+            <span>⚡ Misafir Olarak Hızlı Oyna</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 101 OKEY LOBBY VIEW ================= -->
+    <div id="lobby-view" class="hidden">
+      <div class="plus-lobby-wrapper">
+        <!-- Brand Logo Header -->
+        <div class="plus-logo-box" style="margin-bottom: 20px;">
+          <h1 class="plus-logo-title" style="font-size: 42px; font-weight: 900; letter-spacing: 3px; margin: 0; color: #f1c40f; text-shadow: 0 4px 15px rgba(0,0,0,0.8);">101 OKEY</h1>
+        </div>
+
+        <!-- Logged-in User Profile Card in Lobby -->
         <div class="plus-profile-card">
           <div class="plus-avatar-box">
             <div id="lobby-avatar-img" class="plus-avatar-img">👨</div>
           </div>
           <div class="plus-profile-details">
-            <label for="player-name-input">OYUNCU ADI</label>
-            <input type="text" id="player-name-input" class="plus-input" placeholder="Oyuncu Adınız" value="Oyuncu" maxlength="14">
+            <div class="lobby-user-header">
+              <strong id="lobby-display-name" class="lobby-user-name">Oyuncu</strong>
+              <button id="btn-logout" class="btn-logout" title="Çıkış Yap">🚪 Çıkış</button>
+            </div>
+            <span id="lobby-username-tag" class="lobby-user-tag">@oyuncu</span>
           </div>
         </div>
 

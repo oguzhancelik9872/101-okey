@@ -16,14 +16,14 @@ class RoomManager {
     return code;
   }
 
-  createRoom({ hostId, hostName, isPrivate = false, mode = 'standard', targetRounds = 3, vsBots = false }) {
+  createRoom({ hostId, hostName, userId = null, isPrivate = false, mode = 'standard', targetRounds = 3, vsBots = false }) {
     let roomId = this.generateRoomCode();
     while (this.rooms.has(roomId)) {
       roomId = this.generateRoomCode();
     }
 
     const game = new OkeyGame(roomId, { mode, targetRounds });
-    game.addPlayer(hostId, hostName || 'Oyuncu 1', false);
+    game.addPlayer(hostId, hostName || 'Oyuncu 1', false, null, userId);
 
     if (vsBots) {
       game.fillWithBots();
@@ -51,24 +51,29 @@ class RoomManager {
     return room;
   }
 
-  joinRoom(roomId, playerId, playerName) {
+  joinRoom(roomId, playerId, playerName, userId = null) {
     const room = this.rooms.get(roomId);
     if (!room) return { success: false, reason: 'Oda bulunamadı.' };
 
     const game = room.game;
     
-    // Check if player is reconnecting
-    const existingPlayer = game.players.find(p => p.id === playerId);
+    // Check if player is reconnecting (by userId or socketId)
+    const existingPlayer = game.players.find(p => (userId && p.userId === userId) || p.id === playerId);
     if (existingPlayer) {
+      existingPlayer.id = playerId;
       existingPlayer.isBot = false;
+      if (room.hostId === existingPlayer.userId || existingPlayer.seatIndex === 0) {
+        room.hostId = playerId;
+      }
       return { success: true, room, player: existingPlayer, isRejoin: true };
     }
 
     if (game.players.length >= 4) {
-      // Check if there's a bot slot we can replace (even in active games)
+      // Check if there's a bot slot we can replace
       const botIndex = game.players.findIndex(p => p.isBot);
       if (botIndex !== -1) {
         game.players[botIndex].id = playerId;
+        game.players[botIndex].userId = userId || playerId;
         game.players[botIndex].name = playerName || `Oyuncu ${botIndex + 1}`;
         game.players[botIndex].isBot = false;
         game.addLog(`${game.players[botIndex].name} oyuna katıldı.`);
@@ -77,7 +82,7 @@ class RoomManager {
       return { success: false, reason: 'Oda tamamen dolu.' };
     }
 
-    const player = game.addPlayer(playerId, playerName || `Oyuncu ${game.players.length + 1}`, false);
+    const player = game.addPlayer(playerId, playerName || `Oyuncu ${game.players.length + 1}`, false, null, userId);
 
     // If all 4 seats are now filled with human players, automatically start the game!
     if (game.players.length === 4 && game.state === GAME_STATES.WAITING) {
@@ -86,6 +91,34 @@ class RoomManager {
     }
 
     return { success: true, room, player };
+  }
+
+  reconnectPlayer(roomId, newSocketId, userId) {
+    const room = this.rooms.get(roomId);
+    if (!room) return { success: false, reason: 'Oda bulunamadı veya oyun sona erdi.' };
+
+    const game = room.game;
+    const player = game.players.find(p => (userId && p.userId === userId) || p.id === userId || p.id === newSocketId);
+    if (!player) {
+      return { success: false, reason: 'Bu masada size ait bir koltuk bulunamadı.' };
+    }
+
+    player.id = newSocketId;
+    player.isBot = false;
+    if (player.seatIndex === 0) {
+      room.hostId = newSocketId;
+    }
+
+    game.addLog(`${player.name} masaya geri bağlandı.`);
+    this.broadcastGameState(roomId);
+
+    return {
+      success: true,
+      room,
+      seatIndex: player.seatIndex,
+      isHost: room.hostId === newSocketId,
+      gameState: game.getClientState(player.seatIndex)
+    };
   }
 
   findQuickMatch(playerId, playerName) {

@@ -20,18 +20,92 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
+const db = require('./db/database');
+
 const roomManager = new RoomManager(io);
 
 // Socket.IO Event Handlers
 io.on('connection', (socket) => {
   console.log(`[Socket] Client connected: ${socket.id}`);
 
+  // --- Auth Handlers ---
+  socket.on('auth:register', (data, callback) => {
+    try {
+      const res = db.register(data);
+      if (res.success) {
+        socket.userId = res.user.id;
+      }
+      if (callback) callback(res);
+    } catch (err) {
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
+  socket.on('auth:login', (data, callback) => {
+    try {
+      const res = db.login(data);
+      if (res.success) {
+        socket.userId = res.user.id;
+      }
+      if (callback) callback(res);
+    } catch (err) {
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
+  socket.on('auth:autoLogin', (data, callback) => {
+    try {
+      const user = db.verifyToken(data.token);
+      if (user) {
+        socket.userId = user.id;
+        if (callback) callback({ success: true, user });
+      } else {
+        if (callback) callback({ success: false, reason: 'Oturum süresi doldu.' });
+      }
+    } catch (err) {
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
+  // Reconnect to active room after F5 / disconnection
+  socket.on('reconnectRoom', (data, callback) => {
+    try {
+      const { roomId, userId } = data;
+      const uId = userId || socket.userId;
+      const result = roomManager.reconnectPlayer(roomId, socket.id, uId);
+
+      if (!result.success) {
+        if (callback) callback({ success: false, reason: result.reason });
+        return;
+      }
+
+      socket.join(result.room.id);
+      socket.roomId = result.room.id;
+      if (uId) db.updateActiveRoom(uId, result.room.id);
+
+      if (callback) {
+        callback({
+          success: true,
+          roomId: result.room.id,
+          seatIndex: result.seatIndex,
+          isHost: result.isHost,
+          gameState: result.gameState
+        });
+      }
+    } catch (err) {
+      console.error('Error reconnecting to room:', err);
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
   // Create Room
   socket.on('createRoom', (data, callback) => {
     try {
+      const userId = data.userId || socket.userId;
       const room = roomManager.createRoom({
         hostId: socket.id,
         hostName: data.playerName || 'Oyuncu',
+        userId: userId,
         isPrivate: data.isPrivate !== false,
         mode: data.mode || 'standard',
         targetRounds: data.targetRounds || 3,
@@ -40,6 +114,7 @@ io.on('connection', (socket) => {
 
       socket.join(room.id);
       socket.roomId = room.id;
+      if (userId) db.updateActiveRoom(userId, room.id);
 
       if (callback) {
         callback({
@@ -60,8 +135,9 @@ io.on('connection', (socket) => {
   // Join Room
   socket.on('joinRoom', (data, callback) => {
     try {
-      const { roomId, playerName } = data;
-      const result = roomManager.joinRoom(roomId.toUpperCase(), socket.id, playerName);
+      const { roomId, playerName, userId } = data;
+      const uId = userId || socket.userId;
+      const result = roomManager.joinRoom(roomId.toUpperCase(), socket.id, playerName, uId);
 
       if (!result.success) {
         if (callback) callback({ success: false, reason: result.reason });
@@ -70,6 +146,7 @@ io.on('connection', (socket) => {
 
       socket.join(result.room.id);
       socket.roomId = result.room.id;
+      if (uId) db.updateActiveRoom(uId, result.room.id);
 
       if (callback) {
         callback({
@@ -90,10 +167,16 @@ io.on('connection', (socket) => {
   // Quick Match
   socket.on('quickMatch', (data, callback) => {
     try {
+      const userId = data.userId || socket.userId;
       const result = roomManager.findQuickMatch(socket.id, data.playerName);
       if (!result.success) {
         if (callback) callback({ success: false, reason: result.reason });
         return;
+      }
+
+      if (userId) {
+        result.player.userId = userId;
+        db.updateActiveRoom(userId, result.room.id);
       }
 
       socket.join(result.room.id);
@@ -296,7 +379,9 @@ io.on('connection', (socket) => {
   // Leave Room
   socket.on('leaveRoom', (data, callback) => {
     try {
-      const roomId = data.roomId || socket.roomId;
+      const roomId = (data && data.roomId) || socket.roomId;
+      const uId = (data && data.userId) || socket.userId;
+      if (uId) db.updateActiveRoom(uId, null);
       if (roomId) {
         socket.leave(roomId);
         socket.roomId = null;

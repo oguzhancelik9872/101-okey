@@ -36,7 +36,7 @@ class OkeyGame {
     this.roundResults = null;
   }
 
-  addPlayer(id, name, isBot = false, gender = null) {
+  addPlayer(id, name, isBot = false, gender = null, userId = null) {
     if (this.players.length >= 4) return null;
     const seatIndex = this.players.length;
     
@@ -51,6 +51,7 @@ class OkeyGame {
 
     const player = {
       id,
+      userId: userId || id,
       name,
       seatIndex,
       isBot,

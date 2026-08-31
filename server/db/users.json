@@ -1,0 +1,18 @@
+[
+  {
+    "id": "usr_921362e18aed61cd",
+    "username": "oguzhan",
+    "displayName": "Oğuzhan",
+    "gender": "male",
+    "salt": "890dc66ad5928fa4cc6ee4fd0030831a",
+    "passwordHash": "2478e1f8f8804c55218157bdbbb8135d7f04e77aa68e1c242480bd83d99767c3733888619a9e1ff945f5e8e28b3ca3eac6375d0f2a1f79d6160a0d2240173a03",
+    "createdAt": 1788143572326,
+    "lastLogin": 1788143572330,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": null
+  }
+]

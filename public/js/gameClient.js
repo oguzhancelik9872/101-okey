@@ -30,8 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- Dynamic Title & LocalStorage Sync ---
-  let currentActivePlayerName = localStorage.getItem('okey101_player_name') || 'Oyuncu';
+  let currentActivePlayerName = 'Oyuncu';
   let titleBlinkInterval = null;
+  let currentUser = null;
 
   function updateDocumentTitle(isMyTurn = false) {
     if (titleBlinkInterval) {
@@ -51,40 +52,189 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- Lobby Setup & Connection ---
-  const playerNameInput = document.getElementById('player-name-input');
-  const lobbyAvatarImg = document.getElementById('lobby-avatar-img');
+  // --- Auth Views & Tabs ---
+  const authView = document.getElementById('auth-view');
+  const lobbyView = document.getElementById('lobby-view');
+  const gameView = document.getElementById('game-view');
 
-  // Load saved player name from localStorage
-  const savedPlayerName = localStorage.getItem('okey101_player_name');
-  if (savedPlayerName && playerNameInput) {
-    currentActivePlayerName = savedPlayerName;
-    playerNameInput.value = savedPlayerName;
+  const tabLogin = document.getElementById('tab-login');
+  const tabRegister = document.getElementById('tab-register');
+  const formLogin = document.getElementById('form-login');
+  const formRegister = document.getElementById('form-register');
+
+  function showLobby() {
+    if (authView) authView.classList.add('hidden');
+    if (gameView) gameView.classList.add('hidden');
+    if (lobbyView) lobbyView.classList.remove('hidden');
   }
-  updateDocumentTitle(false);
 
-  if (playerNameInput && lobbyAvatarImg) {
-    const updateLobbyAvatar = () => {
-      const name = playerNameInput.value.trim() || 'Oyuncu';
-      currentActivePlayerName = name;
-      if (typeof window.getPlayerAvatarSVG === 'function') {
-        lobbyAvatarImg.innerHTML = window.getPlayerAvatarSVG(name);
+  function showAuth() {
+    if (lobbyView) lobbyView.classList.add('hidden');
+    if (gameView) gameView.classList.add('hidden');
+    if (authView) authView.classList.remove('hidden');
+  }
+
+  if (tabLogin && tabRegister) {
+    tabLogin.addEventListener('click', () => {
+      tabLogin.classList.add('active');
+      tabRegister.classList.remove('active');
+      if (formLogin) formLogin.classList.remove('hidden');
+      if (formRegister) formRegister.classList.add('hidden');
+    });
+
+    tabRegister.addEventListener('click', () => {
+      tabRegister.classList.add('active');
+      tabLogin.classList.remove('active');
+      if (formRegister) formRegister.classList.remove('hidden');
+      if (formLogin) formLogin.classList.add('hidden');
+    });
+  }
+
+  function handleLoginSuccess(user, token) {
+    currentUser = user;
+    if (token) {
+      localStorage.setItem('okey101_auth_token', token);
+    }
+    localStorage.setItem('okey101_user', JSON.stringify(user));
+    currentActivePlayerName = user.displayName || user.username;
+    updateDocumentTitle(false);
+
+    // Update Lobby UI
+    const nameEl = document.getElementById('lobby-display-name');
+    const tagEl = document.getElementById('lobby-username-tag');
+    const avatarEl = document.getElementById('lobby-avatar-img');
+
+    if (nameEl) nameEl.textContent = user.displayName || user.username;
+    if (tagEl) tagEl.textContent = '@' + user.username;
+    if (avatarEl && typeof window.getPlayerAvatarSVG === 'function') {
+      avatarEl.innerHTML = window.getPlayerAvatarSVG(user.displayName || user.username, user.gender);
+    }
+
+    // Check if user was in an active game session (F5 reconnect)
+    const savedActiveRoom = localStorage.getItem('okey101_active_room') || user.currentRoomId;
+    if (savedActiveRoom) {
+      socket.emit('reconnectRoom', { roomId: savedActiveRoom, userId: user.id }, (res) => {
+        if (res.success) {
+          setupGameRoom(res.roomId, res.seatIndex, res.isHost);
+          if (res.gameState) {
+            table.update(res.gameState);
+            const me = res.gameState.players[res.seatIndex];
+            if (me && me.hand) {
+              istaka.setHand(me.hand, true);
+            }
+          }
+          ui.showToast('🎯 Masanıza geri bağlandınız!', 'success');
+        } else {
+          localStorage.removeItem('okey101_active_room');
+          showLobby();
+        }
+      });
+    } else {
+      showLobby();
+    }
+  }
+
+  // Login Form Submit
+  if (formLogin) {
+    formLogin.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      socket.emit('auth:login', { username, password }, (res) => {
+        if (res.success) {
+          ui.showToast(`Hoş geldin, ${res.user.displayName}!`, 'success');
+          handleLoginSuccess(res.user, res.token);
+        } else {
+          ui.showToast(res.reason, 'error');
+        }
+      });
+    });
+  }
+
+  // Register Form Submit
+  if (formRegister) {
+    formRegister.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = document.getElementById('reg-username').value.trim();
+      const displayName = document.getElementById('reg-nickname').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const gender = (document.querySelector('input[name="reg-gender"]:checked') || {}).value || 'male';
+
+      socket.emit('auth:register', { username, password, displayName, gender }, (res) => {
+        if (res.success) {
+          ui.showToast('Hesabınız başarıyla oluşturuldu!', 'success');
+          handleLoginSuccess(res.user, res.token);
+        } else {
+          ui.showToast(res.reason, 'error');
+        }
+      });
+    });
+  }
+
+  // Quick Guest Play
+  const btnGuest = document.getElementById('btn-guest-play');
+  if (btnGuest) {
+    btnGuest.addEventListener('click', () => {
+      const randNum = Math.floor(1000 + Math.random() * 9000);
+      const username = `misafir_${randNum}`;
+      const displayName = `Misafir ${randNum}`;
+      const password = `guest_${randNum}_pwd`;
+
+      socket.emit('auth:register', { username, password, displayName, gender: 'male' }, (res) => {
+        if (res.success) {
+          ui.showToast(`Misafir girişi yapıldı! (${displayName})`, 'success');
+          handleLoginSuccess(res.user, res.token);
+        } else {
+          ui.showToast(res.reason, 'error');
+        }
+      });
+    });
+  }
+
+  // Logout Button
+  const btnLogout = document.getElementById('btn-logout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+      localStorage.removeItem('okey101_auth_token');
+      localStorage.removeItem('okey101_user');
+      localStorage.removeItem('okey101_active_room');
+      currentUser = null;
+      showAuth();
+      ui.showToast('Oturum kapatıldı.', 'info');
+    });
+  }
+
+  // Auto-login on Page Load
+  const storedToken = localStorage.getItem('okey101_auth_token');
+  if (storedToken) {
+    socket.emit('auth:autoLogin', { token: storedToken }, (res) => {
+      if (res.success) {
+        handleLoginSuccess(res.user, null);
+      } else {
+        localStorage.removeItem('okey101_auth_token');
+        showAuth();
       }
-      if (playerNameInput.value.trim()) {
-        localStorage.setItem('okey101_player_name', playerNameInput.value.trim());
-      }
-      updateDocumentTitle(false);
-    };
-    playerNameInput.addEventListener('input', updateLobbyAvatar);
-    updateLobbyAvatar();
+    });
+  } else {
+    showAuth();
+  }
+
+  function getPlayerName() {
+    return currentUser ? (currentUser.displayName || currentUser.username) : 'Oyuncu';
+  }
+
+  function getUserId() {
+    return currentUser ? currentUser.id : null;
   }
 
   // Quick Play (Matchmaking)
   const btnQuickPlay = document.getElementById('btn-quick-play');
   if (btnQuickPlay) {
     btnQuickPlay.addEventListener('click', () => {
-      const name = playerNameInput ? (playerNameInput.value.trim() || 'Oyuncu') : 'Oyuncu';
-      socket.emit('quickMatch', { playerName: name }, (res) => {
+      const name = getPlayerName();
+      const userId = getUserId();
+      socket.emit('quickMatch', { playerName: name, userId }, (res) => {
         if (res.success) {
           setupGameRoom(res.roomId, res.seatIndex, res.isHost);
         } else {
@@ -98,9 +248,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnPlayBots = document.getElementById('btn-play-bots');
   if (btnPlayBots) {
     btnPlayBots.addEventListener('click', () => {
-      const name = playerNameInput ? (playerNameInput.value.trim() || 'Oyuncu') : 'Oyuncu';
+      const name = getPlayerName();
+      const userId = getUserId();
       socket.emit('createRoom', {
         playerName: name,
+        userId,
         isPrivate: true,
         mode: 'standard',
         targetRounds: 1,
@@ -126,10 +278,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnConfirmCreate = document.getElementById('btn-confirm-create-room');
   if (btnConfirmCreate) {
     btnConfirmCreate.addEventListener('click', () => {
-      const name = playerNameInput ? (playerNameInput.value.trim() || 'Oyuncu') : 'Oyuncu';
+      const name = getPlayerName();
+      const userId = getUserId();
 
       socket.emit('createRoom', {
         playerName: name,
+        userId,
         isPrivate: true,
         mode: 'standard',
         targetRounds: 1,
@@ -156,7 +310,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnConfirmJoin = document.getElementById('btn-confirm-join-room');
   if (btnConfirmJoin) {
     btnConfirmJoin.addEventListener('click', () => {
-      const name = playerNameInput ? (playerNameInput.value.trim() || 'Oyuncu') : 'Oyuncu';
+      const name = getPlayerName();
+      const userId = getUserId();
       const codeEl = document.getElementById('input-room-code');
       const code = codeEl ? codeEl.value.trim().toUpperCase() : '';
 
@@ -165,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      socket.emit('joinRoom', { roomId: code, playerName: name }, (res) => {
+      socket.emit('joinRoom', { roomId: code, playerName: name, userId }, (res) => {
         ui.hideModal('modal-join-room');
         if (res.success) {
           setupGameRoom(res.roomId, res.seatIndex, res.isHost);
@@ -236,8 +391,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnLeaveTable = document.getElementById('btn-leave-table');
   if (btnLeaveTable) {
     btnLeaveTable.addEventListener('click', () => {
+      localStorage.removeItem('okey101_active_room');
       if (roomId) {
-        socket.emit('leaveRoom', { roomId });
+        socket.emit('leaveRoom', { roomId, userId: getUserId() });
       }
       roomId = null;
       currentGameState = null;
@@ -245,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
       isHost = false;
       if (dropdownMenu) dropdownMenu.classList.add('hidden');
       updateDocumentTitle(false);
-      ui.showView('lobby');
+      showLobby();
       ui.showToast('Masadan ayrıldınız.', 'info');
     });
   }
@@ -255,9 +411,12 @@ document.addEventListener('DOMContentLoaded', () => {
     viewerSeatIndex = seatIdx;
     isHost = hostFlag;
     roundStartedHandSorted = false;
+    localStorage.setItem('okey101_active_room', rId);
 
     table.setViewerSeatIndex(viewerSeatIndex);
-    ui.showView('game');
+    if (authView) authView.classList.add('hidden');
+    if (lobbyView) lobbyView.classList.add('hidden');
+    if (gameView) gameView.classList.remove('hidden');
 
     const codeEl = document.getElementById('display-room-code');
     if (codeEl) codeEl.textContent = roomId;
@@ -322,12 +481,14 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           ui.showRoundResultModal(state.roundResults, () => {
             window.roundResultModalActive = false;
+            localStorage.removeItem('okey101_active_room');
             if (roomId) {
-              socket.emit('leaveRoom', { roomId });
+              socket.emit('leaveRoom', { roomId, userId: getUserId() });
             }
             roomId = null;
             currentGameState = null;
-            ui.showView('lobby');
+            updateDocumentTitle(false);
+            showLobby();
           });
         }, 500);
       }
