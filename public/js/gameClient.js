@@ -331,18 +331,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Interactive Virtual Lobby Table & Seat Selection ---
   let currentLobbyTableId = 'MASA-101';
+  let mySeatedIndex = null;
 
   function updateLobbyVirtualTable(lobbyState) {
     if (!lobbyState || !lobbyState.publicTable) return;
     const tableData = lobbyState.publicTable;
     currentLobbyTableId = tableData.id || 'MASA-101';
 
+    // Find if current user is seated
+    const currentUserId = getUserId();
+    mySeatedIndex = null;
+    if (tableData.seats) {
+      tableData.seats.forEach((s, idx) => {
+        if (s && ((currentUserId && s.userId === currentUserId) || s.id === socket.id)) {
+          mySeatedIndex = idx;
+        }
+      });
+    }
+
     const titleEl = document.getElementById('lobby-table-title');
     const statusEl = document.getElementById('lobby-table-status');
     if (titleEl) titleEl.textContent = `MASA #${currentLobbyTableId}`;
     if (statusEl) {
       if (tableData.state === 'PLAYING') {
-        statusEl.textContent = '🎮 OYUN SÜRÜYOR';
+        statusEl.textContent = '🎮 OYUN SÜRÜYOR (DOLU)';
         statusEl.style.borderColor = '#e67e22';
         statusEl.style.color = '#f39c12';
       } else {
@@ -361,33 +373,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (seatInfo) {
         // Seat is occupied
+        const isMe = (mySeatedIndex === seatIdx);
         const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
           ? window.getPlayerAvatarSVG(seatInfo.name, seatInfo.gender, seatInfo.avatarIndex)
           : '👤';
         const isHost = seatInfo.isHost || (tableData.hostId === seatInfo.id);
 
         podEl.innerHTML = `
-          <div class="lobby-occupied-card ${isHost ? 'is-host' : ''}">
+          <div class="lobby-occupied-card ${isMe ? 'is-me' : (isHost ? 'is-host' : '')}">
             <div class="lobby-occupied-avatar">${avatarSvg}</div>
             <div class="lobby-occupied-info">
-              <span class="lobby-occupied-name" title="${seatInfo.name}">${seatInfo.name}</span>
+              <span class="lobby-occupied-name" title="${seatInfo.name}">${seatInfo.name}${isMe ? ' (Siz)' : ''}</span>
               <span class="lobby-occupied-badge">${isHost ? '👑 Kurucu' : (seatInfo.isBot ? '🤖 Bot' : '🟢 Hazır')}</span>
             </div>
+            ${isMe && tableData.state === 'WAITING' ? '<button class="btn-leave-seat-pill" title="Koltuktan Kalk">❌ Kalk</button>' : ''}
           </div>
         `;
+
+        if (isMe && tableData.state === 'WAITING') {
+          const btnLeaveSeat = podEl.querySelector('.btn-leave-seat-pill');
+          if (btnLeaveSeat) {
+            btnLeaveSeat.addEventListener('click', (e) => {
+              e.stopPropagation();
+              socket.emit('lobby:leaveSeat', (res) => {
+                if (res.success) {
+                  mySeatedIndex = null;
+                  roomId = null;
+                }
+              });
+            });
+          }
+        }
       } else {
         // Seat is empty
-        podEl.innerHTML = `
-          <button class="btn-sit-seat" data-seat="${seatIdx}">
-            <span class="sit-icon">➕</span>
-            <span class="sit-label">${seatLabels[seatIdx]}</span>
-          </button>
-        `;
-        const btnSit = podEl.querySelector('.btn-sit-seat');
-        if (btnSit) {
-          btnSit.addEventListener('click', () => {
-            handleSitAtSeat(currentLobbyTableId, seatIdx);
-          });
+        if (tableData.state === 'PLAYING') {
+          podEl.innerHTML = `
+            <div class="lobby-seat-busy">
+              <span class="busy-label">🔒 Dolu</span>
+            </div>
+          `;
+        } else {
+          podEl.innerHTML = `
+            <button class="btn-sit-seat" data-seat="${seatIdx}">
+              <span class="sit-icon">➕</span>
+              <span class="sit-label">${mySeatedIndex !== null ? 'BURAYA GEÇ' : seatLabels[seatIdx]}</span>
+            </button>
+          `;
+          const btnSit = podEl.querySelector('.btn-sit-seat');
+          if (btnSit) {
+            btnSit.addEventListener('click', () => {
+              if (mySeatedIndex !== null) {
+                // Switch seat
+                socket.emit('lobby:switchSeat', { targetSeatIndex: seatIdx }, (res) => {
+                  if (res.success) {
+                    mySeatedIndex = res.seatIndex;
+                  } else {
+                    ui.showToast(res.reason, 'error');
+                  }
+                });
+              } else {
+                // Sit in empty seat
+                handleSitAtSeat(currentLobbyTableId, seatIdx);
+              }
+            });
+          }
         }
       }
     });
@@ -407,7 +456,12 @@ document.addEventListener('DOMContentLoaded', () => {
       avatarIndex: user.avatarIndex
     }, (res) => {
       if (res.success) {
-        setupGameRoom(res.roomId, res.seatIndex, res.isHost);
+        roomId = res.roomId;
+        viewerSeatIndex = res.seatIndex;
+        isHost = res.isHost;
+        mySeatedIndex = res.seatIndex;
+        localStorage.setItem('okey101_active_room', res.roomId);
+        ui.showToast('Koltuğa oturdunuz. Diğer oyuncular bekleniyor...', 'info');
       } else {
         ui.showToast(res.reason, 'error');
       }

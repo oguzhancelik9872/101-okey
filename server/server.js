@@ -228,6 +228,27 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Switch Seat in Lobby
+  socket.on('lobby:switchSeat', (data, callback) => {
+    try {
+      const res = roomManager.switchSeat(socket.id, data.targetSeatIndex);
+      if (callback) callback(res);
+    } catch (err) {
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
+  // Leave Seat in Lobby
+  socket.on('lobby:leaveSeat', (callback) => {
+    try {
+      const res = roomManager.leaveSeat(socket.id);
+      if (socket.userId) db.updateActiveRoom(socket.userId, null);
+      if (callback) callback(res);
+    } catch (err) {
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
   // Quick Match
   socket.on('quickMatch', (data, callback) => {
     try {

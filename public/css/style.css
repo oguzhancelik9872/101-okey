@@ -287,6 +287,43 @@ body.plus-theme {
   box-shadow: 0 4px 18px rgba(0,0,0,0.7), 0 0 14px rgba(241, 196, 15, 0.5);
 }
 
+.lobby-occupied-card.is-me {
+  border-color: #f1c40f !important;
+  background: rgba(14, 45, 24, 0.98);
+  box-shadow: 0 0 20px rgba(241, 196, 15, 0.7) !important;
+}
+
+.btn-leave-seat-pill {
+  background: rgba(231, 76, 60, 0.25);
+  border: 1px solid #e74c3c;
+  color: #ff7675;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all 0.15s;
+}
+
+.btn-leave-seat-pill:hover {
+  background: #c0392b;
+  color: #fff;
+}
+
+.lobby-seat-busy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 6px 14px;
+  color: #888;
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .lobby-occupied-avatar {
   width: 38px;
   height: 38px;
@@ -321,7 +358,8 @@ body.plus-theme {
   color: #2ecc71;
 }
 
-.lobby-occupied-card.is-host .lobby-occupied-badge {
+.lobby-occupied-card.is-host .lobby-occupied-badge,
+.lobby-occupied-card.is-me .lobby-occupied-badge {
   color: #f1c40f;
 }
 

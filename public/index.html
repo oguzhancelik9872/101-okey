@@ -89,8 +89,21 @@
     <div id="lobby-view" class="hidden">
       <!-- Top Navigation Bar across the Lobby -->
       <header class="lobby-top-bar">
-        <!-- Left: Profile Card & Bot Play Button -->
+        <!-- Left: Bot Play Option -->
         <div class="lobby-left-panel">
+          <button id="btn-play-bots" class="btn-bot-quick-play" title="Tek Kişilik Antrenman Masası">
+            <span class="bot-icon">🤖</span>
+            <span class="bot-text">BOTLARLA OYNA</span>
+          </button>
+        </div>
+
+        <!-- Center: Game Logo -->
+        <div class="plus-logo-box">
+          <h1 class="plus-logo-title" style="font-size: 32px; font-weight: 900; letter-spacing: 2px; margin: 0; color: #f1c40f;">101 OKEY</h1>
+        </div>
+
+        <!-- Right: Profile Card & Settings -->
+        <div class="lobby-right-panel">
           <div class="plus-profile-card">
             <div class="plus-avatar-box" id="btn-edit-avatar-trigger" style="cursor: pointer;" title="Avatarı Değiştir">
               <div id="lobby-avatar-img" class="plus-avatar-img">👨</div>
@@ -107,26 +120,6 @@
               <span id="lobby-username-tag" class="lobby-user-tag">@oyuncu</span>
             </div>
           </div>
-
-          <button id="btn-play-bots" class="btn-bot-quick-play" title="Tek Kişilik Antrenman Masası">
-            <span class="bot-icon">🤖</span>
-            <span class="bot-text">BOTLARLA OYNA</span>
-          </button>
-        </div>
-
-        <!-- Center: Game Logo -->
-        <div class="plus-logo-box">
-          <h1 class="plus-logo-title" style="font-size: 32px; font-weight: 900; letter-spacing: 2px; margin: 0; color: #f1c40f;">101 OKEY</h1>
-        </div>
-
-        <!-- Right: Private Room Actions -->
-        <div class="lobby-right-panel">
-          <button id="btn-open-create-room" class="btn-plus-blue btn-sm">
-            <span>➕ ÖZEL MASA KUR</span>
-          </button>
-          <button id="btn-open-join-room" class="btn-plus-purple btn-sm">
-            <span>🔑 KODLA KATIL</span>
-          </button>
         </div>
       </header>
 
@@ -446,35 +439,6 @@
             <span>💾 DEĞİŞİKLİKLERİ KAYDET</span>
           </button>
         </form>
-      </div>
-    </div>
-
-    <!-- Create Room Modal -->
-    <div id="modal-create-room" class="modal-backdrop hidden">
-      <div class="plus-modal-card">
-        <div class="modal-header">
-          <h3>ÖZEL MASA KUR</h3>
-          <button class="btn-close-modal" onclick="document.getElementById('modal-create-room').classList.add('hidden')">×</button>
-        </div>
-        <p style="text-align: center; color: #a8d5ba; font-size: 13px; font-weight: 700; margin: 15px 0;">Arkadaşlarınızla eşli oynamak için özel oda oluşturun.</p>
-        <button id="btn-confirm-create-room" class="btn-plus-gold" style="width: 100%; margin-top: 10px;">MASAYI OLUŞTUR</button>
-      </div>
-    </div>
-
-    <!-- Join Room Modal -->
-    <div id="modal-join-room" class="modal-backdrop hidden">
-      <div class="plus-modal-card">
-        <div class="modal-header">
-          <h3>MASAYA KATIL</h3>
-          <button class="btn-close-modal" onclick="document.getElementById('modal-join-room').classList.add('hidden')">×</button>
-        </div>
-        <div class="lobby-form">
-          <div class="input-group">
-            <label for="input-room-code">6 Haneli Masa Kodu:</label>
-            <input type="text" id="input-room-code" class="plus-input" placeholder="Örn: ABC123" maxlength="6" style="text-transform: uppercase; font-size: 24px; text-align: center; letter-spacing: 6px; font-weight: 900;">
-          </div>
-        </div>
-        <button id="btn-confirm-join-room" class="btn-plus-gold" style="width: 100%; margin-top: 15px;">MASAYA OTUR</button>
       </div>
     </div>
 

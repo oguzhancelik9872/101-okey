@@ -172,8 +172,61 @@ class RoomManager {
       room.hostId = playerId;
     }
 
+    // If all 4 seats are now filled, automatically start the game!
+    if (game.players.filter(Boolean).length === 4 && game.state === GAME_STATES.WAITING) {
+      game.startRound();
+      room.lastBotActionTime = Date.now() - 400;
+      this.startBotAutomation(room);
+      this.broadcastGameState(room.id);
+    }
+
     this.broadcastLobbyState();
     return { success: true, room, player };
+  }
+
+  switchSeat(socketId, newSeatIndex) {
+    const publicRoom = this.getOrCreatePublicRoom();
+    const game = publicRoom.game;
+    if (game.state !== GAME_STATES.WAITING) {
+      return { success: false, reason: 'Oyun başladıktan sonra koltuk değiştirilemez.' };
+    }
+
+    if (newSeatIndex < 0 || newSeatIndex > 3 || game.players[newSeatIndex]) {
+      return { success: false, reason: 'Seçtiğiniz koltuk dolu veya geçersiz.' };
+    }
+
+    const currentSeatIdx = game.players.findIndex(p => p && p.id === socketId);
+    if (currentSeatIdx === -1) {
+      return { success: false, reason: 'Masada oturmuyorsunuz.' };
+    }
+
+    const player = game.players[currentSeatIdx];
+    player.seatIndex = newSeatIndex;
+    game.players[currentSeatIdx] = null;
+    game.players[newSeatIndex] = player;
+
+    this.broadcastLobbyState();
+    return { success: true, seatIndex: newSeatIndex };
+  }
+
+  leaveSeat(socketId) {
+    const publicRoom = this.getOrCreatePublicRoom();
+    const game = publicRoom.game;
+    if (game.state !== GAME_STATES.WAITING) {
+      return { success: false, reason: 'Oyun başladıktan sonra ayrılamazsınız.' };
+    }
+
+    const currentSeatIdx = game.players.findIndex(p => p && p.id === socketId);
+    if (currentSeatIdx !== -1) {
+      game.players[currentSeatIdx] = null;
+      if (publicRoom.hostId === socketId) {
+        const next = game.players.find(Boolean);
+        publicRoom.hostId = next ? next.id : null;
+      }
+      this.broadcastLobbyState();
+      return { success: true };
+    }
+    return { success: false, reason: 'Masada oturmuyorsunuz.' };
   }
 
   reconnectPlayer(roomId, newSocketId, userId) {
