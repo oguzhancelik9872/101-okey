@@ -389,6 +389,8 @@ body.plus-theme {
   color: #fff;
   transform: scale(1.05);
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+}
+
 .btn-rejoin-seat-pill {
   background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%);
   border: 1.5px solid #f9e79f;
