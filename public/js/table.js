@@ -161,8 +161,7 @@ class TableManager {
           if (!penaltyBadge) {
             penaltyBadge = document.createElement('span');
             penaltyBadge.className = 'player-penalty-pill';
-            const infoEl = seatEl.querySelector('.bar-player-info') || seatEl;
-            infoEl.appendChild(penaltyBadge);
+            seatEl.appendChild(penaltyBadge);
           }
           penaltyBadge.textContent = `+${player.penaltyPoints}`;
           penaltyBadge.classList.remove('hidden');
