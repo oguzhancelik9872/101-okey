@@ -1737,6 +1737,12 @@ body.plus-theme {
   color: #2ecc71;
 }
 
+.player-open-status.opened-pairs {
+  background: rgba(155, 89, 182, 0.35);
+  border: 1px solid #9b59b6;
+  color: #d7bde2;
+}
+
 /* Other Players Turn Progress Bar */
 .player-turn-progress-track {
   width: 100%;

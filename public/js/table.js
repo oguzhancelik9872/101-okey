@@ -147,8 +147,13 @@ class TableManager {
             statusEl.className = 'player-open-status';
             statusEl.textContent = 'Hazır';
           } else if (player.opened) {
-            statusEl.className = 'player-open-status opened';
-            statusEl.textContent = (player.openType === 'pairs') ? 'Çift Açtı' : 'Açtı';
+            if (player.openType === 'pairs') {
+              statusEl.className = 'player-open-status opened-pairs';
+              statusEl.textContent = `Çift (${player.openedMeldsCount || 5} Çift)`;
+            } else {
+              statusEl.className = 'player-open-status opened';
+              statusEl.textContent = `Seri (${player.openedScore || 101} Puan)`;
+            }
           } else {
             statusEl.className = 'player-open-status not-opened';
             statusEl.textContent = 'Açmadı';
