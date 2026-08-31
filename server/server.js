@@ -540,12 +540,23 @@ io.on('connection', (socket) => {
   // Disconnection
   socket.on('disconnect', () => {
     console.log(`[Socket] Client disconnected: ${socket.id}`);
-    authPreviewSelections.delete(socket.id);
-    io.emit('auth:previewSelectUpdate', getPreviewList());
-    db.releaseSocket(socket.id);
-    io.emit('auth:namesUpdate', db.getAvailableNames());
-    roomManager.handleDisconnect(socket.id);
+    try {
+      db.releaseSocket(socket.id);
+      io.emit('auth:namesUpdate', db.getAvailableNames());
+      roomManager.handleDisconnect(socket.id);
+    } catch (err) {
+      console.error('Error handling disconnect:', err);
+    }
   });
+});
+
+// Global crash protection
+process.on('uncaughtException', (err) => {
+  console.error(' [UncaughtException]', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error(' [UnhandledRejection]', reason);
 });
 
 // Health Check endpoint (for Render / pingers)

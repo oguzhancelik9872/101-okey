@@ -563,11 +563,12 @@ class RoomManager {
   getPublicRooms() {
     const list = [];
     for (const [roomId, room] of this.rooms.entries()) {
-      if (!room.isPrivate && !room.vsBots) {
+      if (room && !room.isPrivate && !room.vsBots && room.game) {
+        const host = room.game.players.find(p => p && p.id === room.hostId) || room.game.players.find(Boolean);
         list.push({
           id: roomId,
-          hostName: room.game.players[0] ? room.game.players[0].name : 'Host',
-          playerCount: room.game.players.length,
+          hostName: host ? host.name : 'Host',
+          playerCount: room.game.players.filter(Boolean).length,
           state: room.game.state,
           mode: room.mode,
           targetRounds: room.targetRounds
