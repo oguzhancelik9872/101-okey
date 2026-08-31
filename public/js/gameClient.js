@@ -1279,29 +1279,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasDrawnDiscard = isMyTurn && currentGameState.turnState === 'DISCARD' && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;
     const requiredId = (hasDrawnDiscard && isFirstOpen) ? currentGameState.drawnFromDiscard.tileId : null;
 
-    // 1. Calculate Per Score from rack layout (Per puanı her zaman birinci önceliktir)
-    const score = (rackAnalysis && rackAnalysis.validMelds && rackAnalysis.validMelds.length > 0) ? rackAnalysis.totalScore : 0;
+    // Calculate total sum of remaining tiles in hand (Okey = 25, others = number)
+    const handSum = allTiles.reduce((sum, t) => {
+      const p = ClientValidator.getTileProps(t, currentGameState.indicator);
+      return sum + (p.isOkey ? 25 : (p.number || 0));
+    }, 0);
 
-    if (score > 0) {
-      const includesRequired = !requiredId || rackAnalysis.validTileIds.has(requiredId);
-      const isSufficient = score >= minScore && includesRequired;
+    // CASE 1: Player ALREADY OPENED with PAIRS (Çift Açmış Oyuncu)
+    if (!isFirstOpen && viewerPlayer && viewerPlayer.openType === 'pairs') {
+      pointsBadge.className = 'points-badge points-penalty-active';
+      pointsBadge.innerHTML = `💎 Çift Açıldı (Kalan Ceza: <strong>${handSum}</strong> Puan)`;
+      updateActionBarUI();
+      return;
+    }
 
-      if (isFirstOpen) {
-        pointsBadge.className = isSufficient ? 'points-badge points-valid' : 'points-badge points-pending';
-        pointsBadge.innerHTML = `Per: <strong>${score}</strong> / ${minScore}`;
-      } else {
+    // CASE 2: Player ALREADY OPENED with SERI (Seri Açmış Oyuncu)
+    if (!isFirstOpen && viewerPlayer && viewerPlayer.openType === 'seri') {
+      const score = (rackAnalysis && rackAnalysis.validMelds && rackAnalysis.validMelds.length > 0) ? rackAnalysis.totalScore : 0;
+      if (score > 0) {
         pointsBadge.className = 'points-badge points-valid';
-        pointsBadge.innerHTML = `Per: <strong>${score}</strong> Puan`;
+        pointsBadge.innerHTML = `Açılacak Per: <strong>${score}</strong> Puan`;
+      } else {
+        pointsBadge.className = 'points-badge points-penalty-active';
+        pointsBadge.innerHTML = `Kalan Ceza: <strong>${handSum}</strong> Puan`;
       }
       updateActionBarUI();
       return;
     }
 
-    // 2. If NO valid per on rack (score === 0), check if player arranged valid Pairs on rack
-    const rackPairs = istaka.analyzeRackPairs();
-    const containsRequiredPair = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
+    // CASE 3: Player has NOT OPENED YET (İlk Açılış Aşaması)
+    // 3A. Check Per Score on rack
+    const score = (rackAnalysis && rackAnalysis.validMelds && rackAnalysis.validMelds.length > 0) ? rackAnalysis.totalScore : 0;
+    if (score > 0) {
+      const includesRequired = !requiredId || rackAnalysis.validTileIds.has(requiredId);
+      const isSufficient = score >= minScore && includesRequired;
 
-    if (rackPairs.validPairs.length >= 5 && containsRequiredPair && isFirstOpen) {
+      pointsBadge.className = isSufficient ? 'points-badge points-valid' : 'points-badge points-pending';
+      pointsBadge.innerHTML = `Per: <strong>${score}</strong> / ${minScore}`;
+      updateActionBarUI();
+      return;
+    }
+
+    // 3B. Check Pairs arranged on rack
+    const rackPairs = istaka.analyzeRackPairs();
+    const containsRequiredPair = !requiredId || rackPairs.validTileIds.has(requiredId);
+
+    if (rackPairs.validPairs.length >= 5 && containsRequiredPair) {
       const pairedIds = rackPairs.validTileIds;
       const leftoverTiles = allTiles.filter(t => !pairedIds.has(t.id));
       const penaltyScore = leftoverTiles.reduce((sum, t) => {
@@ -1315,14 +1338,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 3. Default: Per is 0
-    if (isFirstOpen) {
-      pointsBadge.className = 'points-badge points-empty';
-      pointsBadge.innerHTML = `Per: <strong>0</strong> / ${minScore}`;
-    } else {
-      pointsBadge.className = 'points-badge points-empty';
-      pointsBadge.innerHTML = `Per: <strong>0</strong> Puan`;
-    }
+    // 3C. Default: Per is 0
+    pointsBadge.className = 'points-badge points-empty';
+    pointsBadge.innerHTML = `Per: <strong>0</strong> / ${minScore}`;
     updateActionBarUI();
   }
 
