@@ -107,32 +107,33 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const btnEnter = document.getElementById('btn-enter-game');
-    if (btnEnter) {
-      btnEnter.textContent = '⏳ Giriş Yapılıyor...';
-      btnEnter.classList.add('disabled');
-      btnEnter.setAttribute('disabled', 'true');
-    }
+    const clean = nameToSelect.trim();
+    const fallbackUser = {
+      id: `usr_${clean.toLowerCase()}`,
+      username: clean.toLowerCase(),
+      displayName: clean,
+      gender: 'male',
+      avatarIndex: 0
+    };
 
-    socket.emit('auth:selectName', { name: nameToSelect }, (res) => {
-      if (btnEnter) {
-        btnEnter.textContent = '🚀 OYUNA GİRİŞ YAP';
-        btnEnter.classList.remove('disabled');
-        btnEnter.removeAttribute('disabled');
-      }
+    currentUser = fallbackUser;
+    currentActivePlayerName = clean;
+    localStorage.setItem('okey101_user', JSON.stringify(fallbackUser));
 
+    // Instantly reveal lobby with ZERO waiting
+    showLobby();
+    updateLobbyProfileUI();
+    ui.showToast(`Hoş geldin, ${clean}!`, 'success');
+
+    // Notify server to bind socket session
+    socket.emit('auth:selectName', { name: clean }, (res) => {
       if (res && res.success && res.user) {
         currentUser = res.user;
-        currentActivePlayerName = res.user.displayName || res.user.username;
         if (res.token) {
           localStorage.setItem('okey101_auth_token', res.token);
         }
         localStorage.setItem('okey101_user', JSON.stringify(res.user));
-        ui.showToast(`Hoş geldin, ${currentActivePlayerName}!`, 'success');
-        showLobby();
         updateLobbyProfileUI();
-      } else {
-        ui.showToast((res && res.reason) || 'Giriş yapılamadı. Tekrar deneyin.', 'error');
       }
     });
   }
@@ -192,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lobbyView) {
       lobbyView.classList.remove('hidden');
       lobbyView.style.removeProperty('display');
-      lobbyView.style.display = 'flex';
+      lobbyView.style.setProperty('display', 'flex', 'important');
     }
     socket.emit('lobby:join');
   }
@@ -211,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (authView) {
       authView.classList.remove('hidden');
       authView.style.removeProperty('display');
-      authView.style.display = 'flex';
+      authView.style.setProperty('display', 'flex', 'important');
     }
     selectedCharName = null;
     updateNamePickerUI();
@@ -717,15 +718,16 @@ document.addEventListener('DOMContentLoaded', () => {
     table.setViewerSeatIndex(viewerSeatIndex);
     if (authView) {
       authView.classList.add('hidden');
-      authView.style.display = 'none';
+      authView.style.setProperty('display', 'none', 'important');
     }
     if (lobbyView) {
       lobbyView.classList.add('hidden');
-      lobbyView.style.display = 'none';
+      lobbyView.style.setProperty('display', 'none', 'important');
     }
     if (gameView) {
       gameView.classList.remove('hidden');
-      gameView.style.display = 'flex';
+      gameView.style.removeProperty('display');
+      gameView.style.setProperty('display', 'flex', 'important');
     }
 
     const codeEl = document.getElementById('display-room-code');
