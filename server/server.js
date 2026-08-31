@@ -483,6 +483,17 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Vote Rematch (Tekrar Oyna)
+  socket.on('voteRematch', (data, callback) => {
+    try {
+      const roomId = (data && data.roomId) || socket.roomId;
+      const result = roomManager.handleVoteRematch(roomId, socket.id);
+      if (callback) callback(result);
+    } catch (err) {
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
   // Next Round
   socket.on('nextRound', (data, callback) => {
     try {

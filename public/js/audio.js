@@ -413,60 +413,14 @@ class OkeyAudio {
   }
 
   /**
-   * Oyuncu İşlek Taş Attığında Çalacak Fail / Blunder Sesi
+   * Oyuncu İşlek Taş Attığında (Standart taş atma sesi kullanılır, absürt ses kaldırıldı)
    */
   playIslekFail() {
-    this._playMP3OrFallback('fail', 'sfx', this._synthIslekFail);
+    this.playDiscard();
   }
 
   _synthIslekFail() {
-    const vol = this.getEffectiveVolume('sfx');
-    if (vol <= 0) return;
-    this.init();
-    if (!this.ctx) return;
-
-    const t = this.ctx.currentTime;
-    const failNotes = [260, 210, 160, 110]; // İnen komik fail gamı
-
-    failNotes.forEach((freq, idx) => {
-      const noteT = t + (idx * 0.07);
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      const filter = this.ctx.createBiquadFilter();
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(800, noteT);
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, noteT);
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.8, noteT + 0.08);
-
-      gain.gain.setValueAtTime(vol * 0.55, noteT);
-      gain.gain.exponentialRampToValueAtTime(0.0001, noteT + 0.09);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc.start(noteT);
-      osc.stop(noteT + 0.095);
-    });
-
-    // Tok tahta çökme efekti
-    const woodOsc = this.ctx.createOscillator();
-    const woodGain = this.ctx.createGain();
-    woodOsc.type = 'sine';
-    woodOsc.frequency.setValueAtTime(120, t + 0.22);
-    woodOsc.frequency.exponentialRampToValueAtTime(50, t + 0.35);
-
-    woodGain.gain.setValueAtTime(vol * 0.6, t + 0.22);
-    woodGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.36);
-
-    woodOsc.connect(woodGain);
-    woodGain.connect(this.ctx.destination);
-
-    woodOsc.start(t + 0.22);
-    woodOsc.stop(t + 0.37);
+    this._synthDiscard();
   }
 
   /**

@@ -159,9 +159,12 @@ class UIManager {
     html += `
         </tbody>
       </table>
-      <div class="round-result-actions" style="margin-top: 14px; display: flex; justify-content: center;">
-        <button id="btn-next-round" class="btn-plus-gold" style="padding: 12px 24px; width: 100%; font-size: 15px; font-weight: 900;">
-          ${hasNext ? `➡️ Sonraki Ele Geç (El ${currentRound + 1} / ${targetRounds})` : '🏆 Sonuçları Gör / Yeni Maça Başla'}
+      <div class="round-result-actions" style="margin-top: 16px; display: flex; gap: 10px; justify-content: center;">
+        <button id="btn-vote-rematch" class="btn-plus-gold" style="flex: 2; padding: 12px 18px; font-size: 14px; font-weight: 900;">
+          🔄 Tekrar Oyna
+        </button>
+        <button id="btn-result-leave" class="btn-danger-action" style="flex: 1; padding: 12px 14px; font-size: 13px; font-weight: 800; border-radius: 14px; background: rgba(231,76,60,0.3); border: 1.5px solid #e74c3c; color: #ff7675; cursor: pointer;">
+          🚪 Masadan Ayrıl
         </button>
       </div>
     `;
@@ -169,11 +172,22 @@ class UIManager {
     content.innerHTML = html;
     modal.classList.remove('hidden');
 
-    const nextBtn = document.getElementById('btn-next-round');
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
+    const rematchBtn = document.getElementById('btn-vote-rematch');
+    const leaveBtn = document.getElementById('btn-result-leave');
+
+    if (rematchBtn) {
+      rematchBtn.addEventListener('click', () => {
+        rematchBtn.disabled = true;
+        rematchBtn.innerHTML = '⏳ Hazırsınız! Diğer Oyuncular Bekleniyor...';
+        rematchBtn.style.opacity = '0.85';
+        if (onNextRoundCallback) onNextRoundCallback('rematch');
+      });
+    }
+
+    if (leaveBtn) {
+      leaveBtn.addEventListener('click', () => {
         modal.classList.add('hidden');
-        if (onNextRoundCallback) onNextRoundCallback();
+        if (onNextRoundCallback) onNextRoundCallback('leave');
       });
     }
 

@@ -488,6 +488,41 @@ class RoomManager {
     executeStep();
   }
 
+  handleVoteRematch(roomId, socketId) {
+    const room = this.rooms.get(roomId);
+    if (!room) return { success: false, reason: 'Oda bulunamadı.' };
+
+    const game = room.game;
+    if (game.state !== GAME_STATES.GAME_OVER) {
+      return { success: false, reason: 'Oyun henüz bitmedi.' };
+    }
+
+    if (!room.rematchVotes) room.rematchVotes = new Set();
+    room.rematchVotes.add(socketId);
+
+    const humanPlayers = game.players.filter(p => p && !p.isBot);
+    const totalHumans = Math.max(1, humanPlayers.length);
+    const votedCount = room.rematchVotes.size;
+
+    if (votedCount >= totalHumans) {
+      // All human players voted rematch! Restart match with same players & bots
+      room.rematchVotes.clear();
+      game.resetForNewMatch();
+      this.broadcastGameState(roomId);
+      if (room.triggerBotStep) room.triggerBotStep();
+      this.io.to(roomId).emit('rematchStarted');
+      return { success: true, restarted: true };
+    } else {
+      // Broadcast vote status to all players in the room
+      this.io.to(roomId).emit('rematchVoteUpdate', {
+        votedCount,
+        totalHumans,
+        voters: Array.from(room.rematchVotes)
+      });
+      return { success: true, restarted: false, votedCount, totalHumans };
+    }
+  }
+
   handleLeave(roomId, playerId, userId = null) {
     const room = this.rooms.get(roomId);
     if (!room) return;

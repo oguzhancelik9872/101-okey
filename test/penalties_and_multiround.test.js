@@ -95,40 +95,21 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(game.players[3].penaltyPoints, initialP3Penalties + 101);
   console.log('   Okey Steal Penalty: PASSED (Opponent Team got +101)');
 
-  // 5. Test Multi-round Progression and Starting Player Rotation
-  console.log('4. Testing 3-Round Progression and Rotating Starter...');
-  // End round 1
-  game.endRound(2, false);
-  assert.strictEqual(game.state, GAME_STATES.ROUND_OVER);
-  assert.strictEqual(game.roundResults.hasNextRound, true);
-  assert.strictEqual(game.roundResults.currentRound, 1);
+  // 5. Test Single-Match Game Over and Rematch Starting Player Rotation
+  console.log('4. Testing Single-Match Finish & Rematch Rotation...');
+  // End match 1
+  game.endRound(2, false, false);
+  assert.strictEqual(game.state, GAME_STATES.GAME_OVER);
+  assert.strictEqual(game.roundResults.hasNextRound, false);
 
-  // Advance to Round 2
-  const nextRes = game.nextRound();
-  assert.strictEqual(nextRes, true);
-  assert.strictEqual(game.currentRound, 2);
+  // Trigger Rematch (Tekrar Oyna)
+  game.resetForNewMatch();
   assert.strictEqual(game.state, GAME_STATES.PLAYING);
-  assert.strictEqual(game.firstPlayerIndex, 1); // Rotated to seat 1!
+  assert.strictEqual(game.firstPlayerIndex, 1); // Rotated to seat 1 (counter-clockwise)!
   assert.strictEqual(game.currentTurn, 1);
   assert.strictEqual(game.players[1].hand.length, 22); // Starter gets 22 tiles
   assert.strictEqual(game.players[0].hand.length, 21); // Others get 21
 
-  // End round 2
-  game.endRound(1, false);
-  assert.strictEqual(game.state, GAME_STATES.ROUND_OVER);
-  assert.strictEqual(game.roundResults.hasNextRound, true);
-
-  // Advance to Round 3
-  game.nextRound();
-  assert.strictEqual(game.currentRound, 3);
-  assert.strictEqual(game.firstPlayerIndex, 2); // Rotated to seat 2!
-  assert.strictEqual(game.currentTurn, 2);
-
-  // End round 3 (Final Round)
-  game.endRound(2, false);
-  assert.strictEqual(game.state, GAME_STATES.GAME_OVER);
-  assert.strictEqual(game.roundResults.hasNextRound, false);
-  console.log('   Multi-Round Rotation (3 Rounds): PASSED');
-
-  console.log('🎉 ALL PENALTY & MULTI-ROUND TESTS PASSED SUCCESSFULLY!');
+  console.log('   Single Match & Rematch Rotation: PASSED');
+  console.log('🎉 ALL PENALTY & REMATCH TESTS PASSED SUCCESSFULLY!');
 });

@@ -875,7 +875,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (islekDiscarded) {
-          window.soundEngine.playIslekFail();
+          window.soundEngine.playDiscard();
           if (discardedByPlayer === viewerSeatIndex) {
             ui.showToast('⚠️ İşlek Taş Attınız! (Masaya işlenebilecek taştı)', 'error', 3500);
           }
@@ -898,26 +898,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start/Stop ambient cafe audio
     if (state.state === 'PLAYING') {
       window.soundEngine.startAmbient();
-    } else {
-      window.soundEngine.stopAmbient();
     }
 
-    // Check round over
+    // Check round over / game over
     if ((state.state === 'ROUND_OVER' || state.state === 'GAME_OVER') && state.roundResults) {
       if (!window.roundResultModalActive) {
         window.roundResultModalActive = true;
         setTimeout(() => {
-          ui.showRoundResultModal(state.roundResults, () => {
-            window.roundResultModalActive = false;
-            if (state.roundResults && state.roundResults.hasNextRound) {
-              // Advance to next round in the same 3-round match!
-              socket.emit('nextRound', { roomId }, (res) => {
-                if (!res || !res.success) {
-                  ui.showToast('Sonraki el başlatılamadı.', 'error');
+          ui.showRoundResultModal(state.roundResults, (action) => {
+            if (action === 'rematch') {
+              socket.emit('voteRematch', { roomId }, (res) => {
+                if (res && res.restarted) {
+                  ui.hideModal('round-result-modal');
+                  window.roundResultModalActive = false;
+                  istaka.clearSelection();
+                } else if (res && !res.success) {
+                  ui.showToast(res.reason || 'Yeniden başlatılamadı.', 'error');
                 }
               });
-            } else {
-              // Match completed - return to lobby
+            } else if (action === 'leave') {
+              window.roundResultModalActive = false;
               localStorage.removeItem('okey101_active_room');
               if (roomId) {
                 socket.emit('leaveRoom', { roomId, userId: getUserId() });
@@ -932,6 +932,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else if (state.state === 'PLAYING') {
       window.roundResultModalActive = false;
+      ui.hideModal('round-result-modal');
+      ui.hideModal('game-over-modal');
     }
 
     if (state.state === 'PLAYING') {
@@ -942,6 +944,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update Action Bar States
     updateActionBarUI();
+  });
+
+  // Rematch Vote Broadcast Update
+  socket.on('rematchVoteUpdate', (data) => {
+    const rematchBtn = document.getElementById('btn-vote-rematch');
+    if (rematchBtn) {
+      rematchBtn.innerHTML = `⏳ Oyuncular Bekleniyor (${data.votedCount}/${data.totalHumans})`;
+    }
+  });
+
+  // Rematch Game Started
+  socket.on('rematchStarted', () => {
+    ui.hideModal('round-result-modal');
+    ui.hideModal('game-over-modal');
+    window.roundResultModalActive = false;
+    istaka.clearSelection();
+    ui.showToast('🎮 Yeni Maç Başladı!', 'success', 2500);
   });
 
   // Turn Timer Animation Loop (30s clock with last 5s gentle countdown tick)
@@ -1063,10 +1082,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!currentGameState || btnOpenHand.disabled) return;
 
       const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
+      if (!isMyTurn) {
+        ui.showToast('Sıra sizde değil.', 'error', 2500);
+        return;
+      }
+      if (currentGameState.turnState !== 'DISCARD') {
+        ui.showToast('Önce taş çekmelisiniz.', 'error', 2500);
+        return;
+      }
+
       const viewerPlayer = currentGameState.players[viewerSeatIndex];
       const isFirstOpen = viewerPlayer ? !viewerPlayer.opened : true;
 
       if (!isFirstOpen && viewerPlayer.openType === 'pairs') {
+        ui.showToast('Çift açtığınız için seri per açamazsınız.', 'error', 3000);
         return;
       }
 
@@ -1088,14 +1117,19 @@ document.addEventListener('DOMContentLoaded', () => {
           istaka.autoSortRuns(isFirstOpen ? requiredId : null);
           meldIdArrays = best.melds.map(m => m.map(t => t.id));
         } else {
-          if (requiredId && isFirstOpen) {
-            ui.showToast('Yandan çektiğiniz taşı kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
+          if (requiredId && isFirstOpen && !containsRequired) {
+            ui.showToast('Yandan çektiğiniz taşı açtığınız perlerde kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
+          } else if (isFirstOpen) {
+            ui.showToast(`Seri açmak için elinizde en az ${minRequired} puan olmalıdır.`, 'error', 3000);
+          } else {
+            ui.showToast('Geçerli bir per oluşturulamadı.', 'error', 3000);
           }
           return;
         }
       }
 
       if (meldIdArrays.length === 0) {
+        ui.showToast(isFirstOpen ? `Seri açmak için elinizde en az ${minRequired} puan olmalıdır.` : 'Geçerli bir per oluşturulamadı.', 'error', 3000);
         return;
       }
 

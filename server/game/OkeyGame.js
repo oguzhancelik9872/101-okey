@@ -7,7 +7,7 @@ class OkeyGame {
   constructor(id, options = {}) {
     this.id = id;
     this.mode = options.mode || GAME_MODES.STANDARD; // standard | folded
-    this.targetRounds = options.targetRounds || 3;
+    this.targetRounds = options.targetRounds || 1;
     this.currentRound = 1;
     this.state = GAME_STATES.WAITING;
 
@@ -148,7 +148,7 @@ class OkeyGame {
     }
   }
 
-  startRound() {
+  startRound(starterIndex = null) {
     this.state = GAME_STATES.PLAYING;
     this.deck = new Deck();
     this.deck.shuffle();
@@ -162,8 +162,11 @@ class OkeyGame {
     this.drawnFromDiscard = null;
     this.roundResults = null;
 
-    // First player rotates each round
-    this.firstPlayerIndex = (this.currentRound - 1) % 4;
+    if (starterIndex !== null && starterIndex !== undefined) {
+      this.firstPlayerIndex = starterIndex % 4;
+    } else if (this.firstPlayerIndex === undefined || this.firstPlayerIndex === null) {
+      this.firstPlayerIndex = 0;
+    }
     this.currentTurn = this.firstPlayerIndex;
     
     // Deal tiles: first player gets 22, others get 21
@@ -695,13 +698,12 @@ class OkeyGame {
     const team2Score = (this.players[1] ? this.players[1].score : 0) + (this.players[3] ? this.players[3].score : 0);
     const isTeam1Winner = team1Score <= team2Score;
 
-    const hasNextRound = this.currentRound < this.targetRounds;
-    this.state = hasNextRound ? GAME_STATES.ROUND_OVER : GAME_STATES.GAME_OVER;
+    this.state = GAME_STATES.GAME_OVER;
 
     this.roundResults = {
-      currentRound: this.currentRound,
-      targetRounds: this.targetRounds,
-      hasNextRound,
+      currentRound: 1,
+      targetRounds: 1,
+      hasNextRound: false,
       finisher: finisher.name,
       isOkeyDiscard,
       isPairsFinish,
@@ -724,14 +726,11 @@ class OkeyGame {
       totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
 
-    let finishMsg = `🎉 ${finisher.name} ${this.currentRound}. eli bitirdi (${finisherPoints} puan).`;
+    let finishMsg = `🎉 ${finisher.name} oyunu bitirdi (${finisherPoints} puan).`;
     if (isOkeyDiscard) finishMsg += ' 🔥 OKEY ATTI (Cezalar 2 katı)!';
     if (isPairsFinish) finishMsg += ' ✨ ÇİFT BİTTİ (Cezalar 2 katı)!';
     this.addLog(finishMsg);
-
-    if (!hasNextRound) {
-      this.addLog(`🏆 3 El Tamamlandı! Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
-    }
+    this.addLog(`🏆 Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
   }
 
   endRoundNoWinner() {
@@ -769,13 +768,12 @@ class OkeyGame {
     const team2Score = (this.players[1] ? this.players[1].score : 0) + (this.players[3] ? this.players[3].score : 0);
     const isTeam1Winner = team1Score <= team2Score;
 
-    const hasNextRound = this.currentRound < this.targetRounds;
-    this.state = hasNextRound ? GAME_STATES.ROUND_OVER : GAME_STATES.GAME_OVER;
+    this.state = GAME_STATES.GAME_OVER;
 
     this.roundResults = {
-      currentRound: this.currentRound,
-      targetRounds: this.targetRounds,
-      hasNextRound,
+      currentRound: 1,
+      targetRounds: 1,
+      hasNextRound: false,
       finisher: null,
       reason: 'Deste bitti',
       roundScores,
@@ -796,19 +794,47 @@ class OkeyGame {
       totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
 
-    this.addLog(`Deste bitti! ${this.currentRound}. elin kalan elleri sayıldı.`);
-    if (!hasNextRound) {
-      this.addLog(`🏆 3 El Tamamlandı! Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
-    }
+    this.addLog(`Deste bitti! Kalan eller sayıldı.`);
+    this.addLog(`🏆 Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
   }
 
   nextRound() {
-    if (this.currentRound < this.targetRounds) {
-      this.currentRound++;
-      this.startRound();
-      return true;
-    }
     return false;
+  }
+
+  /**
+   * Reset game state and start fresh match with same players & bots
+   */
+  resetForNewMatch() {
+    this.tableMelds = [];
+    this.tableMeldCounter = 1;
+    this.discards = [[], [], [], []];
+    this.drawnFromDiscard = null;
+    this.minOpenScore = 101;
+    this.minOpenPairs = 5;
+    this.roundResults = null;
+    this.currentRound = 1;
+    this.targetRounds = 1;
+    this.logs = [];
+
+    // Next match rotates first player counter-clockwise
+    this.firstPlayerIndex = (this.firstPlayerIndex + 1) % 4;
+
+    // Reset player scores & round penalties/opened state
+    for (const player of this.players) {
+      if (player) {
+        player.hand = [];
+        player.opened = false;
+        player.openType = null;
+        player.openedMelds = [];
+        player.score = 0;
+        player.roundScore = 0;
+        player.penaltyPoints = 0;
+        player.penalties = [];
+      }
+    }
+
+    this.startRound(this.firstPlayerIndex);
   }
 
   /**
