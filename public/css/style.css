@@ -1643,10 +1643,7 @@ body.plus-theme {
   min-height: 0;
   box-sizing: border-box;
   overflow: hidden;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: calc(100% / 13) calc(100% / 13);
+  background-color: transparent;
 }
 
 .seri-divider-line {
@@ -1687,16 +1684,7 @@ body.plus-theme {
   box-sizing: border-box;
 }
 
-.no-melds-text {
-  width: 100%;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 11px;
-  font-weight: 600;
-  margin-top: 30px;
-}
-
-/* 13-Column Meld Row */
+/* 13-Column Meld Row (Natural Board Slots) */
 .table-grid-row {
   display: grid;
   grid-template-columns: repeat(13, 1fr);
@@ -1704,30 +1692,12 @@ body.plus-theme {
   height: 100%;
   min-height: 0;
   max-height: 100%;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  align-items: center;
-  padding: 0 1px;
-  transition: all 0.15s;
-  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  align-items: stretch;
   box-sizing: border-box;
-}
-
-.table-grid-row:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(241, 196, 15, 0.4);
-}
-
-.table-grid-row.meld-drag-hover {
-  background: rgba(46, 204, 113, 0.25) !important;
-  border-color: #2ecc71 !important;
-  box-shadow: 0 0 12px rgba(46, 204, 113, 0.8) !important;
-}
-
-.table-grid-row.contains-okey-stealable {
-  border-color: rgba(241, 196, 15, 0.6);
-  box-shadow: 0 0 8px rgba(241, 196, 15, 0.3);
 }
 
 .grid-cell-slot {
@@ -1738,36 +1708,48 @@ body.plus-theme {
   min-height: 0;
   max-height: 100%;
   border-radius: 2px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px dashed rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   min-width: 0;
   box-sizing: border-box;
+  transition: all 0.15s;
 }
 
 .grid-cell-slot.has-tile {
   background: transparent;
-  border: none;
+  border-color: transparent;
 }
 
-.grid-cell-slot .tile,
-.table-grid-row .tile {
+.grid-cell-slot .tile {
   height: 100% !important;
-  max-height: 26px !important;
+  max-height: 25px !important;
   width: auto !important;
   aspect-ratio: 24/32 !important;
   min-width: 0 !important;
   padding: 0 !important;
 }
 
-.grid-cell-slot .tile .tile-number,
-.table-grid-row .tile .tile-number {
+.grid-cell-slot .tile .tile-number {
   font-size: 12px !important;
   line-height: 1 !important;
 }
 
-.grid-cell-slot .tile .tile-sub-symbol,
-.table-grid-row .tile .tile-sub-symbol {
+.grid-cell-slot .tile .tile-sub-symbol {
   font-size: 7px !important;
+}
+
+.table-grid-row.meld-drag-hover .grid-cell-slot.has-tile,
+.table-pairs-row.meld-drag-hover .grid-cell-slot.has-tile {
+  outline: 2px solid #2ecc71 !important;
+  box-shadow: 0 0 10px #2ecc71 !important;
+  border-radius: 3px;
+}
+
+.table-grid-row.contains-okey-stealable .grid-cell-slot.has-tile,
+.table-pairs-row.contains-okey-stealable .grid-cell-slot.has-tile {
+  outline: 1.5px solid rgba(241, 196, 15, 0.7) !important;
+  box-shadow: 0 0 8px rgba(241, 196, 15, 0.5) !important;
+  border-radius: 3px;
 }
 
 /* Orta/Ayırıcı: Deste ve Gösterge Ahşap Şeridi */
@@ -1897,16 +1879,14 @@ body.plus-theme {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 3px;
+  padding: 3px 4px;
   position: relative;
   min-width: 0;
   height: 100%;
+  min-height: 0;
   box-sizing: border-box;
   overflow: hidden;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 100% calc(100% / 13);
+  background-color: transparent;
 }
 
 .pairs-divider-line {
@@ -1918,56 +1898,29 @@ body.plus-theme {
 .pairs-rows-container {
   flex: 1;
   height: 100%;
+  min-height: 0;
   display: grid;
   grid-template-rows: repeat(13, 1fr);
-  gap: 2px;
+  gap: 1px;
   overflow: hidden !important;
   z-index: 2;
   box-sizing: border-box;
 }
 
-.table-pairs-box {
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  padding: 1px 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* 2-Column Pairs Row (Natural Board Slots) */
+.table-pairs-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
   height: 100%;
   min-height: 0;
-  box-sizing: border-box;
-  transition: all 0.15s;
-}
-
-.table-pairs-box.contains-okey-stealable {
-  border-color: rgba(241, 196, 15, 0.6);
-  box-shadow: 0 0 8px rgba(241, 196, 15, 0.4);
-  cursor: pointer;
-}
-
-.table-pairs-box.meld-drag-hover {
-  background: rgba(46, 204, 113, 0.25) !important;
-  border-color: #2ecc71 !important;
-  box-shadow: 0 0 12px rgba(46, 204, 113, 0.8) !important;
-}
-
-.pairs-tiles-row {
-  display: flex;
-  gap: 2px;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
   max-height: 100%;
-}
-
-.table-pairs-box .tile {
-  height: 100% !important;
-  max-height: 28px !important;
-  width: auto !important;
-  aspect-ratio: 24/32 !important;
-  min-width: 0 !important;
-  padding: 0 !important;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  align-items: stretch;
+  box-sizing: border-box;
 }
 
 .table-pairs-box .tile .tile-number {

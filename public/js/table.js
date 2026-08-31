@@ -251,62 +251,32 @@ class TableManager {
     const viewerPlayer = this.gameState.players[this.viewerSeatIndex];
     const viewerOpened = viewerPlayer && viewerPlayer.opened;
 
-    // 1. Render Seri Melds: Fill Left 13x13 Panel first, overflow into Right 13x13 Panel
-    const MAX_ROWS_PER_PANEL = 13;
-    seriMelds.forEach((meld, idx) => {
-      const targetContainer = (idx < MAX_ROWS_PER_PANEL) ? seri1RowsEl : seri2RowsEl;
-
-      const meldRow = document.createElement('div');
-      meldRow.className = 'table-grid-row meld-row meld-type-' + meld.type;
-      meldRow.dataset.meldId = meld.id;
-
-      if (isViewerTurn && viewerOpened) {
-        meldRow.title = 'İşlemek istediğiniz taşı bu pere sürükleyip bırakabilirsiniz';
-        meldRow.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-          meldRow.classList.add('meld-drag-hover');
-        });
-
-        meldRow.addEventListener('dragleave', (e) => {
-          if (!meldRow.contains(e.relatedTarget)) {
-            meldRow.classList.remove('meld-drag-hover');
-          }
-        });
-
-        meldRow.addEventListener('drop', (e) => {
-          e.preventDefault();
-          meldRow.classList.remove('meld-drag-hover');
-          const tileId = e.dataTransfer.getData('text/plain') || window.draggedTileId;
-          if (tileId && !tileId.startsWith('ACTION:')) {
-            if (this.onProcessTileDragDrop) {
-              this.onProcessTileDragDrop(tileId, meld.id);
-            }
-          }
-        });
-      }
-
-      meldRow.addEventListener('click', () => {
-        if (isViewerTurn && viewerOpened && this.onProcessTile) {
-          this.onProcessTile(meld.id);
+    const renderSeriPanel = (container, startMeldIdx) => {
+      for (let rowIdx = 0; rowIdx < 13; rowIdx++) {
+        const meld = seriMelds[startMeldIdx + rowIdx];
+        const meldRow = document.createElement('div');
+        meldRow.className = 'table-grid-row';
+        if (meld) {
+          meldRow.classList.add('meld-row', 'meld-type-' + meld.type);
+          meldRow.dataset.meldId = meld.id;
         }
-      });
 
-      const slotElements = [];
-      for (let col = 1; col <= 13; col++) {
-        const slot = document.createElement('div');
-        slot.className = 'grid-cell-slot col-' + col;
-        slot.dataset.col = col;
-
-        if (isViewerTurn && viewerOpened) {
-          slot.addEventListener('dragover', (e) => {
+        if (meld && isViewerTurn && viewerOpened) {
+          meldRow.title = 'İşlemek istediğiniz taşı bu pere sürükleyip bırakabilirsiniz';
+          meldRow.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             meldRow.classList.add('meld-drag-hover');
           });
-          slot.addEventListener('drop', (e) => {
+
+          meldRow.addEventListener('dragleave', (e) => {
+            if (!meldRow.contains(e.relatedTarget)) {
+              meldRow.classList.remove('meld-drag-hover');
+            }
+          });
+
+          meldRow.addEventListener('drop', (e) => {
             e.preventDefault();
-            e.stopPropagation();
             meldRow.classList.remove('meld-drag-hover');
             const tileId = e.dataTransfer.getData('text/plain') || window.draggedTileId;
             if (tileId && !tileId.startsWith('ACTION:')) {
@@ -315,112 +285,163 @@ class TableManager {
               }
             }
           });
-        }
 
-        slotElements[col] = slot;
-        meldRow.appendChild(slot);
-      }
-
-      if (meld.type === 'run') {
-        const runTiles = [...meld.tiles];
-        let startCol = 1;
-        const firstNonOkeyIdx = runTiles.findIndex(t => !t.isOkey);
-        if (firstNonOkeyIdx !== -1) {
-          const firstNonOkeyTile = runTiles[firstNonOkeyIdx];
-          const val = firstNonOkeyTile.effectiveValue !== undefined ? firstNonOkeyTile.effectiveValue : firstNonOkeyTile.number;
-          startCol = val - firstNonOkeyIdx;
-        }
-        startCol = Math.max(1, Math.min(13 - runTiles.length + 1, startCol));
-
-        runTiles.forEach((t, i) => {
-          const colIndex = startCol + i;
-          if (slotElements[colIndex]) {
-            slotElements[colIndex].classList.add('has-tile');
-            const tileEl = this.createTileDOM(t, false, true);
-            slotElements[colIndex].appendChild(tileEl);
-          }
-        });
-
-      } else if (meld.type === 'group') {
-        const firstNonOkeyTile = meld.tiles.find(t => !t.isOkey) || meld.tiles[0];
-        const groupNum = firstNonOkeyTile ? (firstNonOkeyTile.effectiveValue !== undefined ? firstNonOkeyTile.effectiveValue : firstNonOkeyTile.number) : 1;
-        const startCol = Math.max(1, Math.min(13 - meld.tiles.length + 1, groupNum));
-
-        meld.tiles.forEach((t, i) => {
-          const colIndex = startCol + i;
-          if (slotElements[colIndex]) {
-            slotElements[colIndex].classList.add('has-tile');
-            const tileEl = this.createTileDOM(t, false, true);
-            slotElements[colIndex].appendChild(tileEl);
-          }
-        });
-      }
-
-      if (meld.tiles && meld.tiles.some(t => t.isOkey)) {
-        meldRow.classList.add('contains-okey-stealable');
-      }
-
-      targetContainer.appendChild(meldRow);
-    });
-
-    // 2. Render Pair Melds on Dual 2x13 Pairs Panels (Sol ve Sağ Çift Bölmeleri)
-    const MAX_PAIRS_PER_PANEL = 13;
-    pairMelds.forEach((meld, idx) => {
-      const targetContainer = (idx < MAX_PAIRS_PER_PANEL || !pairs2RowsEl) ? pairs1RowsEl : pairs2RowsEl;
-
-      const pairBox = document.createElement('div');
-      pairBox.className = 'table-pairs-box';
-      pairBox.dataset.meldId = meld.id;
-
-      const hasOkey = meld.tiles && meld.tiles.some(t => t.isOkey);
-      if (hasOkey) {
-        pairBox.classList.add('contains-okey-stealable');
-      }
-
-      const tilesRow = document.createElement('div');
-      tilesRow.className = 'pairs-tiles-row';
-
-      meld.tiles.forEach((t) => {
-        const tileEl = this.createTileDOM(t, false, true);
-        tilesRow.appendChild(tileEl);
-      });
-
-      pairBox.appendChild(tilesRow);
-
-      if (isViewerTurn && viewerOpened && hasOkey) {
-        pairBox.title = 'Aynı taşa sahipseniz Okeyi almak için taşınızı bu çifte sürükleyin';
-        pairBox.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-          pairBox.classList.add('meld-drag-hover');
-        });
-
-        pairBox.addEventListener('dragleave', (e) => {
-          if (!pairBox.contains(e.relatedTarget)) {
-            pairBox.classList.remove('meld-drag-hover');
-          }
-        });
-
-        pairBox.addEventListener('drop', (e) => {
-          e.preventDefault();
-          pairBox.classList.remove('meld-drag-hover');
-          const tileId = e.dataTransfer.getData('text/plain') || window.draggedTileId;
-          if (tileId && !tileId.startsWith('ACTION:')) {
-            if (this.onProcessTileDragDrop) {
-              this.onProcessTileDragDrop(tileId, meld.id);
+          meldRow.addEventListener('click', () => {
+            if (this.onProcessTile) {
+              this.onProcessTile(meld.id);
             }
-          }
-        });
+          });
+        }
 
-        pairBox.addEventListener('click', () => {
-          if (this.onProcessTile) {
-            this.onProcessTile(meld.id);
+        const slotElements = [];
+        for (let col = 1; col <= 13; col++) {
+          const slot = document.createElement('div');
+          slot.className = 'grid-cell-slot col-' + col;
+          slot.dataset.col = col;
+
+          if (meld && isViewerTurn && viewerOpened) {
+            slot.addEventListener('dragover', (e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              meldRow.classList.add('meld-drag-hover');
+            });
+            slot.addEventListener('drop', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              meldRow.classList.remove('meld-drag-hover');
+              const tileId = e.dataTransfer.getData('text/plain') || window.draggedTileId;
+              if (tileId && !tileId.startsWith('ACTION:')) {
+                if (this.onProcessTileDragDrop) {
+                  this.onProcessTileDragDrop(tileId, meld.id);
+                }
+              }
+            });
           }
-        });
+
+          slotElements[col] = slot;
+          meldRow.appendChild(slot);
+        }
+
+        if (meld) {
+          if (meld.type === 'run') {
+            const runTiles = [...meld.tiles];
+            let startCol = 1;
+            const firstNonOkeyIdx = runTiles.findIndex(t => !t.isOkey);
+            if (firstNonOkeyIdx !== -1) {
+              const firstNonOkeyTile = runTiles[firstNonOkeyIdx];
+              const val = firstNonOkeyTile.effectiveValue !== undefined ? firstNonOkeyTile.effectiveValue : firstNonOkeyTile.number;
+              startCol = val - firstNonOkeyIdx;
+            }
+            startCol = Math.max(1, Math.min(13 - runTiles.length + 1, startCol));
+
+            runTiles.forEach((t, i) => {
+              const colIndex = startCol + i;
+              if (slotElements[colIndex]) {
+                slotElements[colIndex].classList.add('has-tile');
+                const tileEl = this.createTileDOM(t, false, true);
+                slotElements[colIndex].appendChild(tileEl);
+              }
+            });
+          } else if (meld.type === 'group') {
+            const firstNonOkeyTile = meld.tiles.find(t => !t.isOkey) || meld.tiles[0];
+            const groupNum = firstNonOkeyTile ? (firstNonOkeyTile.effectiveValue !== undefined ? firstNonOkeyTile.effectiveValue : firstNonOkeyTile.number) : 1;
+            const startCol = Math.max(1, Math.min(13 - meld.tiles.length + 1, groupNum));
+
+            meld.tiles.forEach((t, i) => {
+              const colIndex = startCol + i;
+              if (slotElements[colIndex]) {
+                slotElements[colIndex].classList.add('has-tile');
+                const tileEl = this.createTileDOM(t, false, true);
+                slotElements[colIndex].appendChild(tileEl);
+              }
+            });
+          }
+
+          if (meld.tiles && meld.tiles.some(t => t.isOkey)) {
+            meldRow.classList.add('contains-okey-stealable');
+          }
+        }
+
+        container.appendChild(meldRow);
       }
+    };
 
-      targetContainer.appendChild(pairBox);
-    });
+    const renderPairsPanel = (container, startPairIdx) => {
+      for (let rowIdx = 0; rowIdx < 13; rowIdx++) {
+        const meld = pairMelds[startPairIdx + rowIdx];
+        const pairRow = document.createElement('div');
+        pairRow.className = 'table-pairs-row';
+        if (meld) {
+          pairRow.classList.add('meld-row', 'pairs-row');
+          pairRow.dataset.meldId = meld.id;
+        }
+
+        const slot1 = document.createElement('div');
+        slot1.className = 'grid-cell-slot pair-slot-1';
+        const slot2 = document.createElement('div');
+        slot2.className = 'grid-cell-slot pair-slot-2';
+
+        if (meld) {
+          const hasOkey = meld.tiles && meld.tiles.some(t => t.isOkey);
+          if (hasOkey) {
+            pairRow.classList.add('contains-okey-stealable');
+          }
+
+          if (meld.tiles[0]) {
+            slot1.classList.add('has-tile');
+            slot1.appendChild(this.createTileDOM(meld.tiles[0], false, true));
+          }
+          if (meld.tiles[1]) {
+            slot2.classList.add('has-tile');
+            slot2.appendChild(this.createTileDOM(meld.tiles[1], false, true));
+          }
+
+          if (isViewerTurn && viewerOpened && hasOkey) {
+            pairRow.title = 'Aynı taşa sahipseniz Okeyi almak için taşınızı bu çifte sürükleyin';
+            pairRow.addEventListener('dragover', (e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              pairRow.classList.add('meld-drag-hover');
+            });
+
+            pairRow.addEventListener('dragleave', (e) => {
+              if (!pairRow.contains(e.relatedTarget)) {
+                pairRow.classList.remove('meld-drag-hover');
+              }
+            });
+
+            pairRow.addEventListener('drop', (e) => {
+              e.preventDefault();
+              pairRow.classList.remove('meld-drag-hover');
+              const tileId = e.dataTransfer.getData('text/plain') || window.draggedTileId;
+              if (tileId && !tileId.startsWith('ACTION:')) {
+                if (this.onProcessTileDragDrop) {
+                  this.onProcessTileDragDrop(tileId, meld.id);
+                }
+              }
+            });
+
+            pairRow.addEventListener('click', () => {
+              if (this.onProcessTile) {
+                this.onProcessTile(meld.id);
+              }
+            });
+          }
+        }
+
+        pairRow.appendChild(slot1);
+        pairRow.appendChild(slot2);
+        container.appendChild(pairRow);
+      }
+    };
+
+    // 1. Render Left and Right 13x13 Seri Panels
+    renderSeriPanel(seri1RowsEl, 0);
+    renderSeriPanel(seri2RowsEl, 13);
+
+    // 2. Render Left and Right 2x13 Pairs Panels
+    renderPairsPanel(pairs1RowsEl, 0);
+    if (pairs2RowsEl) renderPairsPanel(pairs2RowsEl, 13);
   }
 
   createTileDOM(tile, isIndicator = false, isSmall = false) {
