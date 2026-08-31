@@ -90,11 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isOnline) {
         card.addEventListener('click', () => {
           socket.emit('auth:selectName', { name: item.name }, (res) => {
-            if (res.success) {
+            if (res.success && res.user) {
               ui.showToast(`Hoş geldin, ${res.user.displayName || res.user.username}!`, 'success');
-              handleLoginSuccess(res.user, res.token);
+              handleLoginSuccess(res.user, res.token, false);
             } else {
-              ui.showToast(res.reason, 'error');
+              ui.showToast(res.reason || 'Giriş yapılamadı.', 'error');
             }
           });
         });
@@ -110,23 +110,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showLobby() {
     stopTurnTimerLoop();
-    if (authView) authView.classList.add('hidden');
-    if (gameView) gameView.classList.add('hidden');
-    if (lobbyView) lobbyView.classList.remove('hidden');
+    if (authView) {
+      authView.classList.add('hidden');
+      authView.style.display = 'none';
+    }
+    if (gameView) {
+      gameView.classList.add('hidden');
+      gameView.style.display = 'none';
+    }
+    if (lobbyView) {
+      lobbyView.classList.remove('hidden');
+      lobbyView.style.display = 'flex';
+    }
     socket.emit('lobby:join');
   }
 
   function showAuth() {
     stopTurnTimerLoop();
-    if (lobbyView) lobbyView.classList.add('hidden');
-    if (gameView) gameView.classList.add('hidden');
-    if (authView) authView.classList.remove('hidden');
+    if (lobbyView) {
+      lobbyView.classList.add('hidden');
+      lobbyView.style.display = 'none';
+    }
+    if (gameView) {
+      gameView.classList.add('hidden');
+      gameView.style.display = 'none';
+    }
+    if (authView) {
+      authView.classList.remove('hidden');
+      authView.style.display = 'flex';
+    }
     socket.emit('auth:getAvailableNames', (list) => {
       renderNamePicker(list);
     });
   }
 
-  function handleLoginSuccess(user, token) {
+  function handleLoginSuccess(user, token, isReconnectCheck = false) {
     currentUser = user;
     if (token) {
       localStorage.setItem('okey101_auth_token', token);
@@ -135,14 +153,14 @@ document.addEventListener('DOMContentLoaded', () => {
     currentActivePlayerName = user.displayName || user.username;
     updateDocumentTitle(false);
 
-    // Update Lobby UI
+    // Update Lobby Profile Card
     updateLobbyProfileUI();
 
-    // Check if user was in an active game session (F5 reconnect)
-    const savedActiveRoom = localStorage.getItem('okey101_active_room') || user.currentRoomId;
+    // Check if user was in an active game session (Only for F5 reconnect checks)
+    const savedActiveRoom = isReconnectCheck ? (localStorage.getItem('okey101_active_room') || user.currentRoomId) : null;
     if (savedActiveRoom) {
       socket.emit('reconnectRoom', { roomId: savedActiveRoom, userId: user.id }, (res) => {
-        if (res.success) {
+        if (res && res.success) {
           setupGameRoom(res.roomId, res.seatIndex, res.isHost);
           if (res.gameState) {
             table.update(res.gameState);
@@ -166,8 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedToken = localStorage.getItem('okey101_auth_token');
   if (savedToken) {
     socket.emit('auth:autoLogin', { token: savedToken }, (res) => {
-      if (res.success) {
-        handleLoginSuccess(res.user, savedToken);
+      if (res && res.success && res.user) {
+        handleLoginSuccess(res.user, savedToken, true);
       } else {
         localStorage.removeItem('okey101_auth_token');
         localStorage.removeItem('okey101_user');
@@ -692,9 +710,18 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('okey101_active_room', rId);
 
     table.setViewerSeatIndex(viewerSeatIndex);
-    if (authView) authView.classList.add('hidden');
-    if (lobbyView) lobbyView.classList.add('hidden');
-    if (gameView) gameView.classList.remove('hidden');
+    if (authView) {
+      authView.classList.add('hidden');
+      authView.style.display = 'none';
+    }
+    if (lobbyView) {
+      lobbyView.classList.add('hidden');
+      lobbyView.style.display = 'none';
+    }
+    if (gameView) {
+      gameView.classList.remove('hidden');
+      gameView.style.display = 'flex';
+    }
 
     const codeEl = document.getElementById('display-room-code');
     if (codeEl) codeEl.textContent = roomId;
@@ -717,9 +744,18 @@ document.addEventListener('DOMContentLoaded', () => {
         roomId = gameRoomId;
         localStorage.setItem('okey101_active_room', roomId);
         table.setViewerSeatIndex(viewerSeatIndex);
-        if (authView) authView.classList.add('hidden');
-        if (lobbyView) lobbyView.classList.add('hidden');
-        if (gameView) gameView.classList.remove('hidden');
+        if (authView) {
+          authView.classList.add('hidden');
+          authView.style.display = 'none';
+        }
+        if (lobbyView) {
+          lobbyView.classList.add('hidden');
+          lobbyView.style.display = 'none';
+        }
+        if (gameView) {
+          gameView.classList.remove('hidden');
+          gameView.style.display = 'flex';
+        }
       }
     }
 

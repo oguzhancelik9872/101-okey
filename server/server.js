@@ -48,6 +48,7 @@ io.on('connection', (socket) => {
       if (res.success) {
         socket.userId = res.user.id;
         io.emit('auth:namesUpdate', db.getAvailableNames());
+        socket.emit('lobby:stateUpdate', roomManager.getLobbyState());
       }
       if (callback) callback(res);
     } catch (err) {
@@ -61,6 +62,7 @@ io.on('connection', (socket) => {
       if (user) {
         socket.userId = user.id;
         io.emit('auth:namesUpdate', db.getAvailableNames());
+        socket.emit('lobby:stateUpdate', roomManager.getLobbyState());
         if (callback) callback({ success: true, user });
       } else {
         if (callback) callback({ success: false, reason: 'Oturum süresi doldu.' });
