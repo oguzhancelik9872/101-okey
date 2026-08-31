@@ -60,9 +60,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let availableProfiles = [];
   let selectedCharName = null;
+  let livePreviewSelections = []; // [{ socketId, name }]
 
   function renderNamePicker(list) {
-    if (list) availableProfiles = list;
+    if (list) {
+      if (Array.isArray(list)) {
+        availableProfiles = list;
+      } else if (list.names) {
+        availableProfiles = list.names;
+        if (list.previews) livePreviewSelections = list.previews;
+      }
+    }
     const grid = document.getElementById('name-picker-grid');
     if (!grid) return;
     grid.innerHTML = '';
@@ -72,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const charItem = availableProfiles.find(p => p.name.toLowerCase() === selectedCharName.toLowerCase());
       if (!charItem || (charItem.isOnline && !charItem.isSelf)) {
         selectedCharName = null;
+        socket.emit('auth:previewSelect', { name: null });
         ui.showToast('Seçtiğiniz karakter az önce başka bir oyuncu tarafından alındı!', 'warning', 3500);
       }
     }
@@ -84,29 +93,38 @@ document.addEventListener('DOMContentLoaded', () => {
       const isOnline = item.isOnline && !item.isSelf;
       const isSelected = selectedCharName && selectedCharName.toLowerCase() === item.name.toLowerCase();
 
-      card.className = 'name-card' + (isOnline ? ' occupied' : ' available') + (isSelected ? ' selected' : '');
+      // Check if someone else on another socket is currently previewing/holding this character
+      const isBeingPreviewedByOther = !isOnline && !isSelected && livePreviewSelections.some(p => p.socketId !== socket.id && p.name && p.name.toLowerCase() === item.name.toLowerCase());
+
+      card.className = 'name-card' + (isOnline ? ' occupied' : ' available') + (isSelected ? ' selected' : '') + (isBeingPreviewedByOther ? ' previewed' : '');
 
       const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
         ? window.getPlayerAvatarSVG(item.displayName || item.name, item.gender || 'male', (item.avatarIndex !== undefined && item.avatarIndex !== null) ? item.avatarIndex : idx % 8)
         : '👤';
 
+      let statusHtml = '';
+      if (isOnline) {
+        statusHtml = '<span class="name-card-status status-occupied">🔴 Dolu / Çevrimiçi</span>';
+      } else if (isSelected) {
+        statusHtml = '<span class="name-card-status status-selected">✨ Seçildi</span>';
+      } else if (isBeingPreviewedByOther) {
+        statusHtml = '<span class="name-card-status status-previewed">👤 Seçiliyor...</span>';
+      } else {
+        statusHtml = '<span class="name-card-status status-available">🟢 Seçilebilir</span>';
+      }
+
       card.innerHTML = `
         <div class="name-card-avatar">${avatarSvg}</div>
         <div class="name-card-info">
           <span class="name-card-title">${item.name}</span>
-          <span class="name-card-status ${isOnline ? 'status-occupied' : isSelected ? 'status-selected' : 'status-available'}">
-            ${isOnline ? '🔴 Dolu / Çevrimiçi' : isSelected ? '✨ Seçildi' : '🟢 Seçilebilir'}
-          </span>
+          ${statusHtml}
         </div>
       `;
 
       if (!isOnline) {
         card.addEventListener('click', () => {
-          if (selectedCharName === item.name) {
-            // Already selected, double click feel
-          } else {
-            selectedCharName = item.name;
-          }
+          selectedCharName = item.name;
+          socket.emit('auth:previewSelect', { name: item.name });
           renderNamePicker();
         });
 
@@ -125,24 +143,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateEnterGameButton() {
     const btnEnter = document.getElementById('btn-enter-game');
-    const previewEl = document.getElementById('selected-character-preview');
+    if (!btnEnter) return;
 
-    if (previewEl) {
-      if (selectedCharName) {
-        previewEl.innerHTML = `<span class="char-selected-badge">✓ Seçilen Karakter: <strong>${selectedCharName}</strong></span>`;
-      } else {
-        previewEl.innerHTML = `<span class="char-hint">👉 Lütfen oynamak istediğiniz karakterin üzerine tıklayın</span>`;
-      }
-    }
-
-    if (btnEnter) {
-      if (selectedCharName) {
-        btnEnter.classList.remove('disabled');
-        btnEnter.removeAttribute('disabled');
-      } else {
-        btnEnter.classList.add('disabled');
-        btnEnter.setAttribute('disabled', 'true');
-      }
+    if (selectedCharName) {
+      btnEnter.classList.remove('disabled');
+      btnEnter.removeAttribute('disabled');
+    } else {
+      btnEnter.classList.add('disabled');
+      btnEnter.setAttribute('disabled', 'true');
     }
   }
 
@@ -158,8 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
         handleLoginSuccess(res.user, res.token, false);
       } else {
         ui.showToast(res.reason || 'Giriş yapılamadı.', 'error');
-        socket.emit('auth:getAvailableNames', (list) => {
-          renderNamePicker(list);
+        socket.emit('auth:getAvailableNames', (data) => {
+          renderNamePicker(data);
         });
       }
     });
@@ -173,9 +181,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Real-time live synchronization of character availability
+  // Real-time live synchronization of character availability & previews
   socket.on('auth:namesUpdate', (names) => {
     renderNamePicker(names);
+  });
+
+  socket.on('auth:previewSelectUpdate', (previews) => {
+    livePreviewSelections = previews || [];
+    renderNamePicker();
   });
 
   function showLobby() {
@@ -210,8 +223,9 @@ document.addEventListener('DOMContentLoaded', () => {
       authView.style.display = 'flex';
     }
     selectedCharName = null;
-    socket.emit('auth:getAvailableNames', (list) => {
-      renderNamePicker(list);
+    socket.emit('auth:previewSelect', { name: null });
+    socket.emit('auth:getAvailableNames', (data) => {
+      renderNamePicker(data);
     });
   }
 
@@ -267,10 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showAuth();
   }
 
-  // --- Profile Settings Modal & Avatar Picker ---
-  let selectedProfileAvatarIndex = 0;
-  let selectedProfileGender = 'male';
-
+  // --- Lobby Fixed Profile Display ---
   function updateLobbyProfileUI() {
     if (!currentUser) return;
     const nameEl = document.getElementById('lobby-display-name');
@@ -283,92 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
       avatarEl.innerHTML = window.getPlayerAvatarSVG(currentUser.displayName || currentUser.username, currentUser.gender, currentUser.avatarIndex);
     }
   }
-
-  function renderAvatarPicker() {
-    const grid = document.getElementById('avatar-picker-grid');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    const list = (selectedProfileGender === 'female') ? (window.femaleAvatars || []) : (window.maleAvatars || []);
-    list.forEach((svgHtml, idx) => {
-      const item = document.createElement('div');
-      item.className = 'avatar-pick-item' + (selectedProfileAvatarIndex === idx ? ' selected' : '');
-      item.innerHTML = svgHtml;
-      item.addEventListener('click', () => {
-        selectedProfileAvatarIndex = idx;
-        renderAvatarPicker();
-      });
-      grid.appendChild(item);
-    });
-  }
-
-  function openProfileModal() {
-    if (!currentUser) return;
-    const editNameInput = document.getElementById('edit-display-name');
-    if (editNameInput) editNameInput.value = currentUser.displayName || currentUser.username;
-
-    selectedProfileGender = currentUser.gender || 'male';
-    selectedProfileAvatarIndex = (currentUser.avatarIndex !== undefined && currentUser.avatarIndex !== null) ? currentUser.avatarIndex : 0;
-
-    const maleRadio = document.getElementById('gender-male');
-    const femaleRadio = document.getElementById('gender-female');
-    if (maleRadio) maleRadio.checked = (selectedProfileGender === 'male');
-    if (femaleRadio) femaleRadio.checked = (selectedProfileGender === 'female');
-
-    renderAvatarPicker();
-    ui.showModal('modal-profile-settings');
-  }
-
-  const btnOpenProfile = document.getElementById('btn-open-profile');
-  if (btnOpenProfile) btnOpenProfile.addEventListener('click', openProfileModal);
-
-  const btnEditAvatar = document.getElementById('btn-edit-avatar-trigger');
-  if (btnEditAvatar) btnEditAvatar.addEventListener('click', openProfileModal);
-
-  const btnCloseProfile = document.getElementById('btn-close-profile-modal');
-  if (btnCloseProfile) {
-    btnCloseProfile.addEventListener('click', () => {
-      ui.hideModal('modal-profile-settings');
-    });
-  }
-
-  // Gender change in profile modal
-  const genderRadios = document.querySelectorAll('input[name="edit-gender"]');
-  genderRadios.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      selectedProfileGender = e.target.value;
-      renderAvatarPicker();
-    });
-  });
-
-  // Profile Settings Form Submit
-  const formProfile = document.getElementById('form-profile-settings');
-  if (formProfile) {
-    formProfile.addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (!currentUser) return;
-
-      socket.emit('auth:updateProfile', {
-        userId: currentUser.id,
-        gender: selectedProfileGender,
-        avatarIndex: selectedProfileAvatarIndex
-      }, (res) => {
-        if (res.success) {
-          currentUser = res.user;
-          localStorage.setItem('okey101_user', JSON.stringify(currentUser));
-          currentActivePlayerName = currentUser.displayName || currentUser.username;
-          updateDocumentTitle(false);
-          updateLobbyProfileUI();
-          ui.hideModal('modal-profile-settings');
-          ui.showToast('Profiliniz güncellendi!', 'success');
-        } else {
-          ui.showToast(res.reason, 'error');
-        }
-      });
-    });
-  }
-
-
 
   // Logout Button
   const btnLogout = document.getElementById('btn-logout');
@@ -1537,19 +1462,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnToggleTimerTick = document.getElementById('btn-toggle-timer-tick');
 
   const btnMute = document.getElementById('btn-toggle-sound');
-  const btnLobbyMute = document.getElementById('btn-lobby-toggle-sound');
-  const lobbySoundIcon = document.getElementById('lobby-sound-icon');
-  const lobbySoundText = document.getElementById('lobby-sound-text');
+  const btnLobbySettings = document.getElementById('btn-lobby-settings') || document.getElementById('btn-lobby-toggle-sound');
 
   function updateSoundUI(isMuted) {
     if (btnMute) {
-      btnMute.innerHTML = isMuted ? '<span>🔇 Ses Ayarları (Kapalı)</span>' : '<span>🔊 Ses Ayarları</span>';
-    }
-    if (lobbySoundIcon) {
-      lobbySoundIcon.textContent = isMuted ? '🔇' : '🔊';
-    }
-    if (lobbySoundText) {
-      lobbySoundText.textContent = isMuted ? 'Ses: Kapalı' : 'Ses Ayarları';
+      btnMute.innerHTML = isMuted ? '<span>🔇 Ayarlar (Sessiz)</span>' : '<span>⚙️ Ayarlar</span>';
     }
   }
 
@@ -1690,7 +1607,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (btnMute) btnMute.addEventListener('click', openSoundSettingsModal);
-  if (btnLobbyMute) btnLobbyMute.addEventListener('click', openSoundSettingsModal);
+  if (btnLobbySettings) btnLobbySettings.addEventListener('click', openSoundSettingsModal);
 
   // Initialize Sound UI on load
   syncSoundSettingsModal();

@@ -979,6 +979,19 @@ body.plus-theme {
   box-shadow: 0 0 8px rgba(241, 196, 15, 0.5);
 }
 
+.status-previewed {
+  background: rgba(52, 152, 219, 0.25);
+  color: #5dade2;
+  border: 1px solid rgba(52, 152, 219, 0.4);
+  animation: pulse 1.5s infinite;
+}
+
+/* Being Previewed / Hovered by Another Player */
+.name-card.previewed {
+  border-color: rgba(52, 152, 219, 0.7);
+  box-shadow: 0 0 14px rgba(52, 152, 219, 0.4);
+}
+
 /* Selected Character Card */
 .name-card.selected {
   border-color: #2ecc71 !important;

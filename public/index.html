@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=20">
+  <link rel="stylesheet" href="css/style.css?v=21">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -25,13 +25,10 @@
             <!-- Rendered dynamically by gameClient.js for 8 friends in alphabetical order -->
           </div>
 
-          <!-- Bottom Action Container: Selection Info & "Lobiye Gir" Button -->
+          <!-- Bottom Action Container: "Oyuna Giriş Yap" Button -->
           <div class="auth-action-box">
-            <div id="selected-character-preview" class="selected-char-info">
-              <span class="char-hint">👉 Lütfen oynamak istediğiniz karakterin üzerine tıklayın</span>
-            </div>
             <button id="btn-enter-game" class="btn-enter-game disabled" disabled>
-              <span>🚀 LOBİYE GİR / OYUNA BAŞLA</span>
+              <span>🚀 OYUNA GİRİŞ YAP</span>
             </button>
           </div>
         </div>
@@ -50,25 +47,20 @@
           <h1 class="plus-logo-title">101 OKEY</h1>
         </div>
 
-        <!-- Right: Audio Settings & Profile Card -->
+        <!-- Right: Settings & Profile Card -->
         <div class="lobby-right-panel">
-          <button id="btn-lobby-toggle-sound" class="btn-lobby-sound" title="Sesi Aç / Kapat">
-            <span id="lobby-sound-icon">🔊</span>
-            <span id="lobby-sound-text">Ses: Açık</span>
+          <button id="btn-lobby-settings" class="btn-lobby-sound" title="Oyun ve Ses Ayarları">
+            <span>⚙️ Ayarlar</span>
           </button>
 
           <div class="plus-profile-card">
-            <div class="plus-avatar-box" id="btn-edit-avatar-trigger" style="cursor: pointer;" title="Avatarı Değiştir">
+            <div class="plus-avatar-box">
               <div id="lobby-avatar-img" class="plus-avatar-img">👨</div>
-              <div class="avatar-edit-badge" title="Düzenle">✏️</div>
             </div>
             <div class="plus-profile-details">
               <div class="lobby-user-header">
                 <strong id="lobby-display-name" class="lobby-user-name">Oyuncu</strong>
-                <div class="lobby-header-btns">
-                  <button id="btn-open-profile" class="btn-profile-edit" title="Profili Düzenle">⚙️ Profil</button>
-                  <button id="btn-logout" class="btn-logout" title="Çıkış Yap">🚪 Çıkış</button>
-                </div>
+                <button id="btn-logout" class="btn-logout" title="Çıkış Yap">🚪 Çıkış</button>
               </div>
               <span id="lobby-username-tag" class="lobby-user-tag">@oyuncu</span>
             </div>
@@ -365,53 +357,11 @@
 
     <!-- ================= PLUS MODALS ================= -->
     
-    <!-- Profile Settings Modal -->
-    <div id="modal-profile-settings" class="modal-backdrop hidden">
-      <div class="plus-modal-card" style="max-width: 480px;">
-        <div class="modal-header">
-          <h3>👤 PROFİL AYARLARI</h3>
-          <button class="btn-close-modal" id="btn-close-profile-modal">×</button>
-        </div>
-        
-        <form id="form-profile-settings" class="profile-settings-form">
-          <div class="input-group">
-            <label>Avatarınızı Seçin:</label>
-            <div id="avatar-picker-grid" class="avatar-picker-grid">
-              <!-- Dynamically populated avatar SVG options -->
-            </div>
-          </div>
-
-          <div class="input-group" style="margin-top: 10px;">
-            <label for="edit-display-name">Profil İsmi (Sabit):</label>
-            <input type="text" id="edit-display-name" class="plus-input" placeholder="İsminiz" maxlength="14" disabled readonly style="opacity: 0.8; cursor: not-allowed; background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.15); color: #f1c40f; font-weight: 700;">
-          </div>
-
-          <div class="input-group" style="margin-top: 10px;">
-            <label>Cinsiyet:</label>
-            <div class="gender-selector">
-              <label class="gender-option">
-                <input type="radio" name="edit-gender" value="male" id="gender-male">
-                <span>👨 Erkek</span>
-              </label>
-              <label class="gender-option">
-                <input type="radio" name="edit-gender" value="female" id="gender-female">
-                <span>👩 Kadın</span>
-              </label>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-plus-gold" style="width: 100%; margin-top: 15px;">
-            <span>💾 DEĞİŞİKLİKLERİ KAYDET</span>
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <!-- Sound Settings Modal -->
+    <!-- Settings & Audio Modal -->
     <div id="sound-settings-modal" class="modal-backdrop hidden">
       <div class="plus-modal-card" style="max-width: 480px;">
         <div class="plus-modal-header">
-          <h3>🔊 SES AYARLARI</h3>
+          <h3>⚙️ AYARLAR</h3>
           <button id="btn-close-sound-settings" class="btn-modal-close" title="Kapat">✕</button>
         </div>
 
@@ -490,11 +440,11 @@
 
   <!-- Socket.IO & Application Scripts (Cache Busted) -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/audio.js?v=20"></script>
-  <script src="js/validator.js?v=20"></script>
-  <script src="js/istaka.js?v=20"></script>
-  <script src="js/table.js?v=20"></script>
-  <script src="js/ui.js?v=20"></script>
-  <script src="js/gameClient.js?v=20"></script>
+  <script src="js/audio.js?v=21"></script>
+  <script src="js/validator.js?v=21"></script>
+  <script src="js/istaka.js?v=21"></script>
+  <script src="js/table.js?v=21"></script>
+  <script src="js/ui.js?v=21"></script>
+  <script src="js/gameClient.js?v=21"></script>
 </body>
 </html>
