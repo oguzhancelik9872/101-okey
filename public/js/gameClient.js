@@ -58,7 +58,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const lobbyView = document.getElementById('lobby-view');
   const gameView = document.getElementById('game-view');
 
-  let availableProfiles = [];
+  const DEFAULT_PROFILES = [
+    { name: 'Akın', gender: 'male', avatarIndex: 0 },
+    { name: 'Alperen', gender: 'male', avatarIndex: 1 },
+    { name: 'Efe', gender: 'male', avatarIndex: 2 },
+    { name: 'Furkan', gender: 'male', avatarIndex: 3 },
+    { name: 'Memiş', gender: 'male', avatarIndex: 4 },
+    { name: 'Oğuzhan', gender: 'male', avatarIndex: 5 },
+    { name: 'Özkan', gender: 'male', avatarIndex: 6 },
+    { name: 'Yekta', gender: 'male', avatarIndex: 7 }
+  ];
+
+  let availableProfiles = [...DEFAULT_PROFILES];
   let selectedCharName = null;
 
   function renderNamePicker(list) {
@@ -80,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sorted.forEach((item, idx) => {
       const card = document.createElement('div');
-      const isOccupied = item.isOnline && item.activeSocketId !== socket.id;
+      const isOccupied = Boolean(item.isOnline && item.activeSocketId && item.activeSocketId !== socket.id);
       const isSelected = selectedCharName && selectedCharName.toLowerCase() === item.name.toLowerCase();
 
       card.className = 'name-card' + (isOccupied ? ' occupied' : ' available') + (isSelected ? ' selected' : '');
@@ -167,15 +178,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.emit('auth:selectName', { name: nameToSelect }, (res) => {
       clearTimeout(resetTimer);
+      if (btnEnter) {
+        btnEnter.textContent = '🚀 OYUNA GİRİŞ YAP';
+        btnEnter.classList.remove('disabled');
+        btnEnter.removeAttribute('disabled');
+      }
+
       if (res && res.success && res.user) {
+        currentUser = res.user;
+        currentActivePlayerName = res.user.displayName || res.user.username;
         if (res.token) {
           localStorage.setItem('okey101_auth_token', res.token);
         }
         localStorage.setItem('okey101_user', JSON.stringify(res.user));
-        ui.showToast(`Hoş geldin, ${res.user.displayName || res.user.username}!`, 'success');
-        setTimeout(() => {
-          window.location.reload();
-        }, 150);
+        ui.showToast(`Hoş geldin, ${currentActivePlayerName}!`, 'success');
+        showLobby();
+        updateLobbyProfileUI();
       } else {
         ui.showToast((res && res.reason) || 'Giriş yapılamadı. Tekrar deneyin.', 'error');
         socket.emit('auth:getAvailableNames', (data) => {
@@ -239,6 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
       authView.style.display = 'flex';
     }
     selectedCharName = null;
+    renderNamePicker(DEFAULT_PROFILES);
     socket.emit('auth:getAvailableNames', (data) => {
       renderNamePicker(data);
     });
@@ -280,18 +299,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Auto-Login with saved token on page load
+  // --- Synchronous Instant View Initialization (Zero Flash) ---
+  const savedUserRaw = localStorage.getItem('okey101_user');
   const savedToken = localStorage.getItem('okey101_auth_token');
-  if (savedToken) {
-    socket.emit('auth:autoLogin', { token: savedToken }, (res) => {
-      if (res && res.success && res.user) {
-        handleLoginSuccess(res.user, savedToken, true);
-      } else {
-        localStorage.removeItem('okey101_auth_token');
-        localStorage.removeItem('okey101_user');
-        showAuth();
-      }
-    });
+
+  if (savedUserRaw && savedToken) {
+    try {
+      const user = JSON.parse(savedUserRaw);
+      handleLoginSuccess(user, savedToken, true);
+
+      // Verify token in background
+      socket.emit('auth:autoLogin', { token: savedToken }, (res) => {
+        if (res && res.success && res.user) {
+          currentUser = res.user;
+          updateLobbyProfileUI();
+        } else if (res && !res.success) {
+          localStorage.removeItem('okey101_auth_token');
+          localStorage.removeItem('okey101_user');
+          showAuth();
+        }
+      });
+    } catch (e) {
+      showAuth();
+    }
   } else {
     showAuth();
   }
