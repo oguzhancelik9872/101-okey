@@ -1514,12 +1514,18 @@ document.addEventListener('DOMContentLoaded', () => {
       window.soundEngine.saveSettings();
       window.soundEngine.updateAmbientVolume();
     });
+    sliderMaster.addEventListener('change', () => {
+      window.soundEngine.playDiscard();
+    });
   }
 
   if (btnMasterMute) {
     btnMasterMute.addEventListener('click', () => {
       window.soundEngine.toggleMute();
       syncSoundSettingsModal();
+      if (!window.soundEngine.settings.muted) {
+        window.soundEngine.playDiscard();
+      }
     });
   }
 
@@ -1529,6 +1535,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (labelSfx) labelSfx.textContent = `${sliderSfx.value}%`;
       window.soundEngine.saveSettings();
     });
+    sliderSfx.addEventListener('change', () => {
+      window.soundEngine.playDiscard();
+    });
   }
 
   if (btnToggleSfx) {
@@ -1536,6 +1545,9 @@ document.addEventListener('DOMContentLoaded', () => {
       window.soundEngine.settings.sfxEnabled = !window.soundEngine.settings.sfxEnabled;
       window.soundEngine.saveSettings();
       syncSoundSettingsModal();
+      if (window.soundEngine.settings.sfxEnabled) {
+        window.soundEngine.playDiscard();
+      }
     });
   }
 
@@ -1546,6 +1558,9 @@ document.addEventListener('DOMContentLoaded', () => {
       window.soundEngine.saveSettings();
       window.soundEngine.updateAmbientVolume();
     });
+    sliderAmbient.addEventListener('change', () => {
+      window.soundEngine._playTeaTinkle();
+    });
   }
 
   if (btnToggleAmbient) {
@@ -1554,6 +1569,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.soundEngine.saveSettings();
       if (window.soundEngine.settings.ambientEnabled && !window.soundEngine.settings.muted) {
         window.soundEngine.startAmbient();
+        window.soundEngine._playTeaTinkle();
       } else {
         window.soundEngine.stopAmbient();
       }
@@ -1566,6 +1582,9 @@ document.addEventListener('DOMContentLoaded', () => {
       window.soundEngine.settings.timerAlertEnabled = !window.soundEngine.settings.timerAlertEnabled;
       window.soundEngine.saveSettings();
       syncSoundSettingsModal();
+      if (window.soundEngine.settings.timerAlertEnabled) {
+        window.soundEngine.playTimerTick(10);
+      }
     });
   }
 

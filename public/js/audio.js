@@ -58,9 +58,6 @@ class OkeyAudio {
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
-    if (this.settings.ambientEnabled && !this.ambientRunning && !this.settings.muted) {
-      this.startAmbient();
-    }
   }
 
   _createNoiseBuffer() {
