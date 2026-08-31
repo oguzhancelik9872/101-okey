@@ -151,12 +151,25 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const btnEnter = document.getElementById('btn-enter-game');
+    if (btnEnter) {
+      btnEnter.textContent = '⏳ Giriş Yapılıyor...';
+      btnEnter.classList.add('disabled');
+      btnEnter.setAttribute('disabled', 'true');
+    }
+
     socket.emit('auth:selectName', { name: nameToSelect }, (res) => {
-      if (res.success && res.user) {
+      if (btnEnter) {
+        btnEnter.textContent = '🚀 OYUNA GİRİŞ YAP';
+        btnEnter.classList.remove('disabled');
+        btnEnter.removeAttribute('disabled');
+      }
+
+      if (res && res.success && res.user) {
         ui.showToast(`Hoş geldin, ${res.user.displayName || res.user.username}!`, 'success');
         handleLoginSuccess(res.user, res.token, false);
       } else {
-        ui.showToast(res.reason || 'Giriş yapılamadı.', 'error');
+        ui.showToast((res && res.reason) || 'Giriş yapılamadı. Tekrar deneyin.', 'error');
         socket.emit('auth:getAvailableNames', (data) => {
           renderNamePicker(data);
         });
@@ -168,7 +181,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnEnterGame = document.getElementById('btn-enter-game');
   if (btnEnterGame) {
     btnEnterGame.addEventListener('click', () => {
-      doSelectNameAndEnterLobby(selectedCharName);
+      if (selectedCharName) {
+        doSelectNameAndEnterLobby(selectedCharName);
+      } else {
+        ui.showToast('Lütfen oynamak için bir karakter seçin!', 'warning');
+      }
     });
   }
 

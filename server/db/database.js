@@ -117,7 +117,8 @@ class Database {
     const uname = matched.toLowerCase();
     const existingSocket = this.activeUsers.get(uname);
     if (existingSocket && existingSocket !== socketId) {
-      return { success: false, reason: 'Bu karakter şu anda başka bir oyuncu tarafından kullanılıyor!' };
+      // Release ghost or previous session socket
+      this.releaseSocket(existingSocket);
     }
 
     // Release any previous name this socket held
@@ -129,15 +130,17 @@ class Database {
 
     const userId = this.usernameIndex.get(uname);
     const user = this.users.get(userId);
-    user.displayName = matched; // Keep exact predefined name
-    user.lastLogin = Date.now();
-    this.save();
+    if (user) {
+      user.displayName = matched;
+      user.lastLogin = Date.now();
+      this.save();
+    }
 
-    const token = this.generateToken(user.id);
+    const token = this.generateToken(user ? user.id : uname);
     return {
       success: true,
       token,
-      user: this.sanitizeUser(user)
+      user: this.sanitizeUser(user || { id: uname, username: uname, displayName: matched })
     };
   }
 
