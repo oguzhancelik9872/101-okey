@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const gameView = document.getElementById('game-view');
 
   let availableProfiles = [];
+  let selectedCharName = null;
 
   function renderNamePicker(list) {
     if (list) availableProfiles = list;
@@ -66,13 +67,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!grid) return;
     grid.innerHTML = '';
 
+    // If previously selected name is now occupied by someone else, deselect it
+    if (selectedCharName) {
+      const charItem = availableProfiles.find(p => p.name.toLowerCase() === selectedCharName.toLowerCase());
+      if (!charItem || (charItem.isOnline && !charItem.isSelf)) {
+        selectedCharName = null;
+        ui.showToast('Seçtiğiniz karakter az önce başka bir oyuncu tarafından alındı!', 'warning', 3500);
+      }
+    }
+
     // Sort alphabetically in Turkish
     const sorted = [...availableProfiles].sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
     sorted.forEach((item, idx) => {
       const card = document.createElement('div');
       const isOnline = item.isOnline && !item.isSelf;
-      card.className = 'name-card' + (isOnline ? ' occupied' : ' available');
+      const isSelected = selectedCharName && selectedCharName.toLowerCase() === item.name.toLowerCase();
+
+      card.className = 'name-card' + (isOnline ? ' occupied' : ' available') + (isSelected ? ' selected' : '');
 
       const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
         ? window.getPlayerAvatarSVG(item.displayName || item.name, item.gender || 'male', (item.avatarIndex !== undefined && item.avatarIndex !== null) ? item.avatarIndex : idx % 8)
@@ -82,29 +94,86 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="name-card-avatar">${avatarSvg}</div>
         <div class="name-card-info">
           <span class="name-card-title">${item.name}</span>
-          <span class="name-card-status ${isOnline ? 'status-occupied' : 'status-available'}">
-            ${isOnline ? '🔴 Çevrimiçi' : '🟢 Giriş Yap'}
+          <span class="name-card-status ${isOnline ? 'status-occupied' : isSelected ? 'status-selected' : 'status-available'}">
+            ${isOnline ? '🔴 Dolu / Çevrimiçi' : isSelected ? '✨ Seçildi' : '🟢 Seçilebilir'}
           </span>
         </div>
       `;
 
       if (!isOnline) {
         card.addEventListener('click', () => {
-          socket.emit('auth:selectName', { name: item.name }, (res) => {
-            if (res.success && res.user) {
-              ui.showToast(`Hoş geldin, ${res.user.displayName || res.user.username}!`, 'success');
-              handleLoginSuccess(res.user, res.token, false);
-            } else {
-              ui.showToast(res.reason || 'Giriş yapılamadı.', 'error');
-            }
-          });
+          if (selectedCharName === item.name) {
+            // Already selected, double click feel
+          } else {
+            selectedCharName = item.name;
+          }
+          renderNamePicker();
+        });
+
+        // Double click directly joins
+        card.addEventListener('dblclick', () => {
+          selectedCharName = item.name;
+          doSelectNameAndEnterLobby(item.name);
         });
       }
 
       grid.appendChild(card);
     });
+
+    updateEnterGameButton();
   }
 
+  function updateEnterGameButton() {
+    const btnEnter = document.getElementById('btn-enter-game');
+    const previewEl = document.getElementById('selected-character-preview');
+
+    if (previewEl) {
+      if (selectedCharName) {
+        previewEl.innerHTML = `<span class="char-selected-badge">✓ Seçilen Karakter: <strong>${selectedCharName}</strong></span>`;
+      } else {
+        previewEl.innerHTML = `<span class="char-hint">👉 Lütfen oynamak istediğiniz karakterin üzerine tıklayın</span>`;
+      }
+    }
+
+    if (btnEnter) {
+      if (selectedCharName) {
+        btnEnter.classList.remove('disabled');
+        btnEnter.removeAttribute('disabled');
+      } else {
+        btnEnter.classList.add('disabled');
+        btnEnter.setAttribute('disabled', 'true');
+      }
+    }
+  }
+
+  function doSelectNameAndEnterLobby(nameToSelect) {
+    if (!nameToSelect) {
+      ui.showToast('Lütfen oynamak için bir karakter seçin!', 'warning');
+      return;
+    }
+
+    socket.emit('auth:selectName', { name: nameToSelect }, (res) => {
+      if (res.success && res.user) {
+        ui.showToast(`Hoş geldin, ${res.user.displayName || res.user.username}!`, 'success');
+        handleLoginSuccess(res.user, res.token, false);
+      } else {
+        ui.showToast(res.reason || 'Giriş yapılamadı.', 'error');
+        socket.emit('auth:getAvailableNames', (list) => {
+          renderNamePicker(list);
+        });
+      }
+    });
+  }
+
+  // Bind Enter Game Button Click
+  const btnEnterGame = document.getElementById('btn-enter-game');
+  if (btnEnterGame) {
+    btnEnterGame.addEventListener('click', () => {
+      doSelectNameAndEnterLobby(selectedCharName);
+    });
+  }
+
+  // Real-time live synchronization of character availability
   socket.on('auth:namesUpdate', (names) => {
     renderNamePicker(names);
   });
@@ -140,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
       authView.classList.remove('hidden');
       authView.style.display = 'flex';
     }
+    selectedCharName = null;
     socket.emit('auth:getAvailableNames', (list) => {
       renderNamePicker(list);
     });

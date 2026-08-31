@@ -116,6 +116,10 @@ class Database {
     }
 
     const uname = matched.toLowerCase();
+    const existingSocket = this.activeUsers.get(uname);
+    if (existingSocket && existingSocket !== socketId) {
+      return { success: false, reason: 'Bu karakter şu anda başka bir oyuncu tarafından kullanılıyor!' };
+    }
 
     // Release any previous name this socket held
     this.releaseSocket(socketId);

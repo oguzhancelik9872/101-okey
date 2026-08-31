@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=19">
+  <link rel="stylesheet" href="css/style.css?v=20">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -15,14 +15,24 @@
     <!-- ================= 101 OKEY AUTH VIEW (NAME SELECTOR) ================= -->
     <div id="auth-view">
       <div class="plus-lobby-wrapper name-picker-wrapper">
-        <div class="plus-logo-box" style="margin-bottom: 18px;">
+        <div class="plus-logo-box" style="margin-bottom: 16px;">
           <h1 class="plus-logo-title" style="font-size: 44px; font-weight: 900; letter-spacing: 3px; margin: 0; color: #f1c40f; text-shadow: 0 4px 15px rgba(0,0,0,0.8);">101 OKEY</h1>
-          <p style="color: #a8d5ba; font-size: 14px; margin: 6px 0 0 0; font-weight: 700;">Profilinizi seçin ve masaya katılın</p>
+          <p style="color: #a8d5ba; font-size: 14px; margin: 6px 0 0 0; font-weight: 700;">Karakterinizi seçin ve lobiye katılın</p>
         </div>
 
         <div class="auth-card name-picker-card">
           <div class="name-picker-grid" id="name-picker-grid">
             <!-- Rendered dynamically by gameClient.js for 8 friends in alphabetical order -->
+          </div>
+
+          <!-- Bottom Action Container: Selection Info & "Lobiye Gir" Button -->
+          <div class="auth-action-box">
+            <div id="selected-character-preview" class="selected-char-info">
+              <span class="char-hint">👉 Lütfen oynamak istediğiniz karakterin üzerine tıklayın</span>
+            </div>
+            <button id="btn-enter-game" class="btn-enter-game disabled" disabled>
+              <span>🚀 LOBİYE GİR / OYUNA BAŞLA</span>
+            </button>
           </div>
         </div>
       </div>
@@ -480,11 +490,11 @@
 
   <!-- Socket.IO & Application Scripts (Cache Busted) -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/audio.js?v=19"></script>
-  <script src="js/validator.js?v=19"></script>
-  <script src="js/istaka.js?v=19"></script>
-  <script src="js/table.js?v=19"></script>
-  <script src="js/ui.js?v=19"></script>
-  <script src="js/gameClient.js?v=19"></script>
+  <script src="js/audio.js?v=20"></script>
+  <script src="js/validator.js?v=20"></script>
+  <script src="js/istaka.js?v=20"></script>
+  <script src="js/table.js?v=20"></script>
+  <script src="js/ui.js?v=20"></script>
+  <script src="js/gameClient.js?v=20"></script>
 </body>
 </html>
