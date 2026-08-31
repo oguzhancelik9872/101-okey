@@ -327,8 +327,8 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', uptime: process.uptime() });
 });
 
-// Wildcard SPA route fallback (prevents 404 on page refresh)
-app.get('*', (req, res) => {
+// Wildcard SPA route fallback (Express 5 compatible)
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
