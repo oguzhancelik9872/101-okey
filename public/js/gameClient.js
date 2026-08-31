@@ -30,10 +30,12 @@ document.addEventListener('DOMContentLoaded', () => {
     onProcessTileDragDrop: (tileId, targetMeldId) => handleProcessTileById(tileId, targetMeldId)
   });
 
-  // --- Dynamic Title & LocalStorage Sync ---
+  // --- Dynamic Title, LocalStorage & Global UI State ---
   let currentActivePlayerName = 'Oyuncu';
   let titleBlinkInterval = null;
   let currentUser = null;
+  let turnTimerLoop = null;
+  let lastTickedSecond = null;
 
   function updateDocumentTitle(isMyTurn = false) {
     if (titleBlinkInterval) {
@@ -57,6 +59,52 @@ document.addEventListener('DOMContentLoaded', () => {
   const authView = document.getElementById('auth-view');
   const lobbyView = document.getElementById('lobby-view');
   const gameView = document.getElementById('game-view');
+
+  function stopTurnTimerLoop() {
+    if (turnTimerLoop) {
+      clearInterval(turnTimerLoop);
+      turnTimerLoop = null;
+    }
+    lastTickedSecond = null;
+    const myTimerBar = document.getElementById('my-turn-timer-bar');
+    if (myTimerBar) {
+      myTimerBar.classList.add('hidden');
+      myTimerBar.classList.remove('warning');
+    }
+  }
+
+  function clearChatMessages() {
+    const chatLogs = document.getElementById('chat-messages');
+    if (chatLogs) {
+      chatLogs.innerHTML = '<div class="chat-welcome-msg">💬 Masa sohbetine hoş geldiniz!</div>';
+    }
+    const tableBadge = document.getElementById('table-chat-badge');
+    const lobbyBadge = document.getElementById('lobby-chat-badge');
+    if (tableBadge) tableBadge.classList.add('hidden');
+    if (lobbyBadge) lobbyBadge.classList.add('hidden');
+  }
+
+  function closeAllDrawers() {
+    const cDrawer = document.getElementById('chat-drawer');
+    const sDrawer = document.getElementById('settings-drawer');
+    const dBackdrop = document.getElementById('drawer-backdrop');
+    if (cDrawer) cDrawer.classList.remove('open');
+    if (sDrawer) sDrawer.classList.remove('open');
+    if (dBackdrop) dBackdrop.classList.add('hidden');
+  }
+
+  function updateLobbyProfileUI() {
+    if (!currentUser) return;
+    const nameEl = document.getElementById('lobby-display-name');
+    const tagEl = document.getElementById('lobby-username-tag');
+    const avatarEl = document.getElementById('lobby-avatar-img');
+
+    if (nameEl) nameEl.textContent = currentUser.displayName || currentUser.username;
+    if (tagEl) tagEl.textContent = '@' + currentUser.username;
+    if (avatarEl && typeof window.getPlayerAvatarSVG === 'function') {
+      avatarEl.innerHTML = window.getPlayerAvatarSVG(currentUser.displayName || currentUser.username, currentUser.gender, currentUser.avatarIndex);
+    }
+  }
 
   const DEFAULT_PROFILES = [
     { name: 'Akın', gender: 'male', avatarIndex: 0 },
@@ -277,19 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showAuth();
   }
 
-  // --- Lobby Fixed Profile Display ---
-  function updateLobbyProfileUI() {
-    if (!currentUser) return;
-    const nameEl = document.getElementById('lobby-display-name');
-    const tagEl = document.getElementById('lobby-username-tag');
-    const avatarEl = document.getElementById('lobby-avatar-img');
 
-    if (nameEl) nameEl.textContent = currentUser.displayName || currentUser.username;
-    if (tagEl) tagEl.textContent = '@' + currentUser.username;
-    if (avatarEl && typeof window.getPlayerAvatarSVG === 'function') {
-      avatarEl.innerHTML = window.getPlayerAvatarSVG(currentUser.displayName || currentUser.username, currentUser.gender, currentUser.avatarIndex);
-    }
-  }
 
   // Logout Button
   const btnLogout = document.getElementById('btn-logout');
@@ -904,8 +940,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Turn Timer Animation Loop (30s clock with last 5s gentle countdown tick)
-  let turnTimerLoop = null;
-  let lastTickedSecond = null;
   function startTurnTimerLoop() {
     if (turnTimerLoop) return;
     lastTickedSecond = null;
@@ -967,19 +1001,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }, 100);
-  }
-
-  function stopTurnTimerLoop() {
-    if (turnTimerLoop) {
-      clearInterval(turnTimerLoop);
-      turnTimerLoop = null;
-    }
-    lastTickedSecond = null;
-    const myTimerBar = document.getElementById('my-turn-timer-bar');
-    if (myTimerBar) {
-      myTimerBar.classList.add('hidden');
-      myTimerBar.classList.remove('warning');
-    }
   }
 
   // --- Action Bar & In-Game Controls ---
@@ -1448,15 +1469,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const drawerInGameActions = document.getElementById('drawer-in-game-actions');
   const btnDrawerLeaveTable = document.getElementById('btn-drawer-leave-table');
 
-  function clearChatMessages() {
-    const chatLogs = document.getElementById('chat-messages');
-    if (chatLogs) {
-      chatLogs.innerHTML = '<div class="chat-welcome-msg">💬 Masa sohbetine hoş geldiniz!</div>';
-    }
-    if (tableChatBadge) tableChatBadge.classList.add('hidden');
-    if (lobbyChatBadge) lobbyChatBadge.classList.add('hidden');
-  }
-
   function openDrawer(drawer) {
     if (!drawer) return;
     window.soundEngine.init();
@@ -1475,12 +1487,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (drawer === settingsDrawer) {
       syncSettingsDrawer();
     }
-  }
-
-  function closeAllDrawers() {
-    if (chatDrawer) chatDrawer.classList.remove('open');
-    if (settingsDrawer) settingsDrawer.classList.remove('open');
-    if (drawerBackdrop) drawerBackdrop.classList.add('hidden');
   }
 
   if (btnLobbyChat) btnLobbyChat.addEventListener('click', () => openDrawer(chatDrawer));
