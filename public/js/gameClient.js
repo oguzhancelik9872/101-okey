@@ -179,6 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showLobby() {
     stopTurnTimerLoop();
+    closeAllDrawers();
+    clearChatMessages();
     if (authView) {
       authView.classList.add('hidden');
       authView.style.display = 'none';
@@ -682,6 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
     isHost = hostFlag;
     roundStartedHandSorted = false;
     localStorage.setItem('okey101_active_room', rId);
+    clearChatMessages();
 
     table.setViewerSeatIndex(viewerSeatIndex);
     if (authView) {
@@ -1415,6 +1418,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const drawerInGameActions = document.getElementById('drawer-in-game-actions');
   const btnDrawerLeaveTable = document.getElementById('btn-drawer-leave-table');
 
+  function clearChatMessages() {
+    const chatLogs = document.getElementById('chat-messages');
+    if (chatLogs) {
+      chatLogs.innerHTML = '<div class="chat-welcome-msg">💬 Masa sohbetine hoş geldiniz!</div>';
+    }
+    if (tableChatBadge) tableChatBadge.classList.add('hidden');
+    if (lobbyChatBadge) lobbyChatBadge.classList.add('hidden');
+  }
+
   function openDrawer(drawer) {
     if (!drawer) return;
     window.soundEngine.init();
@@ -1455,16 +1467,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') closeAllDrawers();
   });
 
-  // --- Live Chat Message Handling ---
+  // --- Live Chat Message Handling (In-Game Only) ---
   function sendChatMessage(customText = null) {
+    if (!roomId) {
+      ui.showToast('Sohbet yalnızca oyun masasında kullanılabilir.', 'info');
+      return;
+    }
+
     const text = (customText !== null) ? customText.trim() : (chatInput ? chatInput.value.trim() : '');
     if (!text) return;
 
     const myName = currentActivePlayerName || (currentUser ? currentUser.displayName : 'Oyuncu');
-    const targetRoom = roomId || 'lobby';
 
     socket.emit('sendChat', {
-      roomId: targetRoom,
+      roomId,
       sender: myName,
       text
     });

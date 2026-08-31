@@ -489,9 +489,10 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Chat message
+  // Chat message (in-game table only)
   socket.on('sendChat', (data) => {
-    const targetRoom = (data && data.roomId) || socket.roomId || 'lobby';
+    const targetRoom = (data && data.roomId) || socket.roomId;
+    if (!targetRoom || targetRoom === 'lobby') return;
     io.to(targetRoom).emit('chatMessage', {
       sender: (data && data.sender) || 'Oyuncu',
       text: (data && data.text) || '',
