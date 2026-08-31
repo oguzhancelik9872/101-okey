@@ -257,20 +257,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedUserRaw = localStorage.getItem('okey101_user');
   const savedToken = localStorage.getItem('okey101_auth_token');
 
-  if (savedUserRaw && savedToken) {
+  if (savedUserRaw) {
     try {
       const user = JSON.parse(savedUserRaw);
       handleLoginSuccess(user, savedToken, true);
 
-      // Verify token in background
-      socket.emit('auth:autoLogin', { token: savedToken }, (res) => {
+      // Restore session in background on socket connect/reconnect
+      socket.emit('auth:autoLogin', { token: savedToken, userId: user.id, username: user.username }, (res) => {
         if (res && res.success && res.user) {
           currentUser = res.user;
           updateLobbyProfileUI();
-        } else if (res && !res.success) {
-          localStorage.removeItem('okey101_auth_token');
-          localStorage.removeItem('okey101_user');
-          showAuth();
         }
       });
     } catch (e) {

@@ -144,11 +144,20 @@ class Database {
     };
   }
 
-  verifyToken(token, socketId = null) {
-    if (!token) return null;
-    const userId = this.tokens.get(token);
+  verifyToken(token, socketId = null, fallbackUserId = null) {
+    let userId = token ? this.tokens.get(token) : null;
+    if (!userId && fallbackUserId) {
+      userId = this.usernameIndex.get(String(fallbackUserId).toLowerCase()) || fallbackUserId;
+    }
     if (!userId) return null;
-    const user = this.users.get(userId);
+    let user = this.users.get(userId);
+    if (!user) {
+      const clean = String(userId).toLowerCase();
+      const matched = ALLOWED_PLAYERS.find(p => p.toLowerCase() === clean);
+      if (matched) {
+        user = this.users.get(this.usernameIndex.get(matched.toLowerCase()));
+      }
+    }
     if (!user) return null;
 
     if (socketId) {

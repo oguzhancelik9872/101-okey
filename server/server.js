@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
 
   socket.on('auth:autoLogin', (data, callback) => {
     try {
-      const user = db.verifyToken(data.token, socket.id);
+      const user = db.verifyToken(data.token, socket.id, data.userId || data.username);
       if (user) {
         socket.userId = user.id;
         io.emit('auth:namesUpdate', db.getAvailableNames());
