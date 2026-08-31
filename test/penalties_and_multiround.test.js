@@ -90,13 +90,45 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(processRes.success, true);
   assert.strictEqual(processRes.okeyStolen, true);
 
-  // Opponent team (Player 1 & 3) should now have an extra +101 penalty (+202 total)
+  // ONLY Player 1 (the meld owner) should now have an extra +101 penalty (+202 total), Player 3 remains 101
   assert.strictEqual(game.players[1].penaltyPoints, initialP1Penalties + 101);
-  assert.strictEqual(game.players[3].penaltyPoints, initialP3Penalties + 101);
-  console.log('   Okey Steal Penalty: PASSED (Opponent Team got +101)');
+  assert.strictEqual(game.players[3].penaltyPoints, initialP3Penalties);
+  console.log('   Okey Steal Penalty: PASSED (Only meld owner got +101)');
 
-  // 5. Test Single-Match Game Over and Rematch Starting Player Rotation
-  console.log('4. Testing Single-Match Finish & Rematch Rotation...');
+  // 5. Test Team Folding Rules (Katlamalı Sistem)
+  console.log('4. Testing Team Folding Rules (Katlamalı)...');
+  // Team 1 Player 0 opened with 171 points.
+  // Team 2 (Player 1 & 3) now needs 172 points to open runs!
+  const reqsP1 = game.getMinOpenRequirements(1);
+  assert.strictEqual(reqsP1.minScore, 172);
+
+  // But Team 1 Player 2 (Partner) only needs 101 points since Team 2 hasn't opened!
+  const reqsP2 = game.getMinOpenRequirements(2);
+  assert.strictEqual(reqsP2.minScore, 101);
+
+  // If Player 1 opens 5 pairs:
+  game.players[1].opened = true;
+  game.players[1].openType = 'pairs';
+  game.players[1].openedMelds = [
+    { type: 'pairs', score: 10 },
+    { type: 'pairs', score: 10 },
+    { type: 'pairs', score: 10 },
+    { type: 'pairs', score: 10 },
+    { type: 'pairs', score: 10 }
+  ];
+
+  // Now Team 1 (Player 0 & 2) needs 6 pairs to open pairs!
+  const reqsTeam1Pairs = game.getMinOpenRequirements(2);
+  assert.strictEqual(reqsTeam1Pairs.minPairs, 6);
+
+  // But Player 3 (Partner of Player 1) only needs 5 pairs!
+  const reqsTeam2Pairs = game.getMinOpenRequirements(3);
+  assert.strictEqual(reqsTeam2Pairs.minPairs, 5);
+
+  console.log('   Team Folding Rules: PASSED');
+
+  // 6. Test Single-Match Game Over and Rematch Starting Player Rotation
+  console.log('5. Testing Single-Match Finish & Rematch Rotation...');
   // End match 1
   game.endRound(2, false, false);
   assert.strictEqual(game.state, GAME_STATES.GAME_OVER);

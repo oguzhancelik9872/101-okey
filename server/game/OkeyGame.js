@@ -293,6 +293,38 @@ class OkeyGame {
   }
 
   /**
+   * Calculates minimum open requirements for a player based on opponent team openings (Katlamalı Sistem)
+   */
+  getMinOpenRequirements(playerIndex) {
+    const player = this.players[playerIndex];
+    if (!player) return { minScore: 101, minPairs: 5 };
+
+    const isTeam1 = (playerIndex % 2 === 0);
+    const oppIndices = isTeam1 ? [1, 3] : [0, 2];
+
+    let maxOpponentScore = 0;
+    let maxOpponentPairs = 0;
+
+    for (const oppIdx of oppIndices) {
+      const opp = this.players[oppIdx];
+      if (opp && opp.opened) {
+        if (opp.openType === 'seri') {
+          const oppScore = opp.openedMelds ? opp.openedMelds.reduce((s, m) => s + (m.score || 0), 0) : 0;
+          if (oppScore > maxOpponentScore) maxOpponentScore = oppScore;
+        } else if (opp.openType === 'pairs') {
+          const oppPairs = opp.openedMelds ? opp.openedMelds.filter(m => m.type === 'pairs').length : 0;
+          if (oppPairs > maxOpponentPairs) maxOpponentPairs = oppPairs;
+        }
+      }
+    }
+
+    const minScore = maxOpponentScore > 0 ? (maxOpponentScore + 1) : 101;
+    const minPairs = maxOpponentPairs > 0 ? (maxOpponentPairs + 1) : 5;
+
+    return { minScore, minPairs };
+  }
+
+  /**
    * Open Hand with Runs/Groups (Seri Açma)
    * melds: array of tile ID arrays e.g. [['red_1', 'red_2', 'red_3'], ...]
    */
@@ -333,7 +365,8 @@ class OkeyGame {
       }
     }
 
-    const minRequired = player.opened ? 0 : this.minOpenScore;
+    const reqs = this.getMinOpenRequirements(playerIndex);
+    const minRequired = player.opened ? 0 : reqs.minScore;
     const validation = Validator.validateOpening(melds, this.indicator, minRequired);
 
     if (!validation.valid) {
@@ -370,10 +403,6 @@ class OkeyGame {
         }
       });
       this.addLog(`🔥 ${player.name} ${validation.score} (153+) puanla açtı! Rakip takım +101 ceza aldı!`);
-    }
-
-    if (firstTime && this.mode === GAME_MODES.FOLDED) {
-      this.minOpenScore = Math.max(this.minOpenScore, validation.score + 1);
     }
 
     this.drawnFromDiscard = null; // Successfully used
@@ -426,7 +455,8 @@ class OkeyGame {
       }
     }
 
-    const minRequired = player.opened ? 0 : this.minOpenPairs;
+    const reqs = this.getMinOpenRequirements(playerIndex);
+    const minRequired = player.opened ? 0 : reqs.minPairs;
     const validation = Validator.validatePairsOpening(pairs, this.indicator, minRequired);
 
     if (!validation.valid) {
@@ -511,17 +541,14 @@ class OkeyGame {
     if (processCheck.isOkeySteal && processCheck.stolenOkeyTile) {
       player.hand.push(processCheck.stolenOkeyTile);
 
-      // If stolen from opponent's meld, opponent team gets +101 penalty!
-      if (targetMeld && targetMeld.playerIndex !== undefined && (playerIndex % 2 !== targetMeld.playerIndex % 2)) {
-        const oppSeats = [targetMeld.playerIndex, (targetMeld.playerIndex + 2) % 4];
-        oppSeats.forEach(s => {
-          const oppP = this.players[s];
-          if (oppP) {
-            oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
-            oppP.penalties.push({ type: 'OKEY_STOLEN', points: 101, desc: 'Okey kaptırma cezası (+101)' });
-          }
-        });
-        this.addLog(`✨ ${player.name} perdeki Okey'i aldı! Rakip takım +101 ceza aldı!`);
+      // If stolen from someone else's meld, only that specific player gets +101 penalty!
+      if (targetMeld && targetMeld.playerIndex !== undefined && playerIndex !== targetMeld.playerIndex) {
+        const meldOwner = this.players[targetMeld.playerIndex];
+        if (meldOwner) {
+          meldOwner.penaltyPoints = (meldOwner.penaltyPoints || 0) + 101;
+          meldOwner.penalties.push({ type: 'OKEY_STOLEN', points: 101, desc: 'Okey kaptırma cezası (+101)' });
+          this.addLog(`✨ ${player.name} perdeki Okey'i aldı! ${meldOwner.name} +101 ceza aldı!`);
+        }
       } else {
         this.addLog(`✨ ${player.name} perdeki Okey'in yerine taş işleyerek OKEY'i eline aldı!`);
       }
@@ -859,11 +886,12 @@ class OkeyGame {
         if (leftDiscard && leftDiscard.length > 0) {
           const topDiscard = leftDiscard[leftDiscard.length - 1];
           const testHand = [...bot.hand, topDiscard];
+          const botReqs = this.getMinOpenRequirements(botIndex);
 
           if (!bot.opened) {
             const best = BotAI.findBestMelds(testHand, this.indicator);
             const usesDiscard = best.melds.some(m => m.some(t => t.id === topDiscard.id));
-            if (best.score >= this.minOpenScore && usesDiscard) {
+            if (best.score >= botReqs.minScore && usesDiscard) {
               const drawRes = this.drawTile(botIndex, 'discard');
               if (drawRes && drawRes.success) drawnFromDiscard = true;
             }
@@ -887,14 +915,15 @@ class OkeyGame {
       // Step 2: Open hand if possible
       if (!bot.opened && this.turnState === 'DISCARD') {
         try {
+          const botReqs = this.getMinOpenRequirements(botIndex);
           const best = BotAI.findBestMelds(bot.hand, this.indicator);
-          if (best.score >= this.minOpenScore) {
+          if (best.score >= botReqs.minScore) {
             const meldIds = best.melds.map(m => m.map(t => t.id));
             this.openHand(botIndex, meldIds);
           } else {
             // Try pairs
             const pairs = BotAI.findAllPairs(bot.hand, this.indicator);
-            if (pairs.length >= this.minOpenPairs) {
+            if (pairs.length >= botReqs.minPairs) {
               const pairIds = pairs.map(p => [p[0].id, p[1].id]);
               this.openPairs(botIndex, pairIds);
             }
@@ -1050,6 +1079,9 @@ class OkeyGame {
    */
   getClientState(viewerSeatIndex) {
     const okeyInfo = this.deck ? this.deck.getOkeyInfo() : null;
+    const viewerReqs = (viewerSeatIndex !== undefined && viewerSeatIndex !== null)
+      ? this.getMinOpenRequirements(viewerSeatIndex)
+      : { minScore: 101, minPairs: 5 };
 
     return {
       id: this.id,
@@ -1069,8 +1101,8 @@ class OkeyGame {
         color: okeyInfo.okeyColor,
         number: okeyInfo.okeyNumber
       } : null,
-      minOpenScore: this.minOpenScore,
-      minOpenPairs: this.minOpenPairs,
+      minOpenScore: viewerReqs.minScore,
+      minOpenPairs: viewerReqs.minPairs,
       tableMelds: this.tableMelds.map(m => ({
         id: m.id,
         playerIndex: m.playerIndex,
