@@ -63,10 +63,50 @@ class RoomManager {
         id: publicRoom.id,
         state: game.state,
         playerCount: game.players.filter(Boolean).length,
+        countdown: (publicRoom.countdownSeconds !== undefined && publicRoom.countdownSeconds !== null) ? publicRoom.countdownSeconds : null,
         seats,
         hostId: publicRoom.hostId
       }
     };
+  }
+
+  startLobbyCountdown(room) {
+    if (room.countdownInterval) return;
+    room.countdownSeconds = 3;
+    this.broadcastLobbyState();
+
+    room.countdownInterval = setInterval(() => {
+      const occupied = room.game.players.filter(Boolean).length;
+      if (occupied < 4 || room.game.state !== GAME_STATES.WAITING) {
+        this.cancelLobbyCountdown(room);
+        return;
+      }
+
+      room.countdownSeconds--;
+      if (room.countdownSeconds > 0) {
+        this.broadcastLobbyState();
+      } else {
+        clearInterval(room.countdownInterval);
+        room.countdownInterval = null;
+        room.countdownSeconds = null;
+
+        // Start Round automatically after 3 seconds!
+        room.game.startRound();
+        room.lastBotActionTime = Date.now() - 400;
+        this.startBotAutomation(room);
+        this.broadcastGameState(room.id);
+        this.broadcastLobbyState();
+      }
+    }, 1000);
+  }
+
+  cancelLobbyCountdown(room) {
+    if (room && room.countdownInterval) {
+      clearInterval(room.countdownInterval);
+      room.countdownInterval = null;
+      room.countdownSeconds = null;
+      this.broadcastLobbyState();
+    }
   }
 
   broadcastLobbyState() {
@@ -167,12 +207,9 @@ class RoomManager {
       room.hostId = playerId;
     }
 
-    // If all 4 seats are now filled, automatically start the game!
+    // If all 4 seats are now filled, start 3-second countdown!
     if (game.players.filter(Boolean).length === 4 && game.state === GAME_STATES.WAITING) {
-      game.startRound();
-      room.lastBotActionTime = Date.now() - 400;
-      this.startBotAutomation(room);
-      this.broadcastGameState(room.id);
+      this.startLobbyCountdown(room);
     }
 
     this.broadcastLobbyState();
@@ -185,6 +222,8 @@ class RoomManager {
     if (game.state !== GAME_STATES.WAITING) {
       return { success: false, reason: 'Oyun başladıktan sonra koltuk değiştirilemez.' };
     }
+
+    this.cancelLobbyCountdown(publicRoom);
 
     if (newSeatIndex < 0 || newSeatIndex > 3 || game.players[newSeatIndex]) {
       return { success: false, reason: 'Seçtiğiniz koltuk dolu veya geçersiz.' };
@@ -211,6 +250,8 @@ class RoomManager {
     if (game.state !== GAME_STATES.WAITING) {
       return { success: false, reason: 'Oyun başladıktan sonra ayrılamazsınız.' };
     }
+
+    this.cancelLobbyCountdown(publicRoom);
 
     const currentSeatIdx = game.players.findIndex(p => p && ((userId && p.userId === userId) || p.id === socketId));
     if (currentSeatIdx !== -1) {
@@ -252,12 +293,9 @@ class RoomManager {
       return { success: false, reason: 'Bot eklenemedi.' };
     }
 
-    // If 4 players are now present, start round!
+    // If 4 players are now present, start 3-second countdown!
     if (game.players.filter(Boolean).length === 4 && game.state === GAME_STATES.WAITING) {
-      game.startRound();
-      publicRoom.lastBotActionTime = Date.now() - 400;
-      this.startBotAutomation(publicRoom);
-      this.broadcastGameState(publicRoom.id);
+      this.startLobbyCountdown(publicRoom);
     }
 
     this.broadcastLobbyState();
@@ -270,6 +308,8 @@ class RoomManager {
     if (game.state !== GAME_STATES.WAITING) {
       return { success: false, reason: 'Oyun başladıktan sonra bot kaldırılamaz.' };
     }
+
+    this.cancelLobbyCountdown(publicRoom);
 
     const isMember = game.players.some(p => p && ((userId && p.userId === userId) || p.id === socketId));
     if (!isMember) {
@@ -414,6 +454,8 @@ class RoomManager {
   handleLeave(roomId, playerId, userId = null) {
     const room = this.rooms.get(roomId);
     if (!room) return;
+
+    this.cancelLobbyCountdown(room);
 
     if (room.vsBots || room.isPrivate || (room.hostId === playerId && room.isPrivate)) {
       if (room.botInterval) clearInterval(room.botInterval);

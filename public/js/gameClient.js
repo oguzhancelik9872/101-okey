@@ -273,26 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Quick Guest Play
-  const btnGuest = document.getElementById('btn-guest-play');
-  if (btnGuest) {
-    btnGuest.addEventListener('click', () => {
-      const randNum = Math.floor(1000 + Math.random() * 9000);
-      const username = `misafir_${randNum}`;
-      const displayName = `Misafir ${randNum}`;
-      const password = `guest_${randNum}_pwd`;
-
-      socket.emit('auth:register', { username, password, displayName, gender: 'male' }, (res) => {
-        if (res.success) {
-          ui.showToast(`Misafir girişi yapıldı! (${displayName})`, 'success');
-          handleLoginSuccess(res.user, res.token);
-        } else {
-          ui.showToast(res.reason, 'error');
-        }
-      });
-    });
-  }
-
   // Logout Button
   const btnLogout = document.getElementById('btn-logout');
   if (btnLogout) {
@@ -362,6 +342,25 @@ document.addEventListener('DOMContentLoaded', () => {
         statusEl.style.borderColor = '#2ecc71';
         statusEl.style.color = '#2ecc71';
       }
+    }
+
+    // Countdown banner handling
+    const countdownBanner = document.getElementById('lobby-countdown-banner');
+    const countdownNum = document.getElementById('lobby-countdown-num');
+    const instructionEl = document.getElementById('lobby-table-instruction');
+
+    if (tableData.countdown !== null && tableData.countdown !== undefined && tableData.countdown > 0) {
+      if (countdownBanner) countdownBanner.classList.remove('hidden');
+      if (countdownNum) countdownNum.textContent = tableData.countdown;
+      if (instructionEl) instructionEl.classList.add('hidden');
+      try {
+        if (window.soundEngine && typeof window.soundEngine.playTileTouch === 'function') {
+          window.soundEngine.playTileTouch();
+        }
+      } catch (e) {}
+    } else {
+      if (countdownBanner) countdownBanner.classList.add('hidden');
+      if (instructionEl) instructionEl.classList.remove('hidden');
     }
 
     const seatLabels = ['1. KOLTUĞA OTUR', 'SAĞA OTUR', 'KARŞIYA OTUR', 'SOLA OTUR'];
@@ -509,29 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('lobby:stateUpdate', (data) => {
     updateLobbyVirtualTable(data);
   });
-
-  // Play vs Bots (Single Player Bot Practice)
-  const btnPlayBots = document.getElementById('btn-play-bots');
-  if (btnPlayBots) {
-    btnPlayBots.addEventListener('click', () => {
-      const name = getPlayerName();
-      const userId = getUserId();
-      const user = currentUser || {};
-
-      socket.emit('createBotRoom', {
-        playerName: name,
-        userId,
-        gender: user.gender,
-        avatarIndex: user.avatarIndex
-      }, (res) => {
-        if (res.success) {
-          setupGameRoom(res.roomId, res.seatIndex, res.isHost);
-        } else {
-          ui.showToast(res.reason, 'error');
-        }
-      });
-    });
-  }
 
   // Create Room Modal
   const btnOpenCreate = document.getElementById('btn-open-create-room');

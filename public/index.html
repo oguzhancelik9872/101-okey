@@ -73,14 +73,6 @@
               <span>✨ HESAP OLUŞTUR & BAŞLA</span>
             </button>
           </form>
-
-          <!-- Quick Guest Play Button -->
-          <div class="auth-divider">
-            <span>veya</span>
-          </div>
-          <button id="btn-guest-play" class="btn-guest-play">
-            <span>⚡ Misafir Olarak Hızlı Oyna</span>
-          </button>
         </div>
       </div>
     </div>
@@ -89,13 +81,8 @@
     <div id="lobby-view" class="hidden">
       <!-- Top Navigation Bar across the Lobby -->
       <header class="lobby-top-bar">
-        <!-- Left: Bot Play Option -->
-        <div class="lobby-left-panel">
-          <button id="btn-play-bots" class="btn-bot-quick-play" title="Tek Kişilik Antrenman Masası">
-            <span class="bot-icon">🤖</span>
-            <span class="bot-text">BOTLARLA OYNA</span>
-          </button>
-        </div>
+        <!-- Left Panel: Spacer / Brand accent -->
+        <div class="lobby-left-panel"></div>
 
         <!-- Center: Game Logo (Perfect Center) -->
         <div class="lobby-center-title">
@@ -173,13 +160,19 @@
               </div>
             </div>
 
-            <!-- Center Table Hub Badge -->
+            <!-- Center Table Hub Badge & Countdown -->
             <div class="lobby-table-center-hub">
               <div class="table-brand-pill">
                 <span class="table-num-tag" id="lobby-table-title">MASA #101</span>
                 <span class="table-status-badge" id="lobby-table-status">⏳ 0/4 OYUNCU</span>
               </div>
-              <p class="table-instruction">Oturmak istediğiniz koltuğa tıklayın</p>
+              <div id="lobby-countdown-banner" class="lobby-countdown-banner hidden">
+                <div class="countdown-pulse-ring">
+                  <span id="lobby-countdown-num" class="countdown-big-num">3</span>
+                </div>
+                <div class="countdown-status-text">🎮 OYUN BAŞLIYOR...</div>
+              </div>
+              <p class="table-instruction" id="lobby-table-instruction">Oturmak istediğiniz koltuğa tıklayın</p>
             </div>
 
           </div>
