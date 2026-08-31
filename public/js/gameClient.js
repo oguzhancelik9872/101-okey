@@ -636,17 +636,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCenterStartGame = document.getElementById('btn-center-start-game');
   if (btnCenterStartGame) btnCenterStartGame.addEventListener('click', handleStartGame);
 
-  const btnLobbyCopy = document.getElementById('btn-lobby-copy');
-  if (btnLobbyCopy) {
-    btnLobbyCopy.addEventListener('click', () => {
-      if (roomId && navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(roomId).then(() => {
-          ui.showToast(`Oda kodu kopyalandı! (${roomId})`, 'success');
-        });
-      }
-    });
-  }
-
   // Menu Dropdown Toggle
   const btnMenuToggle = document.getElementById('btn-menu-toggle');
   const dropdownMenu = document.getElementById('dropdown-table-menu');
@@ -806,32 +795,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenHand = document.getElementById('btn-open-hand');
   const btnOpenPairs = document.getElementById('btn-open-pairs');
   const btnDiscard = document.getElementById('btn-discard-tile');
-
-  // Copy Room Code Button
-  const btnCopyRoom = document.getElementById('btn-copy-room');
-  if (btnCopyRoom) {
-    btnCopyRoom.addEventListener('click', () => {
-      if (roomId) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(roomId).then(() => {
-            ui.showToast(`Oda kodu kopyalandı! (${roomId})`, 'success');
-          }).catch(() => fallbackCopy(roomId));
-        } else {
-          fallbackCopy(roomId);
-        }
-      }
-    });
-  }
-
-  function fallbackCopy(text) {
-    const tempInput = document.createElement('input');
-    tempInput.value = text;
-    document.body.appendChild(tempInput);
-    tempInput.select();
-    document.execCommand('copy');
-    tempInput.remove();
-    ui.showToast(`Oda kodu kopyalandı! (${text})`, 'success');
-  }
 
   // Return Discard Tile Button (Taşı Geri Bırak)
   const btnReturnDiscard = document.getElementById('btn-return-discard');
@@ -1254,12 +1217,35 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.triggerReaction(pos, data.reaction, data.label);
   });
 
-  // Sound toggle button
+  // Sound toggle buttons (Synchronized between Lobby & Table)
   const btnMute = document.getElementById('btn-toggle-sound');
+  const btnLobbyMute = document.getElementById('btn-lobby-toggle-sound');
+  const lobbySoundIcon = document.getElementById('lobby-sound-icon');
+  const lobbySoundText = document.getElementById('lobby-sound-text');
+
+  function updateSoundUI(isMuted) {
+    if (btnMute) {
+      btnMute.innerHTML = isMuted ? '<span>🔇 Ses: Kapalı</span>' : '<span>🔊 Ses: Açık</span>';
+    }
+    if (lobbySoundIcon) {
+      lobbySoundIcon.textContent = isMuted ? '🔇' : '🔊';
+    }
+    if (lobbySoundText) {
+      lobbySoundText.textContent = isMuted ? 'Ses: Kapalı' : 'Ses: Açık';
+    }
+  }
+
   if (btnMute) {
     btnMute.addEventListener('click', () => {
       const isMuted = window.soundEngine.toggleMute();
-      btnMute.textContent = isMuted ? '🔇 Ses: Kapalı' : '🔊 Ses: Açık';
+      updateSoundUI(isMuted);
+    });
+  }
+
+  if (btnLobbyMute) {
+    btnLobbyMute.addEventListener('click', () => {
+      const isMuted = window.soundEngine.toggleMute();
+      updateSoundUI(isMuted);
     });
   }
 });

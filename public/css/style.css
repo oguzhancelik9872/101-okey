@@ -112,10 +112,11 @@ body.plus-theme {
 
 /* Lobby Top Bar */
 .lobby-top-bar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
+  padding: 10px 24px;
   background: rgba(5, 20, 12, 0.88);
   backdrop-filter: blur(14px);
   border-bottom: 2px solid rgba(241, 196, 15, 0.4);
@@ -129,6 +130,7 @@ body.plus-theme {
   display: flex;
   align-items: center;
   gap: 12px;
+  z-index: 2;
 }
 
 .btn-bot-quick-play {
@@ -158,10 +160,53 @@ body.plus-theme {
   transform: translateY(1px);
 }
 
+.lobby-center-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lobby-center-title .plus-logo-title {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  margin: 0;
+  color: #f1c40f;
+  text-shadow: 0 2px 10px rgba(241, 196, 15, 0.5), 0 4px 20px rgba(0, 0, 0, 0.8);
+}
+
 .lobby-right-panel {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
+  z-index: 2;
+}
+
+.btn-lobby-sound {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(241, 196, 15, 0.4);
+  color: #f1c40f;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-lobby-sound:hover {
+  background: rgba(241, 196, 15, 0.18);
+  border-color: #f1c40f;
+  transform: translateY(-1px);
 }
 
 .btn-sm {

@@ -97,13 +97,18 @@
           </button>
         </div>
 
-        <!-- Center: Game Logo -->
-        <div class="plus-logo-box">
-          <h1 class="plus-logo-title" style="font-size: 32px; font-weight: 900; letter-spacing: 2px; margin: 0; color: #f1c40f;">101 OKEY</h1>
+        <!-- Center: Game Logo (Perfect Center) -->
+        <div class="lobby-center-title">
+          <h1 class="plus-logo-title">101 OKEY</h1>
         </div>
 
-        <!-- Right: Profile Card & Settings -->
+        <!-- Right: Audio Settings & Profile Card -->
         <div class="lobby-right-panel">
+          <button id="btn-lobby-toggle-sound" class="btn-lobby-sound" title="Sesi Aç / Kapat">
+            <span id="lobby-sound-icon">🔊</span>
+            <span id="lobby-sound-text">Ses: Açık</span>
+          </button>
+
           <div class="plus-profile-card">
             <div class="plus-avatar-box" id="btn-edit-avatar-trigger" style="cursor: pointer;" title="Avatarı Değiştir">
               <div id="lobby-avatar-img" class="plus-avatar-img">👨</div>
@@ -192,14 +197,6 @@
             <span>⚙️ Menü</span>
           </button>
           <div id="dropdown-table-menu" class="table-dropdown-menu hidden">
-            <button id="btn-start-game" class="menu-item-btn btn-menu-start hidden">
-              <span>▶️ Oyunu Başlat</span>
-            </button>
-            <div class="menu-item-row">
-              <span class="menu-label">🔑 Oda:</span>
-              <strong id="display-room-code" class="menu-code">------</strong>
-              <button id="btn-copy-room" class="btn-copy-pill" title="Kopyala">📋</button>
-            </div>
             <button id="btn-toggle-sound" class="menu-item-btn">
               <span>🔊 Ses: Açık</span>
             </button>
