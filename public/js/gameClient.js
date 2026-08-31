@@ -52,15 +52,61 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- Auth Views & Tabs ---
+  // --- Auth Views & Profile Picker ---
   const authView = document.getElementById('auth-view');
   const lobbyView = document.getElementById('lobby-view');
   const gameView = document.getElementById('game-view');
 
-  const tabLogin = document.getElementById('tab-login');
-  const tabRegister = document.getElementById('tab-register');
-  const formLogin = document.getElementById('form-login');
-  const formRegister = document.getElementById('form-register');
+  let availableProfiles = [];
+
+  function renderNamePicker(list) {
+    if (list) availableProfiles = list;
+    const grid = document.getElementById('name-picker-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    // Sort alphabetically in Turkish
+    const sorted = [...availableProfiles].sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+
+    sorted.forEach((item, idx) => {
+      const card = document.createElement('div');
+      const isOnline = item.isOnline && !item.isSelf;
+      card.className = 'name-card' + (isOnline ? ' occupied' : ' available');
+
+      const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
+        ? window.getPlayerAvatarSVG(item.displayName || item.name, item.gender || 'male', (item.avatarIndex !== undefined && item.avatarIndex !== null) ? item.avatarIndex : idx % 8)
+        : '👤';
+
+      card.innerHTML = `
+        <div class="name-card-avatar">${avatarSvg}</div>
+        <div class="name-card-info">
+          <span class="name-card-title">${item.name}</span>
+          <span class="name-card-status ${isOnline ? 'status-occupied' : 'status-available'}">
+            ${isOnline ? '🔴 Çevrimiçi' : '🟢 Giriş Yap'}
+          </span>
+        </div>
+      `;
+
+      if (!isOnline) {
+        card.addEventListener('click', () => {
+          socket.emit('auth:selectName', { name: item.name }, (res) => {
+            if (res.success) {
+              ui.showToast(`Hoş geldin, ${res.user.displayName || res.user.username}!`, 'success');
+              handleLoginSuccess(res.user, res.token);
+            } else {
+              ui.showToast(res.reason, 'error');
+            }
+          });
+        });
+      }
+
+      grid.appendChild(card);
+    });
+  }
+
+  socket.on('auth:namesUpdate', (names) => {
+    renderNamePicker(names);
+  });
 
   function showLobby() {
     if (authView) authView.classList.add('hidden');
@@ -73,21 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lobbyView) lobbyView.classList.add('hidden');
     if (gameView) gameView.classList.add('hidden');
     if (authView) authView.classList.remove('hidden');
-  }
-
-  if (tabLogin && tabRegister) {
-    tabLogin.addEventListener('click', () => {
-      tabLogin.classList.add('active');
-      tabRegister.classList.remove('active');
-      if (formLogin) formLogin.classList.remove('hidden');
-      if (formRegister) formRegister.classList.add('hidden');
-    });
-
-    tabRegister.addEventListener('click', () => {
-      tabRegister.classList.add('active');
-      tabLogin.classList.remove('active');
-      if (formRegister) formRegister.classList.remove('hidden');
-      if (formLogin) formLogin.classList.add('hidden');
+    socket.emit('auth:getAvailableNames', (list) => {
+      renderNamePicker(list);
     });
   }
 
@@ -125,6 +158,22 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       showLobby();
     }
+  }
+
+  // Auto-Login with saved token on page load
+  const savedToken = localStorage.getItem('okey101_auth_token');
+  if (savedToken) {
+    socket.emit('auth:autoLogin', { token: savedToken }, (res) => {
+      if (res.success) {
+        handleLoginSuccess(res.user, savedToken);
+      } else {
+        localStorage.removeItem('okey101_auth_token');
+        localStorage.removeItem('okey101_user');
+        showAuth();
+      }
+    });
+  } else {
+    showAuth();
   }
 
   // --- Profile Settings Modal & Avatar Picker ---
@@ -235,43 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Login Form Submit
-  if (formLogin) {
-    formLogin.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const username = document.getElementById('login-username').value.trim();
-      const password = document.getElementById('login-password').value;
 
-      socket.emit('auth:login', { username, password }, (res) => {
-        if (res.success) {
-          ui.showToast(`Hoş geldin, ${res.user.displayName}!`, 'success');
-          handleLoginSuccess(res.user, res.token);
-        } else {
-          ui.showToast(res.reason, 'error');
-        }
-      });
-    });
-  }
-
-  // Register Form Submit
-  if (formRegister) {
-    formRegister.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const username = document.getElementById('reg-username').value.trim();
-      const displayName = document.getElementById('reg-nickname').value.trim();
-      const password = document.getElementById('reg-password').value;
-      const gender = (document.querySelector('input[name="reg-gender"]:checked') || {}).value || 'male';
-
-      socket.emit('auth:register', { username, password, displayName, gender }, (res) => {
-        if (res.success) {
-          ui.showToast('Hesabınız başarıyla oluşturuldu!', 'success');
-          handleLoginSuccess(res.user, res.token);
-        } else {
-          ui.showToast(res.reason, 'error');
-        }
-      });
-    });
-  }
 
   // Logout Button
   const btnLogout = document.getElementById('btn-logout');

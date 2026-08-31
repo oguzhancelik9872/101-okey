@@ -29,30 +29,25 @@ io.on('connection', (socket) => {
   console.log(`[Socket] Client connected: ${socket.id}`);
   socket.join('lobby');
   socket.emit('lobby:stateUpdate', roomManager.getLobbyState());
+  socket.emit('auth:namesUpdate', db.getAvailableNames(socket.id));
 
   socket.on('lobby:join', () => {
     socket.join('lobby');
     socket.emit('lobby:stateUpdate', roomManager.getLobbyState());
+    socket.emit('auth:namesUpdate', db.getAvailableNames(socket.id));
   });
 
-  // --- Auth Handlers ---
-  socket.on('auth:register', (data, callback) => {
-    try {
-      const res = db.register(data);
-      if (res.success) {
-        socket.userId = res.user.id;
-      }
-      if (callback) callback(res);
-    } catch (err) {
-      if (callback) callback({ success: false, reason: err.message });
-    }
+  // --- Auth Handlers (Fixed 8 Friends Profile Picker) ---
+  socket.on('auth:getAvailableNames', (callback) => {
+    if (callback) callback(db.getAvailableNames(socket.id));
   });
 
-  socket.on('auth:login', (data, callback) => {
+  socket.on('auth:selectName', (data, callback) => {
     try {
-      const res = db.login(data);
+      const res = db.selectPlayerName(data.name, socket.id);
       if (res.success) {
         socket.userId = res.user.id;
+        io.emit('auth:namesUpdate', db.getAvailableNames());
       }
       if (callback) callback(res);
     } catch (err) {
@@ -62,9 +57,10 @@ io.on('connection', (socket) => {
 
   socket.on('auth:autoLogin', (data, callback) => {
     try {
-      const user = db.verifyToken(data.token);
+      const user = db.verifyToken(data.token, socket.id);
       if (user) {
         socket.userId = user.id;
+        io.emit('auth:namesUpdate', db.getAvailableNames());
         if (callback) callback({ success: true, user });
       } else {
         if (callback) callback({ success: false, reason: 'Oturum süresi doldu.' });
@@ -74,11 +70,25 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('auth:logout', (data, callback) => {
+    try {
+      db.logout(socket.userId, socket.id);
+      socket.userId = null;
+      io.emit('auth:namesUpdate', db.getAvailableNames());
+      if (callback) callback({ success: true });
+    } catch (err) {
+      if (callback) callback({ success: false });
+    }
+  });
+
   socket.on('auth:updateProfile', (data, callback) => {
     try {
       const uId = data.userId || socket.userId;
       if (!uId) return callback && callback({ success: false, reason: 'Oturum bulunamadı.' });
       const res = db.updateProfile(uId, data);
+      if (res.success) {
+        io.emit('auth:namesUpdate', db.getAvailableNames());
+      }
       if (callback) callback(res);
     } catch (err) {
       if (callback) callback({ success: false, reason: err.message });
@@ -528,6 +538,8 @@ io.on('connection', (socket) => {
   // Disconnection
   socket.on('disconnect', () => {
     console.log(`[Socket] Client disconnected: ${socket.id}`);
+    db.releaseSocket(socket.id);
+    io.emit('auth:namesUpdate', db.getAvailableNames());
     roomManager.handleDisconnect(socket.id);
   });
 });

@@ -88,8 +88,8 @@ class OkeyGame {
   addSingleBot(preferredSeat = null) {
     const maleNames = [
       'Ahmet', 'Mehmet', 'Mustafa', 'Burak', 'Emre', 'Kemal', 'Barış',
-      'Hakan', 'Serkan', 'Murat', 'Tolga', 'Onur', 'Oğuz',
-      'Kaan', 'Kerem', 'Volkan', 'Batuhan', 'Eren', 'Tarkan', 'Alper', 'Sedat'
+      'Hakan', 'Serkan', 'Murat', 'Tolga', 'Onur',
+      'Kaan', 'Kerem', 'Volkan', 'Batuhan', 'Eren', 'Tarkan', 'Sedat', 'Mert', 'Can'
     ];
     const femaleNames = [
       'Zeynep', 'Ayşe', 'Fatma', 'Elif', 'Merve', 'Ece', 'Selin', 'Gizem',
@@ -113,8 +113,8 @@ class OkeyGame {
   fillWithBots() {
     const maleNames = [
       'Ahmet', 'Mehmet', 'Mustafa', 'Burak', 'Emre', 'Kemal', 'Barış',
-      'Hakan', 'Serkan', 'Murat', 'Tolga', 'Onur', 'Oğuz',
-      'Kaan', 'Kerem', 'Volkan', 'Batuhan', 'Eren', 'Tarkan', 'Alper', 'Sedat'
+      'Hakan', 'Serkan', 'Murat', 'Tolga', 'Onur',
+      'Kaan', 'Kerem', 'Volkan', 'Batuhan', 'Eren', 'Tarkan', 'Sedat', 'Mert', 'Can'
     ];
     const femaleNames = [
       'Zeynep', 'Ayşe', 'Fatma', 'Elif', 'Merve', 'Ece', 'Selin', 'Gizem',

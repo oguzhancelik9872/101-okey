@@ -1,1 +1,122 @@
-[]
+[
+  {
+    "id": "usr_akın",
+    "username": "akın",
+    "displayName": "Akın",
+    "gender": "male",
+    "avatarIndex": 0,
+    "createdAt": 1788149482520,
+    "lastLogin": 1788149482520,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": null
+  },
+  {
+    "id": "usr_alperen",
+    "username": "alperen",
+    "displayName": "Alperen",
+    "gender": "male",
+    "avatarIndex": 1,
+    "createdAt": 1788149482520,
+    "lastLogin": 1788149482520,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": null
+  },
+  {
+    "id": "usr_efe",
+    "username": "efe",
+    "displayName": "Efe",
+    "gender": "male",
+    "avatarIndex": 2,
+    "createdAt": 1788149482520,
+    "lastLogin": 1788149482520,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": null
+  },
+  {
+    "id": "usr_furkan",
+    "username": "furkan",
+    "displayName": "Furkan",
+    "gender": "male",
+    "avatarIndex": 3,
+    "createdAt": 1788149482520,
+    "lastLogin": 1788149482525,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": null
+  },
+  {
+    "id": "usr_memiş",
+    "username": "memiş",
+    "displayName": "Memiş",
+    "gender": "male",
+    "avatarIndex": 4,
+    "createdAt": 1788149482520,
+    "lastLogin": 1788149482520,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": null
+  },
+  {
+    "id": "usr_oğuzhan",
+    "username": "oğuzhan",
+    "displayName": "Oğuzhan",
+    "gender": "male",
+    "avatarIndex": 5,
+    "createdAt": 1788149482520,
+    "lastLogin": 1788149482523,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": null
+  },
+  {
+    "id": "usr_özkan",
+    "username": "özkan",
+    "displayName": "Özkan",
+    "gender": "male",
+    "avatarIndex": 6,
+    "createdAt": 1788149482520,
+    "lastLogin": 1788149482520,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": null
+  },
+  {
+    "id": "usr_yekta",
+    "username": "yekta",
+    "displayName": "Yekta",
+    "gender": "male",
+    "avatarIndex": 7,
+    "createdAt": 1788149482520,
+    "lastLogin": 1788149482520,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": null
+  }
+]

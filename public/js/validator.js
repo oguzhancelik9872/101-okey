@@ -453,44 +453,57 @@ class ClientValidator {
     };
 
     if (type === 'run') {
-      const jokerIndices = [];
-      tiles.forEach((t, idx) => {
-        if (isJoker(t)) jokerIndices.push(idx);
-      });
+      const pTile = this.getTileProps(tile, indicator);
+      const regularIndices = [];
+      tiles.forEach((t, i) => { if (!isJoker(t)) regularIndices.push(i); });
+      if (regularIndices.length === 0) return { canProcess: false };
 
-      for (const jIdx of jokerIndices) {
-        const candidateTiles = [...tiles];
-        candidateTiles[jIdx] = tile;
+      const firstRegIdx = regularIndices[0];
+      const firstRegTile = this.getTileProps(tiles[firstRegIdx], indicator);
+      const startNum = firstRegTile.number - firstRegIdx;
+      const runColor = firstRegTile.color;
 
-        const checkReplaced = this.isValidRun(candidateTiles, indicator);
-        if (checkReplaced.valid) {
-          const sorted = [...candidateTiles].sort((a, b) => {
-            const pa = this.getTileProps(a, indicator);
-            const pb = this.getTileProps(b, indicator);
-            return pa.number - pb.number;
-          });
+      if (pTile.color !== runColor) return { canProcess: false };
 
-          return {
-            canProcess: true,
-            isOkeySteal: true,
-            stolenOkeyTile: tiles[jIdx],
-            position: 'replace_joker',
-            newTiles: sorted
-          };
+      // 1. Check if played tile replaces any Joker in its exact physical position (Okey Steal)
+      for (let i = 0; i < tiles.length; i++) {
+        if (isJoker(tiles[i])) {
+          const jokerExpectedNum = startNum + i;
+          if (pTile.number === jokerExpectedNum) {
+            const newTiles = [...tiles];
+            newTiles[i] = tile;
+            return {
+              canProcess: true,
+              isOkeySteal: true,
+              stolenOkeyTile: tiles[i],
+              position: 'replace_joker',
+              newTiles
+            };
+          }
         }
       }
 
-      const combined = [...tiles, tile];
-      const result = this.isValidRun(combined, indicator);
-      if (result.valid) {
-        const sorted = [...combined].sort((a, b) => {
-          const pa = this.getTileProps(a, indicator);
-          const pb = this.getTileProps(b, indicator);
-          return pa.number - pb.number;
-        });
-
-        return { canProcess: true, isOkeySteal: false, position: 'add', newTiles: sorted };
+      // 2. Check if played tile extends the run on the left (startNum - 1)
+      if (pTile.number === startNum - 1 && startNum - 1 >= 1) {
+        return {
+          canProcess: true,
+          isOkeySteal: false,
+          position: 'prepend',
+          newTiles: [tile, ...tiles]
+        };
       }
+
+      // 3. Check if played tile extends the run on the right (startNum + tiles.length)
+      if (pTile.number === startNum + tiles.length && startNum + tiles.length <= 13) {
+        return {
+          canProcess: true,
+          isOkeySteal: false,
+          position: 'append',
+          newTiles: [...tiles, tile]
+        };
+      }
+
+      return { canProcess: false };
     } else if (type === 'group') {
       const jokerIndices = [];
       tiles.forEach((t, idx) => {
