@@ -207,6 +207,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Delegated click handler on character selection grid
+  const namePickerGrid = document.getElementById('name-picker-grid');
+  if (namePickerGrid) {
+    namePickerGrid.addEventListener('click', (e) => {
+      const card = e.target.closest('.name-card');
+      if (card) {
+        const charName = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
+        if (charName) {
+          if (selectedCharName === charName) {
+            doSelectNameAndEnterLobby(charName);
+          } else {
+            selectedCharName = charName;
+            renderNamePicker();
+          }
+        }
+      }
+    });
+  }
+
   // Real-time live synchronization of character availability
   socket.on('auth:namesUpdate', (names) => {
     if (!currentUser) {
