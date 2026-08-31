@@ -6,15 +6,27 @@ const FEMALE_NAMES = new Set([
   'ayşe', 'büşra', 'pınar', 'tuğba', 'aslı', 'kübra', 'hülya'
 ]);
 
-const maleAvatars = Array.from({ length: 8 }, (_, i) => `<img src="/assets/avatars/male_${i}.png" alt="Male Avatar" class="avatar-img-photo" />`);
-const femaleAvatars = maleAvatars;
+const PROFILE_IMAGES = {
+  'akın': 'akin.png',
+  'akin': 'akin.png',
+  'alperen': 'alperen.png',
+  'efe': 'efe.png',
+  'furkan': 'furkan.png',
+  'memiş': 'memis.png',
+  'memis': 'memis.png',
+  'oğuzhan': 'oguzhan.png',
+  'oguzhan': 'oguzhan.png',
+  'özkan': 'ozkan.png',
+  'ozkan': 'ozkan.png',
+  'yekta': 'yekta.png'
+};
 
 function getPlayerAvatarHTML(name, gender = null, avatarIndex = null, isBot = false) {
   const isBotUser = Boolean(isBot || (typeof name === 'string' && name.includes('(Bot)')));
-  const clean = (name || '').replace('(Bot)', '').trim().toLowerCase().split(' ')[0];
-  const isFemale = (gender === 'female') || FEMALE_NAMES.has(clean);
+  const clean = (name || '').replace(/\(Bot\)/gi, '').trim().toLowerCase().split(' ')[0];
 
   if (isBotUser) {
+    const isFemale = (gender === 'female') || FEMALE_NAMES.has(clean);
     if (isFemale) {
       return `<div class="bot-avatar-badge bot-female"><span class="bot-glyph">🤖</span></div>`;
     } else {
@@ -22,23 +34,19 @@ function getPlayerAvatarHTML(name, gender = null, avatarIndex = null, isBot = fa
     }
   }
 
-  const list = maleAvatars;
-
-  if (avatarIndex !== null && avatarIndex !== undefined && avatarIndex >= 0 && avatarIndex < list.length) {
-    return list[avatarIndex];
+  // Look up custom friend PNG photo from public/profiller/
+  if (PROFILE_IMAGES[clean]) {
+    const fileName = PROFILE_IMAGES[clean];
+    return `<img src="/profiller/${fileName}" alt="${name}" class="avatar-img-photo" loading="lazy" onerror="this.style.display='none';" />`;
   }
 
-  const charCodeSum = (name || 'user').split('').reduce((sum, c) => sum + c.charCodeAt(0), 0);
-  const idx = charCodeSum % list.length;
-  return list[idx] || list[0];
+  return `<div class="avatar-fallback-badge"><span class="bot-glyph">👤</span></div>`;
 }
 
 function getPlayerAvatarSVG(name, gender = null, avatarIndex = null, isBot = false) {
   return getPlayerAvatarHTML(name, gender, avatarIndex, isBot);
 }
 
-window.femaleAvatars = femaleAvatars;
-window.maleAvatars = maleAvatars;
 window.getPlayerAvatarHTML = getPlayerAvatarHTML;
 window.getPlayerAvatarSVG = getPlayerAvatarSVG;
 

@@ -428,11 +428,23 @@ body.plus-theme {
   height: 38px;
   border-radius: 50%;
   overflow: hidden;
-  border: 1.5px solid rgba(255,255,255,0.4);
-  background: #000;
+  border: 1.5px solid #f1c40f;
+  background: #0c2918;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+.lobby-occupied-avatar img,
+.lobby-occupied-avatar svg {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .lobby-occupied-info {
@@ -913,22 +925,28 @@ body.plus-theme {
 }
 
 .name-card-avatar {
-  width: 54px;
-  height: 54px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  border: 2px solid #f1c40f;
+  border: 2.5px solid #f1c40f;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+  background: radial-gradient(circle, #103b22 0%, #061c10 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+  flex-shrink: 0;
 }
 
+.name-card-avatar img,
 .name-card-avatar svg,
-.name-card-avatar img {
+.avatar-img-photo {
   width: 100%;
   height: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
   display: block;
 }
 
