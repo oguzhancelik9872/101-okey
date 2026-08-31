@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentGameState = null;
   let lastTurn = -1;
   let roundStartedHandSorted = false;
+  let lastGameState = null;
 
   // Initialize Istaka & Table Managers
   const istaka = new IstakaManager(

@@ -543,3 +543,16 @@ class OkeyAudio {
 }
 
 window.soundEngine = new OkeyAudio();
+
+// Global unlock listener on first user interaction to satisfy browser autoplay policies
+const unlockAudioContext = () => {
+  if (window.soundEngine) {
+    window.soundEngine.init();
+  }
+  ['click', 'touchstart', 'touchend', 'pointerdown', 'keydown'].forEach(evt => {
+    window.removeEventListener(evt, unlockAudioContext, true);
+  });
+};
+['click', 'touchstart', 'touchend', 'pointerdown', 'keydown'].forEach(evt => {
+  window.addEventListener(evt, unlockAudioContext, { capture: true, passive: true });
+});
