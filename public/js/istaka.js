@@ -99,11 +99,11 @@ class IstakaManager {
       return;
     }
 
-    // Target is occupied -> Insert between tiles / shift others
-    // Remove tile from source first
+    // Target is occupied -> Insert dynamically between tiles & shift adjacent tiles
+    // Remove tile from source first so that spot is freed
     this.grid[srcRow][srcCol] = null;
 
-    // Find nearest empty slot on targetRow
+    // Find nearest empty slot to the right on targetRow
     let rightEmpty = -1;
     for (let c = targetCol + 1; c < this.COLS; c++) {
       if (this.grid[targetRow][c] === null) {
@@ -112,6 +112,7 @@ class IstakaManager {
       }
     }
 
+    // Find nearest empty slot to the left on targetRow
     let leftEmpty = -1;
     for (let c = targetCol - 1; c >= 0; c--) {
       if (this.grid[targetRow][c] === null) {
@@ -120,20 +121,22 @@ class IstakaManager {
       }
     }
 
-    if (rightEmpty !== -1) {
-      // Shift rightwards from rightEmpty down to targetCol + 1
+    const distRight = rightEmpty !== -1 ? (rightEmpty - targetCol) : Infinity;
+    const distLeft = leftEmpty !== -1 ? (targetCol - leftEmpty) : Infinity;
+
+    // Shift in the direction of the closest empty slot
+    if (distRight <= distLeft && distRight !== Infinity) {
       for (let k = rightEmpty; k > targetCol; k--) {
         this.grid[targetRow][k] = this.grid[targetRow][k - 1];
       }
       this.grid[targetRow][targetCol] = srcTile;
-    } else if (leftEmpty !== -1) {
-      // Shift leftwards from leftEmpty up to targetCol - 1
+    } else if (distLeft < distRight && distLeft !== Infinity) {
       for (let k = leftEmpty; k < targetCol; k++) {
         this.grid[targetRow][k] = this.grid[targetRow][k + 1];
       }
       this.grid[targetRow][targetCol] = srcTile;
     } else {
-      // Entire target row is full (16 tiles) - check other row
+      // Target row has no empty slots! Check other row
       const otherRow = targetRow === 0 ? 1 : 0;
       let otherEmpty = -1;
       for (let c = 0; c < this.COLS; c++) {
@@ -151,7 +154,7 @@ class IstakaManager {
         }
         this.grid[targetRow][targetCol] = srcTile;
       } else {
-        // Fallback swap
+        // Fallback swap if literally all 32 slots are occupied
         const existing = this.grid[targetRow][targetCol];
         this.grid[targetRow][targetCol] = srcTile;
         this.grid[srcRow][srcCol] = existing;
@@ -184,18 +187,20 @@ class IstakaManager {
       }
     }
 
-    if (rightEmpty !== -1) {
+    const distRight = rightEmpty !== -1 ? (rightEmpty - targetCol) : Infinity;
+    const distLeft = leftEmpty !== -1 ? (targetCol - leftEmpty) : Infinity;
+
+    if (distRight <= distLeft && distRight !== Infinity) {
       for (let k = rightEmpty; k > targetCol; k--) {
         this.grid[targetRow][k] = this.grid[targetRow][k - 1];
       }
       this.grid[targetRow][targetCol] = newTile;
-    } else if (leftEmpty !== -1) {
+    } else if (distLeft < distRight && distLeft !== Infinity) {
       for (let k = leftEmpty; k < targetCol; k++) {
         this.grid[targetRow][k] = this.grid[targetRow][k + 1];
       }
       this.grid[targetRow][targetCol] = newTile;
     } else {
-      // Entire target row is full (16 tiles) - check other row
       const otherRow = targetRow === 0 ? 1 : 0;
       let otherEmpty = -1;
       for (let c = 0; c < this.COLS; c++) {
@@ -426,6 +431,48 @@ class IstakaManager {
       document.querySelectorAll('.meld-drag-hover').forEach(m => m.classList.remove('meld-drag-hover'));
     });
 
+    // Drop onto this specific tile to insert directly before/at this tile
+    el.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const slot = el.closest('.istaka-slot');
+      if (slot) slot.classList.add('drag-over');
+    });
+
+    el.addEventListener('dragleave', () => {
+      const slot = el.closest('.istaka-slot');
+      if (slot) slot.classList.remove('drag-over');
+    });
+
+    el.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const slot = el.closest('.istaka-slot');
+      if (slot) slot.classList.remove('drag-over');
+
+      const action = e.dataTransfer.getData('text/plain');
+      if (action === 'ACTION:DRAW_DECK') {
+        this.pendingDropTarget = { row, col };
+        if (this.onDrawDeck) this.onDrawDeck();
+        return;
+      }
+      if (action === 'ACTION:DRAW_DISCARD') {
+        this.pendingDropTarget = { row, col };
+        if (this.onDrawDiscard) this.onDrawDiscard();
+        return;
+      }
+
+      if (!this.draggedSource) return;
+
+      const { row: srcRow, col: srcCol, tile: srcTile } = this.draggedSource;
+      this.insertTileAt(srcRow, srcCol, row, col, srcTile);
+
+      this.draggedSource = null;
+      this.activeTile = null;
+      window.soundEngine.playTilePlace();
+      this.render();
+    });
+
     // Click & Double-Click Handler (Foolproof across all devices and DOM re-renders)
     el.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -440,6 +487,30 @@ class IstakaManager {
           this.onTileDoubleClicked(tile);
         }
         return;
+      }
+
+      // If another tile was active and user clicks on this tile, insert activeTile at (row, col) shifting others!
+      if (this.activeTile && this.activeTile.id !== tile.id) {
+        let srcR = -1, srcC = -1;
+        for (let r = 0; r < this.ROWS; r++) {
+          for (let c = 0; c < this.COLS; c++) {
+            if (this.grid[r][c] && this.grid[r][c].id === this.activeTile.id) {
+              srcR = r;
+              srcC = c;
+              break;
+            }
+          }
+          if (srcR !== -1) break;
+        }
+
+        if (srcR !== -1) {
+          const movingTile = this.activeTile;
+          this.activeTile = null;
+          this.insertTileAt(srcR, srcC, row, col, movingTile);
+          window.soundEngine.playTilePlace();
+          this.render();
+          return;
+        }
       }
 
       this.activeTile = (this.activeTile && this.activeTile.id === tile.id) ? null : tile;
@@ -460,20 +531,27 @@ class IstakaManager {
   }
 
   handleSlotClick(e, row, col) {
-    // If we clicked a tile then click an empty slot, move it there
-    if (this.activeTile && !this.grid[row][col]) {
-      for (let r = 0; r < this.ROWS; r++) {
-        for (let c = 0; c < this.COLS; c++) {
-          if (this.grid[r][c] && this.grid[r][c].id === this.activeTile.id) {
-            this.grid[r][c] = null;
-            this.grid[row][col] = this.activeTile;
-            this.activeTile = null;
-            window.soundEngine.playTilePlace();
-            this.render();
-            return;
-          }
+    // If we clicked a tile then click any slot (empty or occupied), insert it there
+    if (!this.activeTile) return;
+
+    let srcR = -1, srcC = -1;
+    for (let r = 0; r < this.ROWS; r++) {
+      for (let c = 0; c < this.COLS; c++) {
+        if (this.grid[r][c] && this.grid[r][c].id === this.activeTile.id) {
+          srcR = r;
+          srcC = c;
+          break;
         }
       }
+      if (srcR !== -1) break;
+    }
+
+    if (srcR !== -1) {
+      const movingTile = this.activeTile;
+      this.activeTile = null;
+      this.insertTileAt(srcR, srcC, row, col, movingTile);
+      window.soundEngine.playTilePlace();
+      this.render();
     }
   }
 
