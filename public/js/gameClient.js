@@ -62,6 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedCharName = null;
 
   function renderNamePicker(list) {
+    if (currentUser) return; // Ignore if user is already logged in
+
     if (list) {
       if (Array.isArray(list)) {
         availableProfiles = list;
@@ -72,15 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('name-picker-grid');
     if (!grid) return;
     grid.innerHTML = '';
-
-    // If currently selected name is already taken by someone else online, deselect it
-    if (selectedCharName) {
-      const charItem = availableProfiles.find(p => p.name.toLowerCase() === selectedCharName.toLowerCase());
-      if (charItem && charItem.isOnline && charItem.activeSocketId !== socket.id) {
-        selectedCharName = null;
-        ui.showToast('Seçtiğiniz karakter az önce başka bir oyuncu tarafından alındı!', 'warning', 3000);
-      }
-    }
 
     // Sort alphabetically in Turkish
     const sorted = [...availableProfiles].sort((a, b) => a.name.localeCompare(b.name, 'tr'));
@@ -115,8 +108,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!isOccupied) {
         card.addEventListener('click', () => {
-          selectedCharName = item.name;
-          renderNamePicker();
+          if (selectedCharName === item.name) {
+            // Second click on already selected card directly enters
+            doSelectNameAndEnterLobby(item.name);
+          } else {
+            selectedCharName = item.name;
+            renderNamePicker();
+          }
         });
 
         // Double click directly joins
@@ -158,7 +156,17 @@ document.addEventListener('DOMContentLoaded', () => {
       btnEnter.setAttribute('disabled', 'true');
     }
 
+    // Safety timeout in case of network lag
+    const resetTimer = setTimeout(() => {
+      if (btnEnter && !currentUser) {
+        btnEnter.textContent = '🚀 OYUNA GİRİŞ YAP';
+        btnEnter.classList.remove('disabled');
+        btnEnter.removeAttribute('disabled');
+      }
+    }, 4000);
+
     socket.emit('auth:selectName', { name: nameToSelect }, (res) => {
+      clearTimeout(resetTimer);
       if (btnEnter) {
         btnEnter.textContent = '🚀 OYUNA GİRİŞ YAP';
         btnEnter.classList.remove('disabled');
@@ -191,7 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Real-time live synchronization of character availability
   socket.on('auth:namesUpdate', (names) => {
-    renderNamePicker(names);
+    if (!currentUser) {
+      renderNamePicker(names);
+    }
   });
 
   function showLobby() {
@@ -215,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showAuth() {
     stopTurnTimerLoop();
+    currentUser = null;
     if (lobbyView) {
       lobbyView.classList.add('hidden');
       lobbyView.style.display = 'none';
