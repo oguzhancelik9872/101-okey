@@ -1127,21 +1127,28 @@ document.addEventListener('DOMContentLoaded', () => {
       const minPairs = isFirstOpen ? (currentGameState.minOpenPairs || 5) : 1;
       const requiredId = (isMyTurn && isFirstOpen && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
 
-      // Analyze 2-tile pair groups currently arranged on the istaka rack
-      const rackPairs = istaka.analyzeRackPairs();
-      const containsRequired = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
+      // 1. Analyze 2-tile pair groups currently arranged on the istaka rack
+      let rackPairs = istaka.analyzeRackPairs();
+      let containsRequired = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
 
       if (rackPairs.validPairs.length < minPairs || !containsRequired) {
         const allPairsInHand = ClientValidator.findAllPairs(istaka.getAllTiles(), currentGameState.indicator, isFirstOpen ? requiredId : null);
         const containsRequiredInHand = !requiredId || !isFirstOpen || allPairsInHand.some(p => p[0].id === requiredId || p[1].id === requiredId);
 
         if (allPairsInHand.length >= minPairs && containsRequiredInHand) {
-          ui.showToast(`Çift açmak için en az ${minPairs} çifti ıstakanızda 2'şerli kümeler halinde dizmelisiniz (veya 'Çift Diz' butonunu kullanınız).`, 'warning', 4000);
+          istaka.autoSortPairs(isFirstOpen ? requiredId : null);
+          rackPairs = istaka.analyzeRackPairs();
         } else if (requiredId && isFirstOpen && !containsRequired) {
           ui.showToast('Yandan çektiğiniz taşı açtığınız çiftlerde kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
+          return;
         } else {
-          ui.showToast(`Çift açmak için en az ${minPairs} çiftiniz olmalıdır. (Dizili: ${rackPairs.validPairs.length})`, 'error', 3000);
+          ui.showToast(`Çift açmak için en az ${minPairs} çiftiniz olmalıdır.`, 'error', 3000);
+          return;
         }
+      }
+
+      if (rackPairs.validPairs.length < minPairs) {
+        ui.showToast(`Çift açmak için en az ${minPairs} çiftiniz olmalıdır.`, 'error', 3000);
         return;
       }
 

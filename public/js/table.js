@@ -418,6 +418,7 @@ class TableManager {
             slot2.appendChild(this.createTileDOM(meld.tiles[1], false, true));
           }
 
+          const hasOkey = meld.tiles && meld.tiles.some(t => t.isOkey);
           if (isViewerTurn && viewerOpened && hasOkey) {
             pairRow.title = 'Aynı taşa sahipseniz Okeyi almak için taşınızı bu çifte sürükleyin';
             pairRow.addEventListener('dragover', (e) => {
