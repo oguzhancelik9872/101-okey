@@ -673,6 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       roomId = null;
       currentGameState = null;
+      mySeatedIndex = null;
       viewerSeatIndex = 0;
       isHost = false;
       if (dropdownMenu) dropdownMenu.classList.add('hidden');
@@ -703,22 +704,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Socket.IO Game State Updates ---
   socket.on('gameStateUpdate', (state) => {
-    currentGameState = state;
+    if (!state) return;
 
-    // Transition from lobby to game table when round starts
+    // Transition from lobby to game table ONLY when round starts and user is seated in THIS room
     if (state.state === 'PLAYING') {
-      const mySeat = state.players.findIndex(p => p && ((currentUser && p.userId === currentUser.id) || p.id === socket.id));
+      const mySeat = state.players ? state.players.findIndex(p => p && ((currentUser && p.userId === currentUser.id) || p.id === socket.id)) : -1;
       if (mySeat !== -1) {
-        viewerSeatIndex = mySeat;
-        roomId = state.id || currentLobbyTableId;
-        localStorage.setItem('okey101_active_room', roomId);
-        table.setViewerSeatIndex(viewerSeatIndex);
-        if (authView) authView.classList.add('hidden');
-        if (lobbyView) lobbyView.classList.add('hidden');
-        if (gameView) gameView.classList.remove('hidden');
+        if (roomId === state.id || (!roomId && state.id === currentLobbyTableId)) {
+          viewerSeatIndex = mySeat;
+          roomId = state.id;
+          localStorage.setItem('okey101_active_room', roomId);
+          table.setViewerSeatIndex(viewerSeatIndex);
+          if (authView) authView.classList.add('hidden');
+          if (lobbyView) lobbyView.classList.add('hidden');
+          if (gameView) gameView.classList.remove('hidden');
+        }
       }
     }
 
+    // If client is currently in lobby view, ignore game table rendering from background rooms
+    if (lobbyView && !lobbyView.classList.contains('hidden')) {
+      return;
+    }
+
+    currentGameState = state;
     table.setViewerSeatIndex(viewerSeatIndex);
     istaka.setIndicator(state.indicator);
 

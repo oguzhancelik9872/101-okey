@@ -494,7 +494,7 @@ io.on('connection', (socket) => {
       if (roomId) {
         socket.leave(roomId);
         socket.roomId = null;
-        roomManager.handleLeave(roomId, socket.id);
+        roomManager.handleLeave(roomId, socket.id, uId);
       }
       if (callback) callback({ success: true });
     } catch (err) {

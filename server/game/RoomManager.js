@@ -216,8 +216,14 @@ class RoomManager {
     if (currentSeatIdx !== -1) {
       game.players[currentSeatIdx] = null;
       if (publicRoom.hostId === socketId || (userId && publicRoom.hostId === userId)) {
-        const next = game.players.find(Boolean);
+        const next = game.players.find(p => p && !p.isBot);
         publicRoom.hostId = next ? next.id : null;
+      }
+      // If no human players remain at the table, remove all bots and completely reset!
+      const remainingHumans = game.players.filter(p => p && !p.isBot);
+      if (remainingHumans.length === 0) {
+        game.players = [null, null, null, null];
+        publicRoom.hostId = null;
       }
       this.broadcastLobbyState();
       return { success: true };
@@ -405,27 +411,41 @@ class RoomManager {
     executeStep();
   }
 
-  handleLeave(roomId, playerId) {
+  handleLeave(roomId, playerId, userId = null) {
     const room = this.rooms.get(roomId);
     if (!room) return;
 
-    if (room.vsBots || (room.hostId === playerId && room.isPrivate)) {
+    if (room.vsBots || room.isPrivate || (room.hostId === playerId && room.isPrivate)) {
       if (room.botInterval) clearInterval(room.botInterval);
       this.rooms.delete(roomId);
       this.broadcastLobbyState();
       return;
     }
 
-    const playerIndex = room.game.players.findIndex(p => p && p.id === playerId);
+    const playerIndex = room.game.players.findIndex(p => p && ((userId && p.userId === userId) || p.id === playerId));
     if (playerIndex !== -1) {
       if (room.game.state === GAME_STATES.WAITING) {
         room.game.players[playerIndex] = null;
-        if (room.hostId === playerId) {
-          const nextPlayer = room.game.players.find(Boolean);
+        if (room.hostId === playerId || (userId && room.hostId === userId)) {
+          const nextPlayer = room.game.players.find(p => p && !p.isBot);
           room.hostId = nextPlayer ? nextPlayer.id : null;
+        }
+        // If no human players left, clean up all bots and reset
+        const remainingHumans = room.game.players.filter(p => p && !p.isBot);
+        if (remainingHumans.length === 0) {
+          room.game.players = [null, null, null, null];
+          room.hostId = null;
         }
       } else {
         room.game.players[playerIndex].isBot = true;
+        // If all humans left the active game, destroy room
+        const remainingHumans = room.game.players.filter(p => p && !p.isBot);
+        if (remainingHumans.length === 0) {
+          if (room.botInterval) clearInterval(room.botInterval);
+          this.rooms.delete(roomId);
+          this.broadcastLobbyState();
+          return;
+        }
       }
       room.game.addLog(`Oyuncu masadan ayrıldı.`);
       this.broadcastGameState(roomId);
