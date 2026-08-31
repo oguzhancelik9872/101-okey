@@ -69,67 +69,22 @@ document.addEventListener('DOMContentLoaded', () => {
     { name: 'Yekta', gender: 'male', avatarIndex: 7 }
   ];
 
-  let availableProfiles = [...DEFAULT_PROFILES];
   let selectedCharName = null;
 
-  function renderNamePicker(list) {
-    if (currentUser) return; // Ignore if user is already logged in
-
-    if (list) {
-      if (Array.isArray(list)) {
-        availableProfiles = list;
-      } else if (list.names) {
-        availableProfiles = list.names;
-      }
-    }
+  function updateNamePickerUI() {
     const grid = document.getElementById('name-picker-grid');
     if (!grid) return;
-    grid.innerHTML = '';
-
-    // Sort alphabetically in Turkish
-    const sorted = [...availableProfiles].sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-
-    sorted.forEach((item, idx) => {
-      const card = document.createElement('div');
-      const isSelected = selectedCharName && selectedCharName.toLowerCase() === item.name.toLowerCase();
-
-      card.className = 'name-card available' + (isSelected ? ' selected' : '');
-
-      const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
-        ? window.getPlayerAvatarSVG(item.displayName || item.name, item.gender || 'male', (item.avatarIndex !== undefined && item.avatarIndex !== null) ? item.avatarIndex : idx % 8)
-        : '👤';
-
-      const statusHtml = isSelected
-        ? '<span class="name-card-status status-selected">✨ Seçildi</span>'
-        : '<span class="name-card-status status-available">🟢 Seç</span>';
-
-      card.innerHTML = `
-        <div class="name-card-avatar">${avatarSvg}</div>
-        <div class="name-card-info">
-          <span class="name-card-title">${item.name}</span>
-          ${statusHtml}
-        </div>
-      `;
-
-      card.addEventListener('click', () => {
-        if (selectedCharName === item.name) {
-          // Second click on already selected card directly enters
-          doSelectNameAndEnterLobby(item.name);
-        } else {
-          selectedCharName = item.name;
-          renderNamePicker();
-        }
-      });
-
-      // Double click directly joins
-      card.addEventListener('dblclick', () => {
-        selectedCharName = item.name;
-        doSelectNameAndEnterLobby(item.name);
-      });
-
-      grid.appendChild(card);
+    const cards = grid.querySelectorAll('.name-card');
+    cards.forEach(card => {
+      const name = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
+      const isSelected = selectedCharName && selectedCharName.toLowerCase() === (name || '').toLowerCase();
+      card.classList.toggle('selected', Boolean(isSelected));
+      const statusEl = card.querySelector('.name-card-status');
+      if (statusEl) {
+        statusEl.className = 'name-card-status ' + (isSelected ? 'status-selected' : 'status-available');
+        statusEl.textContent = isSelected ? '✨ Seçildi' : '🟢 Seç';
+      }
     });
-
     updateEnterGameButton();
   }
 
@@ -159,17 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnEnter.setAttribute('disabled', 'true');
     }
 
-    // Safety timeout in case of network lag
-    const resetTimer = setTimeout(() => {
-      if (btnEnter && !currentUser) {
-        btnEnter.textContent = '🚀 OYUNA GİRİŞ YAP';
-        btnEnter.classList.remove('disabled');
-        btnEnter.removeAttribute('disabled');
-      }
-    }, 4000);
-
     socket.emit('auth:selectName', { name: nameToSelect }, (res) => {
-      clearTimeout(resetTimer);
       if (btnEnter) {
         btnEnter.textContent = '🚀 OYUNA GİRİŞ YAP';
         btnEnter.classList.remove('disabled');
@@ -188,9 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateLobbyProfileUI();
       } else {
         ui.showToast((res && res.reason) || 'Giriş yapılamadı. Tekrar deneyin.', 'error');
-        socket.emit('auth:getAvailableNames', (data) => {
-          renderNamePicker(data);
-        });
       }
     });
   }
@@ -198,7 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bind Enter Game Button Click
   const btnEnterGame = document.getElementById('btn-enter-game');
   if (btnEnterGame) {
-    btnEnterGame.addEventListener('click', () => {
+    btnEnterGame.addEventListener('click', (e) => {
+      e.preventDefault();
       if (selectedCharName) {
         doSelectNameAndEnterLobby(selectedCharName);
       } else {
@@ -207,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Delegated click handler on character selection grid
+  // Delegated click & double click on character selection grid
   const namePickerGrid = document.getElementById('name-picker-grid');
   if (namePickerGrid) {
     namePickerGrid.addEventListener('click', (e) => {
@@ -215,23 +158,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (card) {
         const charName = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
         if (charName) {
-          if (selectedCharName === charName) {
-            doSelectNameAndEnterLobby(charName);
-          } else {
-            selectedCharName = charName;
-            renderNamePicker();
-          }
+          selectedCharName = charName;
+          updateNamePickerUI();
+        }
+      }
+    });
+
+    namePickerGrid.addEventListener('dblclick', (e) => {
+      const card = e.target.closest('.name-card');
+      if (card) {
+        const charName = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
+        if (charName) {
+          selectedCharName = charName;
+          updateNamePickerUI();
+          doSelectNameAndEnterLobby(charName);
         }
       }
     });
   }
-
-  // Real-time live synchronization of character availability
-  socket.on('auth:namesUpdate', (names) => {
-    if (!currentUser) {
-      renderNamePicker(names);
-    }
-  });
 
   function showLobby() {
     stopTurnTimerLoop();
@@ -239,14 +183,15 @@ document.addEventListener('DOMContentLoaded', () => {
     clearChatMessages();
     if (authView) {
       authView.classList.add('hidden');
-      authView.style.display = 'none';
+      authView.style.setProperty('display', 'none', 'important');
     }
     if (gameView) {
       gameView.classList.add('hidden');
-      gameView.style.display = 'none';
+      gameView.style.setProperty('display', 'none', 'important');
     }
     if (lobbyView) {
       lobbyView.classList.remove('hidden');
+      lobbyView.style.removeProperty('display');
       lobbyView.style.display = 'flex';
     }
     socket.emit('lobby:join');
@@ -257,21 +202,19 @@ document.addEventListener('DOMContentLoaded', () => {
     currentUser = null;
     if (lobbyView) {
       lobbyView.classList.add('hidden');
-      lobbyView.style.display = 'none';
+      lobbyView.style.setProperty('display', 'none', 'important');
     }
     if (gameView) {
       gameView.classList.add('hidden');
-      gameView.style.display = 'none';
+      gameView.style.setProperty('display', 'none', 'important');
     }
     if (authView) {
       authView.classList.remove('hidden');
+      authView.style.removeProperty('display');
       authView.style.display = 'flex';
     }
     selectedCharName = null;
-    renderNamePicker(DEFAULT_PROFILES);
-    socket.emit('auth:getAvailableNames', (data) => {
-      renderNamePicker(data);
-    });
+    updateNamePickerUI();
   }
 
   function handleLoginSuccess(user, token, isReconnectCheck = false) {
