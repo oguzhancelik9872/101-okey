@@ -11,31 +11,17 @@ class OkeyAudio {
     this.mp3Audios = {};  // Preloaded HTML5 Audio objects
     this.mp3Missing = {}; // Track missing MP3s to avoid repeated requests
 
-    // Granular Settings
+    // Simple Sound Settings (Master Mute / Unmute)
     this.settings = {
-      masterVolume: 0.85,
-      sfxVolume: 0.9,
-      ambientVolume: 0.4,
-      ambientEnabled: true,
-      timerAlertEnabled: true,
-      sfxEnabled: true,
       muted: false
     };
 
     this.loadSettings();
-
-    // Ambient Cafe Chatter state
-    this.ambientGainNode = null;
-    this.ambientRunning = false;
-    this.ambientNodes = [];
-    this.ambientAudioElement = null;
-
-    // Check & preload MP3 files from /audio/
     this._preloadMP3s();
   }
 
   _preloadMP3s() {
-    const soundNames = ['discard', 'draw', 'draw_discard', 'open_hand', 'your_turn', 'fail', 'ambient', 'tick', 'win', 'penalty'];
+    const soundNames = ['discard', 'draw', 'draw_discard', 'open_hand', 'your_turn', 'fail', 'tick', 'win', 'penalty'];
     soundNames.forEach(name => {
       const audio = new Audio(`/audio/${name}.mp3`);
       audio.preload = 'auto';
@@ -50,20 +36,17 @@ class OkeyAudio {
   }
 
   _playMP3OrFallback(name, type = 'sfx', fallbackFn = null) {
-    const vol = this.getEffectiveVolume(type);
-    if (vol <= 0) return;
+    if (this.settings.muted) return;
 
     if (this.mp3Audios[name] && !this.mp3Missing[name]) {
       try {
         const sound = this.mp3Audios[name].cloneNode();
-        sound.volume = Math.max(0, Math.min(1, vol));
+        sound.volume = 0.85;
         sound.play().catch(() => {
           if (fallbackFn) fallbackFn.call(this);
         });
         return;
-      } catch (e) {
-        // Fallback
-      }
+      } catch (e) {}
     }
 
     if (fallbackFn) {
@@ -73,21 +56,17 @@ class OkeyAudio {
 
   loadSettings() {
     try {
-      const saved = localStorage.getItem('okey101_sound_settings');
-      if (saved) {
-        this.settings = Object.assign(this.settings, JSON.parse(saved));
+      const saved = localStorage.getItem('okey101_sound_muted');
+      if (saved !== null) {
+        this.settings.muted = (saved === 'true');
       }
-    } catch (e) {
-      console.warn('Could not load sound settings', e);
-    }
+    } catch (e) {}
   }
 
   saveSettings() {
     try {
-      localStorage.setItem('okey101_sound_settings', JSON.stringify(this.settings));
-    } catch (e) {
-      console.warn('Could not save sound settings', e);
-    }
+      localStorage.setItem('okey101_sound_muted', String(this.settings.muted));
+    } catch (e) {}
   }
 
   init() {
@@ -95,7 +74,6 @@ class OkeyAudio {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) {
         this.ctx = new AudioContext();
-        this._createNoiseBuffer();
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
@@ -103,42 +81,28 @@ class OkeyAudio {
     }
   }
 
-  _createNoiseBuffer() {
-    if (!this.ctx) return;
-    const bufferSize = this.ctx.sampleRate * 3; // 3 seconds of warm pink/brown noise
-    this.noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const output = this.noiseBuffer.getChannelData(0);
-    let b0 = 0, b1 = 0, b2 = 0, b3 = 0;
-    for (let i = 0; i < bufferSize; i++) {
-      const white = Math.random() * 2 - 1;
-      // Filter heavily towards warm brown/pink noise
-      b0 = 0.99886 * b0 + white * 0.0555179;
-      b1 = 0.99332 * b1 + white * 0.0750759;
-      b2 = 0.96900 * b2 + white * 0.1538520;
-      b3 = 0.86650 * b3 + white * 0.3104856;
-      output[i] = (b0 + b1 + b2 + b3 + white * 0.2) * 0.15;
-    }
-  }
-
-  getEffectiveVolume(type = 'sfx') {
-    if (this.settings.muted) return 0;
-    const master = Math.max(0, Math.min(1, this.settings.masterVolume));
-    if (type === 'ambient') {
-      return this.settings.ambientEnabled ? master * this.settings.ambientVolume : 0;
-    }
-    return this.settings.sfxEnabled ? master * this.settings.sfxVolume : 0;
+  getEffectiveVolume() {
+    return this.settings.muted ? 0 : 0.85;
   }
 
   toggleMute() {
     this.settings.muted = !this.settings.muted;
     this.saveSettings();
-    if (this.settings.muted) {
-      this.stopAmbient();
-    } else if (this.settings.ambientEnabled) {
-      this.startAmbient();
-    }
     return this.settings.muted;
   }
+
+  isMuted() {
+    return Boolean(this.settings.muted);
+  }
+
+  setMuted(muted) {
+    this.settings.muted = Boolean(muted);
+    this.saveSettings();
+  }
+
+  startAmbient() {}
+  stopAmbient() {}
+  updateAmbientVolume() {}
 
   // =========================================================================
   // 1. GAMEPLAY SOUND EFFECTS (Tok, derin, ahşap & kemik vuruşları / MP3)

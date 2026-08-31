@@ -1389,41 +1389,73 @@ document.addEventListener('DOMContentLoaded', () => {
     updateActionBarUI();
   }
 
-  // --- Chat & Emoji Reactions ---
-  const chatModal = document.getElementById('chat-modal');
+  // =========================================================
+  // SLIDING SIDE DRAWERS (CHAT & SETTINGS) & SOUND TOGGLE
+  // =========================================================
+  const drawerBackdrop = document.getElementById('drawer-backdrop');
+  const chatDrawer = document.getElementById('chat-drawer');
+  const settingsDrawer = document.getElementById('settings-drawer');
+
   const btnLobbyChat = document.getElementById('btn-lobby-chat');
   const btnTableChat = document.getElementById('btn-table-chat');
-  const btnCloseChat = document.getElementById('btn-close-chat');
-  const chatInput = document.getElementById('chat-input');
-  const btnSendChat = document.getElementById('btn-send-chat');
+  const btnCloseChatDrawer = document.getElementById('btn-close-chat-drawer');
+
+  const btnLobbySettings = document.getElementById('btn-lobby-settings');
+  const btnTableSettings = document.getElementById('btn-table-settings');
+  const btnCloseSettingsDrawer = document.getElementById('btn-close-settings-drawer');
+
   const lobbyChatBadge = document.getElementById('lobby-chat-badge');
   const tableChatBadge = document.getElementById('table-chat-badge');
+  const chatInput = document.getElementById('chat-input');
+  const btnSendChat = document.getElementById('btn-send-chat');
 
-  function openChatModal() {
-    if (!chatModal) return;
-    chatModal.classList.remove('hidden');
-    if (lobbyChatBadge) lobbyChatBadge.classList.add('hidden');
-    if (tableChatBadge) tableChatBadge.classList.add('hidden');
-    if (chatInput) {
-      setTimeout(() => chatInput.focus(), 150);
+  const btnToggleMasterAudio = document.getElementById('btn-toggle-master-audio');
+  const labelMasterAudioIcon = document.getElementById('label-master-audio-icon');
+  const labelMasterAudioText = document.getElementById('label-master-audio-text');
+  const drawerInGameActions = document.getElementById('drawer-in-game-actions');
+  const btnDrawerLeaveTable = document.getElementById('btn-drawer-leave-table');
+
+  function openDrawer(drawer) {
+    if (!drawer) return;
+    window.soundEngine.init();
+    closeAllDrawers();
+    drawer.classList.add('open');
+    if (drawerBackdrop) drawerBackdrop.classList.remove('hidden');
+
+    if (drawer === chatDrawer) {
+      if (lobbyChatBadge) lobbyChatBadge.classList.add('hidden');
+      if (tableChatBadge) tableChatBadge.classList.add('hidden');
+      if (chatInput) {
+        setTimeout(() => chatInput.focus(), 150);
+      }
+      const chatLogs = document.getElementById('chat-messages');
+      if (chatLogs) chatLogs.scrollTop = chatLogs.scrollHeight;
+    } else if (drawer === settingsDrawer) {
+      syncSettingsDrawer();
     }
-    const chatLogs = document.getElementById('chat-messages');
-    if (chatLogs) chatLogs.scrollTop = chatLogs.scrollHeight;
   }
 
-  function closeChatModal() {
-    if (chatModal) chatModal.classList.add('hidden');
+  function closeAllDrawers() {
+    if (chatDrawer) chatDrawer.classList.remove('open');
+    if (settingsDrawer) settingsDrawer.classList.remove('open');
+    if (drawerBackdrop) drawerBackdrop.classList.add('hidden');
   }
 
-  if (btnLobbyChat) btnLobbyChat.addEventListener('click', openChatModal);
-  if (btnTableChat) btnTableChat.addEventListener('click', openChatModal);
-  if (btnCloseChat) btnCloseChat.addEventListener('click', closeChatModal);
-  if (chatModal) {
-    chatModal.addEventListener('click', (e) => {
-      if (e.target === chatModal) closeChatModal();
-    });
-  }
+  if (btnLobbyChat) btnLobbyChat.addEventListener('click', () => openDrawer(chatDrawer));
+  if (btnTableChat) btnTableChat.addEventListener('click', () => openDrawer(chatDrawer));
+  if (btnCloseChatDrawer) btnCloseChatDrawer.addEventListener('click', closeAllDrawers);
 
+  if (btnLobbySettings) btnLobbySettings.addEventListener('click', () => openDrawer(settingsDrawer));
+  if (btnTableSettings) btnTableSettings.addEventListener('click', () => openDrawer(settingsDrawer));
+  if (btnCloseSettingsDrawer) btnCloseSettingsDrawer.addEventListener('click', closeAllDrawers);
+
+  if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeAllDrawers);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAllDrawers();
+  });
+
+  // --- Live Chat Message Handling ---
   function sendChatMessage(customText = null) {
     const text = (customText !== null) ? customText.trim() : (chatInput ? chatInput.value.trim() : '');
     if (!text) return;
@@ -1463,17 +1495,53 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.appendChatMessage(msg.sender, msg.text, msg.time, isMe);
 
     // If chat is closed and message is from someone else, show unread badge
-    const isChatOpen = chatModal && !chatModal.classList.contains('hidden');
+    const isChatOpen = chatDrawer && chatDrawer.classList.contains('open');
     if (!isChatOpen && !isMe) {
       if (lobbyChatBadge) lobbyChatBadge.classList.remove('hidden');
       if (tableChatBadge) tableChatBadge.classList.remove('hidden');
-      try {
-        if (window.soundEngine && typeof window.soundEngine._playTeaTinkle === 'function') {
-          window.soundEngine._playTeaTinkle();
-        }
-      } catch (e) {}
     }
   });
+
+  // --- Master Sound Toggle & Settings Drawer Sync ---
+  function syncSettingsDrawer() {
+    const isMuted = window.soundEngine.isMuted();
+    if (btnToggleMasterAudio) {
+      btnToggleMasterAudio.className = 'btn-sound-main-toggle ' + (isMuted ? 'muted' : 'active');
+      if (labelMasterAudioIcon) labelMasterAudioIcon.textContent = isMuted ? '🔇' : '🔊';
+      if (labelMasterAudioText) labelMasterAudioText.textContent = isMuted ? 'SES: KAPALI' : 'SES: AÇIK';
+    }
+
+    if (drawerInGameActions) {
+      if (roomId) {
+        drawerInGameActions.classList.remove('hidden');
+      } else {
+        drawerInGameActions.classList.add('hidden');
+      }
+    }
+  }
+
+  if (btnToggleMasterAudio) {
+    btnToggleMasterAudio.addEventListener('click', () => {
+      const isMuted = window.soundEngine.toggleMute();
+      syncSettingsDrawer();
+      if (!isMuted) {
+        window.soundEngine.playDiscard();
+      }
+    });
+  }
+
+  if (btnDrawerLeaveTable) {
+    btnDrawerLeaveTable.addEventListener('click', () => {
+      closeAllDrawers();
+      if (roomId) {
+        socket.emit('leaveRoom', { roomId, userId: getUserId() }, () => {
+          roomId = null;
+          showLobby();
+          ui.showToast('Masadan ayrıldınız.', 'info');
+        });
+      }
+    });
+  }
 
   // Quick Emoji reactions
   document.querySelectorAll('.btn-plus-emoji, .btn-quick-reaction').forEach(btn => {
@@ -1490,173 +1558,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.triggerReaction(pos, data.reaction, data.label);
   });
 
-  // Sound Settings Modal & Controls (Synchronized between Lobby & Table)
-  const soundModal = document.getElementById('sound-settings-modal');
-  const btnCloseSound = document.getElementById('btn-close-sound-settings');
-  const btnSaveSound = document.getElementById('btn-save-sound-settings');
-
-  const sliderMaster = document.getElementById('slider-master-volume');
-  const labelMaster = document.getElementById('label-master-volume');
-  const btnMasterMute = document.getElementById('btn-toggle-master-mute');
-
-  const sliderSfx = document.getElementById('slider-sfx-volume');
-  const labelSfx = document.getElementById('label-sfx-volume');
-  const btnToggleSfx = document.getElementById('btn-toggle-sfx');
-
-  const sliderAmbient = document.getElementById('slider-ambient-volume');
-  const labelAmbient = document.getElementById('label-ambient-volume');
-  const btnToggleAmbient = document.getElementById('btn-toggle-ambient');
-
-  const btnToggleTimerTick = document.getElementById('btn-toggle-timer-tick');
-
-  const btnMute = document.getElementById('btn-toggle-sound');
-  const btnLobbySettings = document.getElementById('btn-lobby-settings') || document.getElementById('btn-lobby-toggle-sound');
-
-  function updateSoundUI(isMuted) {
-    if (btnMute) {
-      btnMute.innerHTML = isMuted ? '<span>🔇 Ayarlar (Sessiz)</span>' : '<span>⚙️ Ayarlar</span>';
-    }
-  }
-
-  function syncSoundSettingsModal() {
-    const s = window.soundEngine.settings;
-    if (sliderMaster) {
-      sliderMaster.value = Math.round(s.masterVolume * 100);
-      if (labelMaster) labelMaster.textContent = `${sliderMaster.value}%`;
-    }
-    if (btnMasterMute) {
-      btnMasterMute.textContent = s.muted ? 'Kapalı' : 'Açık';
-      btnMasterMute.className = 'btn-sound-toggle ' + (s.muted ? 'muted' : 'active');
-    }
-
-    if (sliderSfx) {
-      sliderSfx.value = Math.round(s.sfxVolume * 100);
-      if (labelSfx) labelSfx.textContent = `${sliderSfx.value}%`;
-    }
-    if (btnToggleSfx) {
-      btnToggleSfx.textContent = s.sfxEnabled ? 'Açık' : 'Kapalı';
-      btnToggleSfx.className = 'btn-sound-toggle ' + (s.sfxEnabled ? 'active' : 'muted');
-    }
-
-    if (sliderAmbient) {
-      sliderAmbient.value = Math.round(s.ambientVolume * 100);
-      if (labelAmbient) labelAmbient.textContent = `${sliderAmbient.value}%`;
-    }
-    if (btnToggleAmbient) {
-      btnToggleAmbient.textContent = s.ambientEnabled ? 'Açık' : 'Kapalı';
-      btnToggleAmbient.className = 'btn-sound-toggle ' + (s.ambientEnabled ? 'active' : 'muted');
-    }
-
-    if (btnToggleTimerTick) {
-      btnToggleTimerTick.textContent = s.timerAlertEnabled ? 'Açık' : 'Kapalı';
-      btnToggleTimerTick.className = 'btn-sound-toggle ' + (s.timerAlertEnabled ? 'active' : 'muted');
-    }
-
-    updateSoundUI(s.muted);
-  }
-
-  function openSoundSettingsModal() {
-    window.soundEngine.init();
-    syncSoundSettingsModal();
-    if (soundModal) soundModal.classList.remove('hidden');
-  }
-
-  function closeSoundSettingsModal() {
-    if (soundModal) soundModal.classList.add('hidden');
-  }
-
-  if (sliderMaster) {
-    sliderMaster.addEventListener('input', () => {
-      window.soundEngine.settings.masterVolume = parseInt(sliderMaster.value) / 100;
-      if (labelMaster) labelMaster.textContent = `${sliderMaster.value}%`;
-      window.soundEngine.saveSettings();
-      window.soundEngine.updateAmbientVolume();
-    });
-    sliderMaster.addEventListener('change', () => {
-      window.soundEngine.playDiscard();
-    });
-  }
-
-  if (btnMasterMute) {
-    btnMasterMute.addEventListener('click', () => {
-      window.soundEngine.toggleMute();
-      syncSoundSettingsModal();
-      if (!window.soundEngine.settings.muted) {
-        window.soundEngine.playDiscard();
-      }
-    });
-  }
-
-  if (sliderSfx) {
-    sliderSfx.addEventListener('input', () => {
-      window.soundEngine.settings.sfxVolume = parseInt(sliderSfx.value) / 100;
-      if (labelSfx) labelSfx.textContent = `${sliderSfx.value}%`;
-      window.soundEngine.saveSettings();
-    });
-    sliderSfx.addEventListener('change', () => {
-      window.soundEngine.playDiscard();
-    });
-  }
-
-  if (btnToggleSfx) {
-    btnToggleSfx.addEventListener('click', () => {
-      window.soundEngine.settings.sfxEnabled = !window.soundEngine.settings.sfxEnabled;
-      window.soundEngine.saveSettings();
-      syncSoundSettingsModal();
-      if (window.soundEngine.settings.sfxEnabled) {
-        window.soundEngine.playDiscard();
-      }
-    });
-  }
-
-  if (sliderAmbient) {
-    sliderAmbient.addEventListener('input', () => {
-      window.soundEngine.settings.ambientVolume = parseInt(sliderAmbient.value) / 100;
-      if (labelAmbient) labelAmbient.textContent = `${sliderAmbient.value}%`;
-      window.soundEngine.saveSettings();
-      window.soundEngine.updateAmbientVolume();
-    });
-    sliderAmbient.addEventListener('change', () => {
-      window.soundEngine._playTeaTinkle();
-    });
-  }
-
-  if (btnToggleAmbient) {
-    btnToggleAmbient.addEventListener('click', () => {
-      window.soundEngine.settings.ambientEnabled = !window.soundEngine.settings.ambientEnabled;
-      window.soundEngine.saveSettings();
-      if (window.soundEngine.settings.ambientEnabled && !window.soundEngine.settings.muted) {
-        window.soundEngine.startAmbient();
-        window.soundEngine._playTeaTinkle();
-      } else {
-        window.soundEngine.stopAmbient();
-      }
-      syncSoundSettingsModal();
-    });
-  }
-
-  if (btnToggleTimerTick) {
-    btnToggleTimerTick.addEventListener('click', () => {
-      window.soundEngine.settings.timerAlertEnabled = !window.soundEngine.settings.timerAlertEnabled;
-      window.soundEngine.saveSettings();
-      syncSoundSettingsModal();
-      if (window.soundEngine.settings.timerAlertEnabled) {
-        window.soundEngine.playTimerTick(10);
-      }
-    });
-  }
-
-  if (btnCloseSound) btnCloseSound.addEventListener('click', closeSoundSettingsModal);
-  if (btnSaveSound) btnSaveSound.addEventListener('click', closeSoundSettingsModal);
-  if (soundModal) {
-    soundModal.addEventListener('click', (e) => {
-      if (e.target === soundModal) closeSoundSettingsModal();
-    });
-  }
-
-  if (btnMute) btnMute.addEventListener('click', openSoundSettingsModal);
-  if (btnLobbySettings) btnLobbySettings.addEventListener('click', openSoundSettingsModal);
-
   // Initialize Sound UI on load
-  syncSoundSettingsModal();
+  syncSettingsDrawer();
 });

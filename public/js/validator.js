@@ -207,7 +207,7 @@ class ClientValidator {
   }
 
   /**
-   * Finds all possible runs from a list of tiles (including Okey Jokers)
+   * Finds all possible runs from a list of tiles (including Okey Jokers and wrap-1)
    */
   static findAllRuns(tiles, indicator) {
     const runs = [];
@@ -234,38 +234,78 @@ class ClientValidator {
         byVal[val].push(t);
       }
 
+      // Linear runs from len 3 up to 13
       for (let startVal = 1; startVal <= 11; startVal++) {
-        for (let len = 3; len <= 7; len++) {
+        for (let len = 3; len <= 13; len++) {
           if (startVal + len - 1 > 13) continue;
 
-          const candidate = [];
-          let availableJokers = [...jokers];
-          let valid = true;
-
+          const stepOptions = [];
           for (let step = 0; step < len; step++) {
             const targetVal = startVal + step;
-
-            if (byVal[targetVal] && byVal[targetVal].length > 0) {
-              candidate.push(byVal[targetVal][0]);
-            } else if (availableJokers.length > 0) {
-              candidate.push(availableJokers.pop());
-            } else {
-              valid = false;
-              break;
-            }
+            stepOptions.push({ targetVal, options: byVal[targetVal] || [] });
           }
 
-          if (valid && candidate.length >= 3) {
-            const check = this.isValidRun(candidate, indicator);
-            if (check.valid) {
-              runs.push({ type: 'run', tiles: candidate, score: check.score });
-            }
-          }
+          this._generateRunCombinations(stepOptions, jokers, indicator, runs);
         }
+      }
+
+      // Wrap-1 runs ending with 1 (e.g. 12-13-1, 11-12-13-1, 10-11-12-13-1)
+      for (let len = 3; len <= 5; len++) {
+        const wrapStart = 15 - len;
+        if (wrapStart < 1 || wrapStart > 12) continue;
+
+        const stepOptions = [];
+        for (let step = 0; step < len - 1; step++) {
+          const targetVal = wrapStart + step;
+          stepOptions.push({ targetVal, options: byVal[targetVal] || [] });
+        }
+        stepOptions.push({ targetVal: 1, options: byVal[1] || [] });
+
+        this._generateRunCombinations(stepOptions, jokers, indicator, runs);
       }
     }
 
     return runs;
+  }
+
+  static _generateRunCombinations(stepOptions, jokers, indicator, runs) {
+    const len = stepOptions.length;
+
+    function build(stepIdx, currentTiles, usedTileIds, usedJokersCount) {
+      if (stepIdx === len) {
+        const check = ClientValidator.isValidRun(currentTiles, indicator);
+        if (check.valid) {
+          runs.push({ type: 'run', tiles: [...currentTiles], score: check.score });
+        }
+        return;
+      }
+
+      const { options } = stepOptions[stepIdx];
+      const availableRegs = options.filter(t => !usedTileIds.has(t.id));
+
+      if (availableRegs.length > 0) {
+        for (const reg of availableRegs) {
+          usedTileIds.add(reg.id);
+          currentTiles.push(reg);
+          build(stepIdx + 1, currentTiles, usedTileIds, usedJokersCount);
+          currentTiles.pop();
+          usedTileIds.delete(reg.id);
+        }
+      }
+
+      if (usedJokersCount < jokers.length) {
+        const j = jokers[usedJokersCount];
+        if (!usedTileIds.has(j.id)) {
+          usedTileIds.add(j.id);
+          currentTiles.push(j);
+          build(stepIdx + 1, currentTiles, usedTileIds, usedJokersCount + 1);
+          currentTiles.pop();
+          usedTileIds.delete(j.id);
+        }
+      }
+    }
+
+    build(0, [], new Set(), 0);
   }
 
   /**
@@ -286,35 +326,78 @@ class ClientValidator {
       }
     }
 
+    const allColors = ['red', 'blue', 'black', 'yellow'];
+
     for (let num = 1; num <= 13; num++) {
       const bTiles = numBuckets[num] || [];
+      if (bTiles.length + jokers.length < 3) continue;
+
       const byColor = {};
+      for (const c of allColors) byColor[c] = [];
       for (const t of bTiles) {
         const c = this.getTileProps(t, indicator).color;
-        if (!byColor[c]) byColor[c] = t;
+        if (byColor[c]) byColor[c].push(t);
       }
 
-      const distinct = Object.values(byColor);
+      const availableColors = allColors.filter(c => byColor[c].length > 0);
 
-      if (distinct.length + jokers.length >= 3 && distinct.length >= 2) {
-        // 3-tile group
-        if (distinct.length === 3) {
-          const c3 = this.isValidGroup(distinct, indicator);
-          if (c3.valid) groups.push({ type: 'group', tiles: distinct, score: c3.score });
-        } else if (distinct.length === 2 && jokers.length >= 1) {
-          const g3 = [...distinct, jokers[0]];
-          const c3 = this.isValidGroup(g3, indicator);
-          if (c3.valid) groups.push({ type: 'group', tiles: g3, score: c3.score });
+      // 4-tile group combinations (all 4 colors)
+      if (availableColors.length === 4) {
+        for (const r of byColor['red']) {
+          for (const bl of byColor['blue']) {
+            for (const bk of byColor['black']) {
+              for (const y of byColor['yellow']) {
+                const g = [r, bl, bk, y];
+                const c = this.isValidGroup(g, indicator);
+                if (c.valid) groups.push({ type: 'group', tiles: g, score: c.score });
+              }
+            }
+          }
         }
+      } else if (availableColors.length === 3 && jokers.length >= 1) {
+        const c1 = availableColors[0], c2 = availableColors[1], c3 = availableColors[2];
+        for (const t1 of byColor[c1]) {
+          for (const t2 of byColor[c2]) {
+            for (const t3 of byColor[c3]) {
+              const g = [t1, t2, t3, jokers[0]];
+              const c = this.isValidGroup(g, indicator);
+              if (c.valid) groups.push({ type: 'group', tiles: g, score: c.score });
+            }
+          }
+        }
+      }
 
-        // 4-tile group
-        if (distinct.length === 4) {
-          const c4 = this.isValidGroup(distinct, indicator);
-          if (c4.valid) groups.push({ type: 'group', tiles: distinct, score: c4.score });
-        } else if (distinct.length === 3 && jokers.length >= 1) {
-          const g4 = [...distinct, jokers[0]];
-          const c4 = this.isValidGroup(g4, indicator);
-          if (c4.valid) groups.push({ type: 'group', tiles: g4, score: c4.score });
+      // 3-tile group combinations (pick any 3 colors)
+      for (let i = 0; i < availableColors.length; i++) {
+        for (let j = i + 1; j < availableColors.length; j++) {
+          for (let k = j + 1; k < availableColors.length; k++) {
+            const c1 = availableColors[i], c2 = availableColors[j], c3 = availableColors[k];
+            for (const t1 of byColor[c1]) {
+              for (const t2 of byColor[c2]) {
+                for (const t3 of byColor[c3]) {
+                  const g = [t1, t2, t3];
+                  const c = this.isValidGroup(g, indicator);
+                  if (c.valid) groups.push({ type: 'group', tiles: g, score: c.score });
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // 2 colors + 1 joker
+      if (jokers.length >= 1) {
+        for (let i = 0; i < availableColors.length; i++) {
+          for (let j = i + 1; j < availableColors.length; j++) {
+            const c1 = availableColors[i], c2 = availableColors[j];
+            for (const t1 of byColor[c1]) {
+              for (const t2 of byColor[c2]) {
+                const g = [t1, t2, jokers[0]];
+                const c = this.isValidGroup(g, indicator);
+                if (c.valid) groups.push({ type: 'group', tiles: g, score: c.score });
+              }
+            }
+          }
         }
       }
     }
@@ -378,23 +461,40 @@ class ClientValidator {
   }
 
   /**
-   * Finds best non-overlapping valid melds maximizing score (with optional requiredTileId constraint)
+   * Finds best non-overlapping valid melds maximizing score and tile count
    */
   static findBestMelds(tiles, indicator, requiredTileId = null) {
     const allRuns = this.findAllRuns(tiles, indicator);
     const allGroups = this.findAllGroups(tiles, indicator);
-    const candidates = [...allRuns, ...allGroups];
+
+    // Deduplicate candidate melds by sorted tile IDs
+    const seenCombos = new Set();
+    const candidates = [];
+    for (const c of [...allRuns, ...allGroups]) {
+      const key = c.tiles.map(t => t.id).sort().join('-');
+      if (!seenCombos.has(key)) {
+        seenCombos.add(key);
+        candidates.push(c);
+      }
+    }
+
+    // Sort candidates by score descending, then length descending
+    candidates.sort((a, b) => (b.score - a.score) || (b.tiles.length - a.tiles.length));
 
     if (candidates.length === 0) return { melds: [], score: 0 };
 
     let bestScore = 0;
+    let bestTileCount = 0;
     let bestMelds = [];
 
-    function search(index, curMelds, usedIds, curScore) {
+    function search(index, curMelds, usedIds, curScore, curTileCount) {
       const containsRequired = !requiredTileId || usedIds.has(requiredTileId);
-      if (curScore > bestScore && containsRequired) {
-        bestScore = curScore;
-        bestMelds = [...curMelds];
+      if (containsRequired) {
+        if (curScore > bestScore || (curScore === bestScore && curTileCount > bestTileCount)) {
+          bestScore = curScore;
+          bestTileCount = curTileCount;
+          bestMelds = [...curMelds];
+        }
       }
 
       for (let i = index; i < candidates.length; i++) {
@@ -406,7 +506,7 @@ class ClientValidator {
           for (const id of cIds) usedIds.add(id);
           curMelds.push(c.tiles);
 
-          search(i + 1, curMelds, usedIds, curScore + c.score);
+          search(i + 1, curMelds, usedIds, curScore + c.score, curTileCount + c.tiles.length);
 
           curMelds.pop();
           for (const id of cIds) usedIds.delete(id);
@@ -414,7 +514,7 @@ class ClientValidator {
       }
     }
 
-    search(0, [], new Set(), 0);
+    search(0, [], new Set(), 0, 0);
 
     if (bestScore > 0 && (!requiredTileId || bestMelds.some(m => m.some(t => t.id === requiredTileId)))) {
       return { melds: bestMelds, score: bestScore };
