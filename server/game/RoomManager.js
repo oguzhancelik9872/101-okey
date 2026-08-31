@@ -57,6 +57,7 @@ class RoomManager {
         name: p.name,
         gender: p.gender || 'male',
         avatarIndex: p.avatarIndex,
+        avatarFile: p.avatarFile || null,
         seatIndex: idx,
         isHost: publicRoom.hostId === p.id,
         isBot: p.isBot

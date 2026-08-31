@@ -36,16 +36,12 @@ class OkeyGame {
     this.roundResults = null;
   }
 
-  addPlayer(id, name, isBot = false, gender = null, userId = null, preferredSeat = null, avatarIndex = null) {
-    let seatIndex = null;
+  addPlayer(id, name, isBot = false, gender = null, userId = null, preferredSeat = null, avatarIndex = null, avatarFile = null) {
+    if (this.players.filter(Boolean).length >= 4) return null;
 
-    if (preferredSeat !== null && preferredSeat !== undefined && preferredSeat >= 0 && preferredSeat < 4) {
-      if (!this.players[preferredSeat]) {
-        seatIndex = preferredSeat;
-      }
-    }
-
-    if (seatIndex === null) {
+    let seatIndex = preferredSeat;
+    if (seatIndex === null || seatIndex === undefined || this.players[seatIndex]) {
+      // Find first empty seat
       for (let i = 0; i < 4; i++) {
         if (!this.players[i]) {
           seatIndex = i;
@@ -73,6 +69,7 @@ class OkeyGame {
       isBot,
       gender: detectedGender,
       avatarIndex: (avatarIndex !== undefined && avatarIndex !== null) ? avatarIndex : null,
+      avatarFile: avatarFile || null,
       hand: [],
       opened: false,
       openType: null, // 'seri' | 'pairs'
@@ -95,15 +92,24 @@ class OkeyGame {
       'Gökçe', 'Bade', 'Lara', 'Ela', 'Nisan', 'Irmak', 'Ceyda', 'Simge'
     ];
 
+    const BOT_AVATAR_FILES = ['1.png', '5.png', '6.png', '7.png', '8.png', '9.png', '10.png'];
+
     const existingNames = this.players.filter(Boolean).map(p => p.name);
     const available = femaleNames.filter(n => !existingNames.includes(n + ' (Bot)'));
     const baseName = available.length > 0 ? available[Math.floor(Math.random() * available.length)] : femaleNames[Math.floor(Math.random() * femaleNames.length)];
     const fullName = `${baseName} (Bot)`;
     const gender = 'female';
-    const avatarIndex = Math.floor(Math.random() * 8);
 
+    // Unique avatar photo per game/table
+    const usedAvatars = this.players.filter(p => p && p.isBot && p.avatarFile).map(p => p.avatarFile);
+    const availableAvatars = BOT_AVATAR_FILES.filter(f => !usedAvatars.includes(f));
+    const chosenAvatarFile = (availableAvatars.length > 0)
+      ? availableAvatars[Math.floor(Math.random() * availableAvatars.length)]
+      : BOT_AVATAR_FILES[Math.floor(Math.random() * BOT_AVATAR_FILES.length)];
+
+    const avatarIndex = BOT_AVATAR_FILES.indexOf(chosenAvatarFile);
     const botId = `bot_${Date.now()}_${preferredSeat || 0}_${Math.random().toString(36).substring(7)}`;
-    return this.addPlayer(botId, fullName, true, gender, null, preferredSeat, avatarIndex);
+    return this.addPlayer(botId, fullName, true, gender, null, preferredSeat, avatarIndex, chosenAvatarFile);
   }
 
   fillWithBots() {
@@ -116,15 +122,27 @@ class OkeyGame {
       'Gökçe', 'Bade', 'Lara', 'Ela', 'Nisan', 'Irmak', 'Ceyda', 'Simge'
     ];
 
-    const shuffledFemales = [...femaleNames].sort(() => Math.random() - 0.5);
-    let fIdx = 0;
+    const BOT_AVATAR_FILES = ['1.png', '5.png', '6.png', '7.png', '8.png', '9.png', '10.png'];
+    const usedAvatars = new Set(this.players.filter(p => p && p.isBot && p.avatarFile).map(p => p.avatarFile));
+
+    const existingNames = new Set(this.players.filter(Boolean).map(p => p.name));
+    const availableNames = femaleNames.filter(n => !existingNames.has(n + ' (Bot)')).sort(() => Math.random() - 0.5);
+    let nIdx = 0;
 
     for (let i = 0; i < 4; i++) {
       if (!this.players[i]) {
-        const name = shuffledFemales[fIdx++ % shuffledFemales.length] + ' (Bot)';
+        const baseName = (nIdx < availableNames.length) ? availableNames[nIdx++] : femaleNames[Math.floor(Math.random() * femaleNames.length)];
+        const name = `${baseName} (Bot)`;
         const gender = 'female';
-        const avatarIndex = Math.floor(Math.random() * 8);
-        this.addPlayer(`bot_${Date.now()}_${i}_${Math.random().toString(36).substring(7)}`, name, true, gender, null, i, avatarIndex);
+
+        const availableAvatars = BOT_AVATAR_FILES.filter(f => !usedAvatars.has(f));
+        const chosenAvatar = (availableAvatars.length > 0)
+          ? availableAvatars[Math.floor(Math.random() * availableAvatars.length)]
+          : BOT_AVATAR_FILES[Math.floor(Math.random() * BOT_AVATAR_FILES.length)];
+        usedAvatars.add(chosenAvatar);
+
+        const avatarIndex = BOT_AVATAR_FILES.indexOf(chosenAvatar);
+        this.addPlayer(`bot_${Date.now()}_${i}_${Math.random().toString(36).substring(7)}`, name, true, gender, null, i, avatarIndex, chosenAvatar);
       }
     }
   }
@@ -966,6 +984,7 @@ class OkeyGame {
         isBot: p.isBot,
         gender: p.gender || 'male',
         avatarIndex: (p.avatarIndex !== undefined && p.avatarIndex !== null) ? p.avatarIndex : null,
+        avatarFile: p.avatarFile || null,
         tileCount: p.hand ? p.hand.length : 0,
         opened: p.opened || false,
         openType: p.openType || null,

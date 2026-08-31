@@ -6,6 +6,8 @@ const FEMALE_NAMES = new Set([
   'ayşe', 'büşra', 'pınar', 'tuğba', 'aslı', 'kübra', 'hülya'
 ]);
 
+const BOT_AVATAR_FILES = ['1.png', '5.png', '6.png', '7.png', '8.png', '9.png', '10.png'];
+
 const PROFILE_IMAGES = {
   'akın': 'akin.png',
   'akin': 'akin.png',
@@ -21,17 +23,27 @@ const PROFILE_IMAGES = {
   'yekta': 'yekta.png'
 };
 
-function getPlayerAvatarHTML(name, gender = null, avatarIndex = null, isBot = false) {
+function getPlayerAvatarHTML(name, gender = null, avatarIndex = null, isBot = false, avatarFile = null) {
   const isBotUser = Boolean(isBot || (typeof name === 'string' && name.includes('(Bot)')));
   const clean = (name || '').replace(/\(Bot\)/gi, '').trim().toLowerCase().split(' ')[0];
 
   if (isBotUser) {
-    const isFemale = (gender === 'female') || FEMALE_NAMES.has(clean);
-    if (isFemale) {
-      return `<div class="bot-avatar-badge bot-female"><span class="bot-glyph">🤖</span></div>`;
-    } else {
-      return `<div class="bot-avatar-badge bot-male"><span class="bot-glyph">🤖</span></div>`;
+    let chosenBotFile = avatarFile;
+    if (!chosenBotFile) {
+      if (typeof avatarIndex === 'string' && avatarIndex.endsWith('.png')) {
+        chosenBotFile = avatarIndex;
+      } else if (typeof avatarIndex === 'number') {
+        chosenBotFile = BOT_AVATAR_FILES[Math.abs(avatarIndex) % BOT_AVATAR_FILES.length];
+      } else {
+        // Deterministic hash based on bot name
+        let hash = 0;
+        for (let i = 0; i < clean.length; i++) {
+          hash = (hash + clean.charCodeAt(i)) % BOT_AVATAR_FILES.length;
+        }
+        chosenBotFile = BOT_AVATAR_FILES[hash];
+      }
     }
+    return `<img src="/botlar/${chosenBotFile}" alt="${name}" class="avatar-img-photo" loading="lazy" onerror="this.onerror=null; this.src='/botlar/1.png';" />`;
   }
 
   // Look up custom friend PNG photo from public/profiller/
@@ -43,8 +55,8 @@ function getPlayerAvatarHTML(name, gender = null, avatarIndex = null, isBot = fa
   return `<div class="avatar-fallback-badge"><span class="bot-glyph">👤</span></div>`;
 }
 
-function getPlayerAvatarSVG(name, gender = null, avatarIndex = null, isBot = false) {
-  return getPlayerAvatarHTML(name, gender, avatarIndex, isBot);
+function getPlayerAvatarSVG(name, gender = null, avatarIndex = null, isBot = false, avatarFile = null) {
+  return getPlayerAvatarHTML(name, gender, avatarIndex, isBot, avatarFile);
 }
 
 window.getPlayerAvatarHTML = getPlayerAvatarHTML;
@@ -123,7 +135,7 @@ class TableManager {
 
         const avatarEl = seatEl.querySelector('.pod-avatar');
         if (avatarEl) {
-          avatarEl.innerHTML = getPlayerAvatarHTML(player.name, player.gender, player.avatarIndex, player.isBot);
+          avatarEl.innerHTML = getPlayerAvatarHTML(player.name, player.gender, player.avatarIndex, player.isBot, player.avatarFile);
         }
 
         const scoreEl = seatEl.querySelector('.player-score');
