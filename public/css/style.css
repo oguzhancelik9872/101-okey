@@ -565,6 +565,77 @@ body.plus-theme {
   z-index: 1;
 }
 
+/* Waiting Lobby Center Overlay */
+.waiting-lobby-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 14, 8, 0.88);
+  backdrop-filter: blur(8px);
+  border-radius: 120px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.lobby-center-card {
+  background: linear-gradient(135deg, rgba(14, 40, 24, 0.98), rgba(6, 20, 12, 0.98));
+  border: 2px solid var(--gold-primary);
+  border-radius: 24px;
+  padding: 24px 36px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(241, 196, 15, 0.3);
+  max-width: 440px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.lobby-card-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--gold-primary);
+  letter-spacing: 1px;
+}
+
+.lobby-code-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(241, 196, 15, 0.4);
+  padding: 8px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.lobby-code-box strong {
+  font-size: 20px;
+  color: var(--gold-primary);
+  letter-spacing: 2px;
+  font-family: 'Cinzel', monospace, sans-serif;
+}
+
+.lobby-card-desc {
+  font-size: 12px;
+  color: #a8d5ba;
+  font-weight: 600;
+}
+
+.btn-center-start {
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  box-shadow: 0 6px 20px rgba(241, 196, 15, 0.5);
+  animation: pulse 1.6s infinite;
+}
+
 /* =========================================================
    101 OKEY PLUS - OUTER PLAYER INFO BARS (OUTSIDE FELT)
    ========================================================= */

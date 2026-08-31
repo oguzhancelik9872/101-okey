@@ -123,6 +123,7 @@ class RoomManager {
     }
 
     game.startRound();
+    room.lastBotActionTime = Date.now() - 400;
     this.startBotAutomation(room);
     return { success: true, room };
   }

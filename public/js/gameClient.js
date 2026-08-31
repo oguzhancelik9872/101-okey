@@ -152,18 +152,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Start Game Button (for room host in menu)
-  const btnStartGame = document.getElementById('btn-start-game');
-  if (btnStartGame) {
-    btnStartGame.addEventListener('click', () => {
-      socket.emit('startGame', { roomId }, (res) => {
-        if (!res.success) {
-          ui.showToast(res.reason, 'error');
-        } else {
-          const dropdownMenu = document.getElementById('dropdown-table-menu');
-          if (dropdownMenu) dropdownMenu.classList.add('hidden');
+  // Start Game Handlers
+  const handleStartGame = () => {
+    if (!roomId) return;
+    window.soundEngine.playDeal();
+    const btnCenter = document.getElementById('btn-center-start-game');
+    if (btnCenter) {
+      btnCenter.textContent = '⏳ Oyun Başlatılıyor...';
+      btnCenter.disabled = true;
+    }
+    socket.emit('startGame', { roomId }, (res) => {
+      if (!res.success) {
+        ui.showToast(res.reason, 'error');
+        if (btnCenter) {
+          btnCenter.textContent = '▶️ OYUNU BAŞLAT';
+          btnCenter.disabled = false;
         }
-      });
+      } else {
+        const dropdownMenu = document.getElementById('dropdown-table-menu');
+        if (dropdownMenu) dropdownMenu.classList.add('hidden');
+      }
+    });
+  };
+
+  const btnStartGame = document.getElementById('btn-start-game');
+  if (btnStartGame) btnStartGame.addEventListener('click', handleStartGame);
+
+  const btnCenterStartGame = document.getElementById('btn-center-start-game');
+  if (btnCenterStartGame) btnCenterStartGame.addEventListener('click', handleStartGame);
+
+  const btnLobbyCopy = document.getElementById('btn-lobby-copy');
+  if (btnLobbyCopy) {
+    btnLobbyCopy.addEventListener('click', () => {
+      if (roomId && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(roomId).then(() => {
+          ui.showToast(`Oda kodu kopyalandı! (${roomId})`, 'success');
+        });
+      }
     });
   }
 
@@ -211,8 +236,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const codeEl = document.getElementById('display-room-code');
     if (codeEl) codeEl.textContent = roomId;
+    const cardCode = document.getElementById('lobby-card-room-code');
+    if (cardCode) cardCode.textContent = roomId;
     if (btnStartGame) btnStartGame.classList.toggle('hidden', !isHost);
-    ui.showToast(`Odaya katıldınız! Kod: ${roomId}`, 'success');
   }
 
   // --- Socket.IO Game State Updates ---
@@ -220,6 +246,15 @@ document.addEventListener('DOMContentLoaded', () => {
     currentGameState = state;
     table.setViewerSeatIndex(viewerSeatIndex);
     istaka.setIndicator(state.indicator);
+
+    // Waiting lobby overlay
+    const waitingOverlay = document.getElementById('waiting-lobby-overlay');
+    if (waitingOverlay) {
+      const isWaiting = state.state === 'WAITING';
+      waitingOverlay.classList.toggle('hidden', !isWaiting);
+      const cardCode = document.getElementById('lobby-card-room-code');
+      if (cardCode && roomId) cardCode.textContent = roomId;
+    }
 
     // Update table components
     table.update(state);

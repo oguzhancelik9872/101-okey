@@ -144,6 +144,22 @@
         <div class="table-felt-mat">
           <div class="felt-watermark">101 OKEY</div>
 
+          <!-- Waiting Lobby Center Card (Shown when game state is WAITING) -->
+          <div id="waiting-lobby-overlay" class="waiting-lobby-overlay hidden">
+            <div class="lobby-center-card">
+              <h3 class="lobby-card-title">🎲 OYUNCULAR BEKLENİYOR</h3>
+              <div class="lobby-code-box">
+                <span>Oda Kodu:</span>
+                <strong id="lobby-card-room-code">------</strong>
+                <button id="btn-lobby-copy" class="btn-copy-pill" title="Kodu Kopyala">📋</button>
+              </div>
+              <p class="lobby-card-desc">Arkadaşlarını davet et veya hemen botlarla başlat!</p>
+              <button id="btn-center-start-game" class="btn-plus-gold btn-center-start">
+                <span>▶️ OYUNU BAŞLAT</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Center Board (Table Melds & Center Deck/Indicator) -->
           <div class="center-table-zone">
             <!-- Sol ve Orta: 2 Tane Yan Yana 13x13 Seri Açma Bölmesi -->
