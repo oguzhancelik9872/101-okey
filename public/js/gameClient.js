@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function showLobby() {
+    stopTurnTimerLoop();
     if (authView) authView.classList.add('hidden');
     if (gameView) gameView.classList.add('hidden');
     if (lobbyView) lobbyView.classList.remove('hidden');
@@ -116,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showAuth() {
+    stopTurnTimerLoop();
     if (lobbyView) lobbyView.classList.add('hidden');
     if (gameView) gameView.classList.add('hidden');
     if (authView) authView.classList.remove('hidden');
@@ -812,6 +814,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (state.state === 'PLAYING') {
       startTurnTimerLoop();
+    } else {
+      stopTurnTimerLoop();
     }
 
     // Update Action Bar States
@@ -870,6 +874,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }, 100);
+  }
+
+  function stopTurnTimerLoop() {
+    if (turnTimerLoop) {
+      clearInterval(turnTimerLoop);
+      turnTimerLoop = null;
+    }
+    const myTimerBar = document.getElementById('my-turn-timer-bar');
+    if (myTimerBar) {
+      myTimerBar.classList.add('hidden');
+      myTimerBar.classList.remove('warning');
+    }
   }
 
   // --- Action Bar & In-Game Controls ---

@@ -67,42 +67,48 @@ class ClientValidator {
     let bestMatch = null;
     let maxScore = -1;
 
-    // Strict 1-13 consecutive numbers (13'ün yanına 1 konulamaz, 13-1 sadece okey belirlenirken geçerlidir)
-    const regularValues = regularTiles.map(t => ({
-      id: t.id,
-      origNumber: t.number,
-      val: t.number
-    })).sort((a, b) => a.val - b.val);
-
+    const candidateSequences = [];
+    // 1. Standard linear sequences (1..13)
     for (let startNum = 1; startNum <= 13 - len + 1; startNum++) {
+      candidateSequences.push(Array.from({ length: len }, (_, i) => ({
+        expectedNum: startNum + i,
+        score: startNum + i
+      })));
+    }
+
+    // 2. Wrap-1 sequences ending with 1 after 13 (e.g. 12-13-1, 11-12-13-1)
+    const wrapStart = 15 - len;
+    if (wrapStart >= 1 && wrapStart <= 12) {
+      const wrapSeq = Array.from({ length: len - 1 }, (_, i) => ({
+        expectedNum: wrapStart + i,
+        score: wrapStart + i
+      })).concat([{ expectedNum: 1, score: 1 }]);
+      candidateSequences.push(wrapSeq);
+    }
+
+    for (const seq of candidateSequences) {
       let isMatch = true;
-      let regularIdx = 0;
       let usedJokersCount = 0;
+      const matchedRegularIds = new Set();
       const substituted = [];
 
-      for (let i = 0; i < len; i++) {
-        const expectedNum = startNum + i;
-
-        if (expectedNum > 13) {
-          isMatch = false;
-          break;
-        }
-
-        if (regularIdx < regularValues.length && regularValues[regularIdx].val === expectedNum) {
-          const reg = regularValues[regularIdx++];
+      for (const slot of seq) {
+        const reg = regularTiles.find(r => !matchedRegularIds.has(r.id) && r.number === slot.expectedNum);
+        if (reg) {
+          matchedRegularIds.add(reg.id);
           substituted.push({
             id: reg.id,
             isOkey: false,
-            substitutedNumber: reg.origNumber,
-            score: reg.origNumber
+            substitutedNumber: reg.number,
+            score: slot.score
           });
         } else if (usedJokersCount < jokers.length) {
           const jokerTile = jokers[usedJokersCount++];
           substituted.push({
             id: jokerTile.id,
             isOkey: true,
-            substitutedNumber: expectedNum,
-            score: expectedNum
+            substitutedNumber: slot.expectedNum,
+            score: slot.score
           });
         } else {
           isMatch = false;
@@ -110,7 +116,7 @@ class ClientValidator {
         }
       }
 
-      if (isMatch && regularIdx === regularValues.length && usedJokersCount === jokers.length) {
+      if (isMatch && matchedRegularIds.size === regularTiles.length && usedJokersCount === jokers.length) {
         const score = substituted.reduce((sum, item) => sum + item.score, 0);
         if (score > maxScore) {
           maxScore = score;
