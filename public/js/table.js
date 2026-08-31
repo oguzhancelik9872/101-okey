@@ -227,14 +227,6 @@ class TableManager {
       if (pile && pile.length > 0) {
         const topTile = pile[pile.length - 1];
         const tileEl = this.createTileDOM(topTile, false);
-
-        // Highlight if this discard tile is an İşlek Taş (Masaya işlenebilir)
-        const isProcessable = (this.gameState.tableMelds && this.gameState.tableMelds.length > 0 && typeof ClientValidator !== 'undefined' && ClientValidator.isPlayableToTable(topTile, this.gameState.tableMelds, this.gameState.indicator));
-        if (isProcessable) {
-          tileEl.classList.add('is-processable-tile');
-          tileEl.title = 'İşlek Taş (Masaya İşlenebilir)';
-        }
-
         discardSlot.appendChild(tileEl);
       }
 
@@ -384,10 +376,6 @@ class TableManager {
               }
             });
           }
-
-          if (meld.tiles && meld.tiles.some(t => t.isOkey)) {
-            meldRow.classList.add('contains-okey-stealable');
-          }
         }
 
         container.appendChild(meldRow);
@@ -410,11 +398,6 @@ class TableManager {
         slot2.className = 'grid-cell-slot pair-slot-2';
 
         if (meld) {
-          const hasOkey = meld.tiles && meld.tiles.some(t => t.isOkey);
-          if (hasOkey) {
-            pairRow.classList.add('contains-okey-stealable');
-          }
-
           if (meld.tiles[0]) {
             slot1.classList.add('has-tile');
             slot1.appendChild(this.createTileDOM(meld.tiles[0], false, true));
