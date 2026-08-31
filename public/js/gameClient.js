@@ -91,23 +91,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sorted.forEach((item, idx) => {
       const card = document.createElement('div');
-      const isOccupied = Boolean(item.isOnline && item.activeSocketId && item.activeSocketId !== socket.id);
       const isSelected = selectedCharName && selectedCharName.toLowerCase() === item.name.toLowerCase();
 
-      card.className = 'name-card' + (isOccupied ? ' occupied' : ' available') + (isSelected ? ' selected' : '');
+      card.className = 'name-card available' + (isSelected ? ' selected' : '');
 
       const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
         ? window.getPlayerAvatarSVG(item.displayName || item.name, item.gender || 'male', (item.avatarIndex !== undefined && item.avatarIndex !== null) ? item.avatarIndex : idx % 8)
         : '👤';
 
-      let statusHtml = '';
-      if (isOccupied) {
-        statusHtml = '<span class="name-card-status status-occupied">🔴 Dolu / Çevrimiçi</span>';
-      } else if (isSelected) {
-        statusHtml = '<span class="name-card-status status-selected">✨ Seçildi</span>';
-      } else {
-        statusHtml = '<span class="name-card-status status-available">🟢 Seçilebilir</span>';
-      }
+      const statusHtml = isSelected
+        ? '<span class="name-card-status status-selected">✨ Seçildi</span>'
+        : '<span class="name-card-status status-available">🟢 Seç</span>';
 
       card.innerHTML = `
         <div class="name-card-avatar">${avatarSvg}</div>
@@ -117,23 +111,21 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      if (!isOccupied) {
-        card.addEventListener('click', () => {
-          if (selectedCharName === item.name) {
-            // Second click on already selected card directly enters
-            doSelectNameAndEnterLobby(item.name);
-          } else {
-            selectedCharName = item.name;
-            renderNamePicker();
-          }
-        });
-
-        // Double click directly joins
-        card.addEventListener('dblclick', () => {
-          selectedCharName = item.name;
+      card.addEventListener('click', () => {
+        if (selectedCharName === item.name) {
+          // Second click on already selected card directly enters
           doSelectNameAndEnterLobby(item.name);
-        });
-      }
+        } else {
+          selectedCharName = item.name;
+          renderNamePicker();
+        }
+      });
+
+      // Double click directly joins
+      card.addEventListener('dblclick', () => {
+        selectedCharName = item.name;
+        doSelectNameAndEnterLobby(item.name);
+      });
 
       grid.appendChild(card);
     });
