@@ -33,11 +33,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const playerNameInput = document.getElementById('player-name-input');
   const lobbyAvatarImg = document.getElementById('lobby-avatar-img');
 
+  // Load saved player name from localStorage
+  const savedPlayerName = localStorage.getItem('okey101_player_name');
+  if (savedPlayerName && playerNameInput) {
+    playerNameInput.value = savedPlayerName;
+    document.title = `101 - ${savedPlayerName}`;
+  }
+
   if (playerNameInput && lobbyAvatarImg) {
     const updateLobbyAvatar = () => {
-      const name = playerNameInput.value || 'Oyuncu';
+      const name = playerNameInput.value.trim() || 'Oyuncu';
       if (typeof window.getPlayerAvatarSVG === 'function') {
         lobbyAvatarImg.innerHTML = window.getPlayerAvatarSVG(name);
+      }
+      if (playerNameInput.value.trim()) {
+        localStorage.setItem('okey101_player_name', playerNameInput.value.trim());
+        document.title = `101 - ${playerNameInput.value.trim()}`;
       }
     };
     playerNameInput.addEventListener('input', updateLobbyAvatar);
@@ -534,8 +545,12 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleQuickDiscard(tile) {
     if (!currentGameState) return;
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
-    const hasDrawnDiscard = isMyTurn && currentGameState.turnState === 'DISCARD' && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;
+    if (!isMyTurn || currentGameState.turnState !== 'DISCARD') {
+      ui.showToast('Sıra sizde değilken veya taş çekmeden taş atamazsınız.', 'error');
+      return;
+    }
 
+    const hasDrawnDiscard = currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;
     if (hasDrawnDiscard) {
       ui.showToast('Yandan aldığınız taşı el açarak veya masaya işleyerek kullanmak zorundasınız! Kullanmayacaksanız "Taşı Geri Bırak" butonuna basarak desteden çekiniz.', 'error', 4000);
       return;

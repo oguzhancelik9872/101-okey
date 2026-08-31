@@ -63,37 +63,81 @@ class TableManager {
   renderSeats() {
     if (!this.gameState || !this.gameState.players) return;
 
-    this.gameState.players.forEach((player) => {
-      const pos = this.getRelativePosition(player.seatIndex);
+    const positions = ['bottom', 'right', 'top', 'left'];
+    const isMyTurn = this.gameState.currentTurn === this.viewerSeatIndex && this.gameState.state === 'PLAYING';
+
+    const istakaEl = document.getElementById('player-istaka-container');
+    if (istakaEl) {
+      istakaEl.classList.toggle('your-turn-active', isMyTurn);
+    }
+    const turnBadge = document.getElementById('turn-indicator-badge');
+    if (turnBadge) {
+      turnBadge.classList.toggle('hidden', !isMyTurn);
+    }
+
+    positions.forEach((pos) => {
       const seatEl = document.getElementById('seat-' + pos);
       if (!seatEl) return;
 
-      const isCurrentTurn = this.gameState.currentTurn === player.seatIndex;
-      seatEl.classList.toggle('active-turn', isCurrentTurn);
+      // Find player mapped to this relative position
+      const player = this.gameState.players.find(p => this.getRelativePosition(p.seatIndex) === pos);
 
-      const nameEl = seatEl.querySelector('.player-name');
-      if (nameEl) nameEl.textContent = player.name;
+      if (player) {
+        seatEl.classList.remove('seat-empty');
+        const isCurrentTurn = this.gameState.currentTurn === player.seatIndex && this.gameState.state === 'PLAYING';
+        seatEl.classList.toggle('active-turn', isCurrentTurn);
 
-      const avatarEl = seatEl.querySelector('.pod-avatar');
-      if (avatarEl) {
-        avatarEl.innerHTML = getPlayerAvatarHTML(player.name, player.gender);
-      }
+        const nameEl = seatEl.querySelector('.player-name');
+        if (nameEl) nameEl.textContent = player.name;
 
-      const scoreEl = seatEl.querySelector('.player-score');
-      if (scoreEl) scoreEl.textContent = '';
+        const avatarEl = seatEl.querySelector('.pod-avatar');
+        if (avatarEl) {
+          avatarEl.innerHTML = getPlayerAvatarHTML(player.name, player.gender);
+        }
 
-      const statusEl = seatEl.querySelector('.player-open-status');
-      if (statusEl) {
-        if (player.opened) {
-          statusEl.className = 'player-open-status opened';
-          if (player.openType === 'pairs') {
-            statusEl.textContent = (player.openedMeldsCount || 5) + ' Çift Açtı';
+        const scoreEl = seatEl.querySelector('.player-score');
+        if (scoreEl) scoreEl.textContent = '';
+
+        const statusEl = seatEl.querySelector('.player-open-status');
+        if (statusEl) {
+          if (this.gameState.state === 'WAITING') {
+            statusEl.className = 'player-open-status';
+            statusEl.textContent = 'Hazır';
+          } else if (player.opened) {
+            statusEl.className = 'player-open-status opened';
+            if (player.openType === 'pairs') {
+              statusEl.textContent = (player.openedMeldsCount || 5) + ' Çift Açtı';
+            } else {
+              statusEl.textContent = player.openedScore ? (player.openedScore + ' Puanla Açtı') : 'Açtı';
+            }
           } else {
-            statusEl.textContent = player.openedScore ? (player.openedScore + ' Puanla Açtı') : 'Açtı';
+            statusEl.className = 'player-open-status not-opened';
+            statusEl.textContent = 'Açmadı';
           }
-        } else {
-          statusEl.className = 'player-open-status not-opened';
-          statusEl.textContent = 'Açmadı';
+        }
+      } else {
+        // Empty seat waiting for player
+        seatEl.classList.add('seat-empty');
+        seatEl.classList.remove('active-turn');
+
+        const nameEl = seatEl.querySelector('.player-name');
+        if (nameEl) nameEl.textContent = 'Oyuncu Bekleniyor...';
+
+        const avatarEl = seatEl.querySelector('.pod-avatar');
+        if (avatarEl) {
+          avatarEl.innerHTML = `
+            <svg viewBox="0 0 100 100" width="100%" height="100%">
+              <circle cx="50" cy="50" r="48" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" stroke-dasharray="4 4" stroke-width="2"/>
+              <circle cx="50" cy="40" r="16" fill="rgba(255,255,255,0.2)"/>
+              <path d="M 24 82 Q 50 64 76 82 Z" fill="rgba(255,255,255,0.2)"/>
+            </svg>
+          `;
+        }
+
+        const statusEl = seatEl.querySelector('.player-open-status');
+        if (statusEl) {
+          statusEl.className = 'player-open-status';
+          statusEl.textContent = 'Boş Koltuk';
         }
       }
     });

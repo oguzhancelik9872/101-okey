@@ -426,20 +426,25 @@ class IstakaManager {
       document.querySelectorAll('.meld-drag-hover').forEach(m => m.classList.remove('meld-drag-hover'));
     });
 
-    // Click handler for moving to empty slot
+    // Click & Double-Click Handler (Foolproof across all devices and DOM re-renders)
     el.addEventListener('click', (e) => {
       e.stopPropagation();
+      const now = Date.now();
+      const isDouble = (this.lastClickTileId === tile.id && (now - (this.lastClickTime || 0)) < 350);
+      this.lastClickTime = now;
+      this.lastClickTileId = tile.id;
+
+      if (isDouble) {
+        this.lastClickTileId = null;
+        if (this.onTileDoubleClicked) {
+          this.onTileDoubleClicked(tile);
+        }
+        return;
+      }
+
       this.activeTile = (this.activeTile && this.activeTile.id === tile.id) ? null : tile;
       window.soundEngine.playTileClick();
       this.render();
-    });
-
-    // Double click for quick discard
-    el.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      if (this.onTileDoubleClicked) {
-        this.onTileDoubleClicked(tile);
-      }
     });
 
     return el;

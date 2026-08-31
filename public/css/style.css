@@ -1414,7 +1414,42 @@ body.plus-theme {
   border: 1.5px solid #e74c3c !important;
   color: #fff !important;
   box-shadow: 0 0 16px rgba(231, 76, 60, 0.8) !important;
-  animation: pulse 1.2s infinite;
+/* Turn Indicator Badge */
+.turn-indicator-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: 1.5px solid #34d399;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.7);
+  letter-spacing: 0.5px;
+  animation: turnPulse 1.2s infinite ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@keyframes turnPulse {
+  0% { transform: scale(1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+  50% { transform: scale(1.05); box-shadow: 0 0 22px rgba(16, 185, 129, 0.9), 0 0 30px rgba(241, 196, 15, 0.4); }
+  100% { transform: scale(1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+}
+
+/* Istaka Turn Glow */
+#player-istaka-container.your-turn-active {
+  box-shadow: 0 0 28px rgba(241, 196, 15, 0.45), inset 0 0 25px rgba(241, 196, 15, 0.2), 0 12px 35px rgba(0, 0, 0, 0.8) !important;
+  border-color: rgba(241, 196, 15, 0.85) !important;
+}
+
+.player-outer-bar.bar-bottom.active-turn {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 28px rgba(16, 185, 129, 0.9), 0 8px 24px rgba(0,0,0,0.8) !important;
+}
+
+.player-outer-bar.bar-bottom.active-turn .avatar-ring-container::before {
+  border-color: #10b981 !important;
 }
 
 /* Istaka Wing Wrapper (Istaka + Left Seri Diz + Right Çift Diz) */
