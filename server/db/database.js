@@ -116,12 +116,6 @@ class Database {
     }
 
     const uname = matched.toLowerCase();
-    const existingSocket = this.activeUsers.get(uname);
-
-    // If another socket is actively using this name
-    if (existingSocket && existingSocket !== socketId) {
-      return { success: false, reason: `${matched} şu anda aktif olarak bağlı.` };
-    }
 
     // Release any previous name this socket held
     this.releaseSocket(socketId);
@@ -132,6 +126,7 @@ class Database {
 
     const userId = this.usernameIndex.get(uname);
     const user = this.users.get(userId);
+    user.displayName = matched; // Keep exact predefined name
     user.lastLogin = Date.now();
     this.save();
 
@@ -194,13 +189,10 @@ class Database {
     return user ? this.sanitizeUser(user) : null;
   }
 
-  updateProfile(userId, { displayName, gender, avatarIndex }) {
+  updateProfile(userId, { gender, avatarIndex }) {
     const user = this.users.get(userId);
     if (!user) return { success: false, reason: 'Kullanıcı bulunamadı.' };
 
-    if (displayName) {
-      user.displayName = displayName.trim().substring(0, 14);
-    }
     if (gender) {
       user.gender = gender === 'female' ? 'female' : 'male';
     }

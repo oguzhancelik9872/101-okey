@@ -277,15 +277,8 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       if (!currentUser) return;
 
-      const editName = document.getElementById('edit-display-name').value.trim();
-      if (!editName) {
-        ui.showToast('Lütfen geçerli bir isim girin.', 'error');
-        return;
-      }
-
       socket.emit('auth:updateProfile', {
         userId: currentUser.id,
-        displayName: editName,
         gender: selectedProfileGender,
         avatarIndex: selectedProfileAvatarIndex
       }, (res) => {

@@ -6,8 +6,74 @@ const FEMALE_NAMES = new Set([
   'ayşe', 'büşra', 'pınar', 'tuğba', 'aslı', 'kübra', 'hülya'
 ]);
 
-const femaleAvatars = Array.from({ length: 9 }, (_, i) => `<img src="/assets/avatars/female_${i}.png" alt="Female Avatar" class="avatar-img-photo" />`);
-const maleAvatars = Array.from({ length: 9 }, (_, i) => `<img src="/assets/avatars/male_${i}.png" alt="Male Avatar" class="avatar-img-photo" />`);
+const maleConfigs = [
+  { bg: ['#1e3c72', '#2a5298'], hair: '#1a1a1a', skin: '#f8d5b8', beard: 'none', glasses: false, hairStyle: 'short' },
+  { bg: ['#0f2027', '#203a43'], hair: '#3d2314', skin: '#eec7a2', beard: 'full', glasses: true, hairStyle: 'buzz' },
+  { bg: ['#3a1c71', '#d76d77'], hair: '#2d3436', skin: '#f5cd79', beard: 'goatee', glasses: false, hairStyle: 'undercut' },
+  { bg: ['#134e5e', '#71b280'], hair: '#4b382a', skin: '#f8d5b8', beard: 'none', glasses: false, hairStyle: 'wavy' },
+  { bg: ['#4b1248', '#f0c27b'], hair: '#1e272e', skin: '#eec7a2', beard: 'full', glasses: false, hairStyle: 'short' },
+  { bg: ['#114357', '#f29492'], hair: '#2f3542', skin: '#f5cd79', beard: 'goatee', glasses: true, hairStyle: 'undercut' },
+  { bg: ['#000428', '#004e92'], hair: '#2c3e50', skin: '#f8d5b8', beard: 'none', glasses: true, hairStyle: 'wavy' },
+  { bg: ['#2c3e50', '#3498db'], hair: '#1a1a1a', skin: '#eec7a2', beard: 'full', glasses: false, hairStyle: 'undercut' }
+];
+
+const femaleConfigs = [
+  { bg: ['#ff758c', '#ff7eb3'], hair: '#2c3e50', skin: '#f8d5b8', hairStyle: 'long', glasses: false },
+  { bg: ['#ee9ca7', '#ffdde1'], hair: '#d35400', skin: '#f5cd79', hairStyle: 'bob', glasses: false },
+  { bg: ['#c33764', '#1d2671'], hair: '#1a1a1a', skin: '#eec7a2', hairStyle: 'ponytail', glasses: true },
+  { bg: ['#654ea3', '#eaafc8'], hair: '#8e44ad', skin: '#f8d5b8', hairStyle: 'wavy', glasses: false },
+  { bg: ['#f857a6', '#ff5858'], hair: '#2d3436', skin: '#f5cd79', hairStyle: 'long', glasses: true },
+  { bg: ['#4facfe', '#00f2fe'], hair: '#3d2314', skin: '#eec7a2', hairStyle: 'bob', glasses: false },
+  { bg: ['#43e97b', '#38f9d7'], hair: '#1e272e', skin: '#f8d5b8', hairStyle: 'ponytail', glasses: false },
+  { bg: ['#fa709a', '#fee140'], hair: '#4b382a', skin: '#f5cd79', hairStyle: 'wavy', glasses: false }
+];
+
+const maleAvatars = maleConfigs.map((c, i) => {
+  let hair = '';
+  if (c.hairStyle === 'short') {
+    hair = `<path d="M28,38 C26,20 38,14 50,14 C62,14 74,20 72,38 C68,26 60,22 50,22 C40,22 32,26 28,38 Z" fill="${c.hair}"/>`;
+  } else if (c.hairStyle === 'wavy') {
+    hair = `<path d="M24,40 C22,18 36,12 50,12 C64,12 78,18 76,40 C72,26 64,20 50,20 C36,20 28,26 24,40 Z" fill="${c.hair}"/><path d="M22,32 Q32,22 45,26 Q35,14 50,14 Q65,14 55,26 Q68,22 78,32 Q68,18 50,16 Q32,18 22,32 Z" fill="${c.hair}"/>`;
+  } else if (c.hairStyle === 'undercut') {
+    hair = `<path d="M28,36 C27,18 38,13 50,13 C62,13 73,18 72,36 C70,24 62,19 50,19 C38,19 30,24 28,36 Z" fill="${c.hair}"/><path d="M34,22 Q50,8 66,22 Q50,14 34,22 Z" fill="${c.hair}"/>`;
+  } else {
+    hair = `<path d="M27,38 C26,22 36,15 50,15 C64,15 74,22 73,38 C70,26 62,21 50,21 C38,21 30,26 27,38 Z" fill="${c.hair}" opacity="0.9"/>`;
+  }
+
+  let beard = '';
+  if (c.beard === 'full') {
+    beard = `<path d="M34,54 C34,74 42,82 50,82 C58,82 66,74 66,54 C62,64 56,68 50,68 C44,68 38,64 34,54 Z" fill="${c.hair}"/><path d="M42,59 Q50,64 58,59 Q50,61 42,59 Z" fill="${c.hair}"/>`;
+  } else if (c.beard === 'goatee') {
+    beard = `<path d="M43,60 Q50,64 57,60 Q50,62 43,60 Z" fill="${c.hair}"/><path d="M45,69 Q50,78 55,69 Q50,74 45,69 Z" fill="${c.hair}"/>`;
+  }
+
+  let glasses = '';
+  if (c.glasses) {
+    glasses = `<rect x="31" y="43" width="15" height="10" rx="3" fill="none" stroke="#f1c40f" stroke-width="2"/><rect x="54" y="43" width="15" height="10" rx="3" fill="none" stroke="#f1c40f" stroke-width="2"/><line x1="46" y1="48" x2="54" y2="48" stroke="#f1c40f" stroke-width="2"/>`;
+  }
+
+  return `<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="m_bg_${i}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c.bg[0]}"/><stop offset="100%" stop-color="${c.bg[1]}"/></linearGradient></defs><circle cx="50" cy="50" r="48" fill="url(#m_bg_${i})" stroke="rgba(255,255,255,0.2)" stroke-width="2"/><path d="M20,96 C20,74 34,68 50,68 C66,68 80,74 80,96 Z" fill="#1e272e"/><path d="M38,68 L50,82 L62,68 Z" fill="#fff" opacity="0.9"/><rect x="44" y="58" width="12" height="14" rx="3" fill="${c.skin}"/><ellipse cx="50" cy="48" rx="18" ry="22" fill="${c.skin}"/>${hair}<circle cx="42" cy="48" r="2.5" fill="#2c3e50"/><circle cx="58" cy="48" r="2.5" fill="#2c3e50"/><circle cx="43" cy="47" r="0.8" fill="#fff"/><circle cx="59" cy="47" r="0.8" fill="#fff"/><path d="M37,43 Q42,40 47,43" fill="none" stroke="${c.hair}" stroke-width="2" stroke-linecap="round"/><path d="M53,43 Q58,40 63,43" fill="none" stroke="${c.hair}" stroke-width="2" stroke-linecap="round"/><path d="M50,47 L48,54 L52,54" fill="none" stroke="#d35400" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/><path d="M44,59 Q50,65 56,59" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/>${beard}${glasses}</svg>`;
+});
+
+const femaleAvatars = femaleConfigs.map((c, i) => {
+  let hair = '';
+  if (c.hairStyle === 'long') {
+    hair = `<path d="M22,38 C20,16 36,12 50,12 C64,12 80,16 78,38 C82,54 82,78 74,84 C70,76 74,56 72,40 C68,26 60,20 50,20 C40,20 32,26 28,40 C26,56 30,76 26,84 C18,78 18,54 22,38 Z" fill="${c.hair}"/>`;
+  } else if (c.hairStyle === 'bob') {
+    hair = `<path d="M24,38 C22,18 36,12 50,12 C64,12 78,18 76,38 C80,56 76,64 70,62 C68,48 64,22 50,22 C36,22 32,48 30,62 C24,64 20,56 24,38 Z" fill="${c.hair}"/>`;
+  } else if (c.hairStyle === 'ponytail') {
+    hair = `<path d="M26,38 C24,18 36,12 50,12 C64,12 76,18 74,38 C70,24 62,20 50,20 C38,20 30,24 26,38 Z" fill="${c.hair}"/><path d="M72,26 C82,24 88,36 84,54 C82,44 80,32 72,26 Z" fill="${c.hair}"/>`;
+  } else {
+    hair = `<path d="M22,38 C20,16 36,12 50,12 C64,12 80,16 78,38 C82,50 80,68 74,74 C72,60 72,42 70,36 C66,24 58,20 50,20 C42,20 34,24 30,36 C28,42 28,60 26,74 C20,68 18,50 22,38 Z" fill="${c.hair}"/>`;
+  }
+
+  let glasses = '';
+  if (c.glasses) {
+    glasses = `<rect x="31" y="43" width="15" height="10" rx="3" fill="none" stroke="#e84393" stroke-width="2"/><rect x="54" y="43" width="15" height="10" rx="3" fill="none" stroke="#e84393" stroke-width="2"/><line x1="46" y1="48" x2="54" y2="48" stroke="#e84393" stroke-width="2"/>`;
+  }
+
+  return `<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="f_bg_${i}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c.bg[0]}"/><stop offset="100%" stop-color="${c.bg[1]}"/></linearGradient></defs><circle cx="50" cy="50" r="48" fill="url(#f_bg_${i})" stroke="rgba(255,255,255,0.2)" stroke-width="2"/><path d="M20,96 C20,74 34,68 50,68 C66,68 80,74 80,96 Z" fill="#6c5ce7"/><path d="M38,68 L50,80 L62,68 Z" fill="#fd79a8" opacity="0.8"/><rect x="44" y="58" width="12" height="14" rx="3" fill="${c.skin}"/><ellipse cx="50" cy="48" rx="18" ry="22" fill="${c.skin}"/>${hair}<circle cx="42" cy="48" r="2.5" fill="#2c3e50"/><circle cx="58" cy="48" r="2.5" fill="#2c3e50"/><circle cx="43" cy="47" r="0.8" fill="#fff"/><circle cx="59" cy="47" r="0.8" fill="#fff"/><path d="M37,43 Q42,40 47,43" fill="none" stroke="${c.hair}" stroke-width="1.8" stroke-linecap="round"/><path d="M53,43 Q58,40 63,43" fill="none" stroke="${c.hair}" stroke-width="1.8" stroke-linecap="round"/><path d="M50,47 L48,54 L52,54" fill="none" stroke="#d35400" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/><path d="M44,60 Q50,66 56,60" fill="none" stroke="#e84393" stroke-width="2.2" stroke-linecap="round"/>${glasses}</svg>`;
+});
 
 function getPlayerAvatarHTML(name, gender = null, avatarIndex = null, isBot = false) {
   const isBotUser = Boolean(isBot || (typeof name === 'string' && name.includes('(Bot)')));
