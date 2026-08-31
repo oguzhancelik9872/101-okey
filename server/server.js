@@ -491,14 +491,13 @@ io.on('connection', (socket) => {
 
   // Chat message
   socket.on('sendChat', (data) => {
-    const roomId = data.roomId || socket.roomId;
-    if (roomId) {
-      io.to(roomId).emit('chatMessage', {
-        sender: data.sender || 'Oyuncu',
-        text: data.text,
-        time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-      });
-    }
+    const targetRoom = (data && data.roomId) || socket.roomId || 'lobby';
+    io.to(targetRoom).emit('chatMessage', {
+      sender: (data && data.sender) || 'Oyuncu',
+      text: (data && data.text) || '',
+      time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      roomId: targetRoom
+    });
   });
 
   // Emoji / Quick Voice reaction

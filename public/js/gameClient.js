@@ -1390,26 +1390,89 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Chat & Emoji Reactions ---
-  const chatInput = document.getElementById('chat-input-text');
+  const chatModal = document.getElementById('chat-modal');
+  const btnLobbyChat = document.getElementById('btn-lobby-chat');
+  const btnTableChat = document.getElementById('btn-table-chat');
+  const btnCloseChat = document.getElementById('btn-close-chat');
+  const chatInput = document.getElementById('chat-input');
   const btnSendChat = document.getElementById('btn-send-chat');
+  const lobbyChatBadge = document.getElementById('lobby-chat-badge');
+  const tableChatBadge = document.getElementById('table-chat-badge');
 
-  function sendChatMessage() {
-    const text = chatInput.value.trim();
-    if (!text || !roomId) return;
-    const myName = currentGameState && currentGameState.players[viewerSeatIndex] ? currentGameState.players[viewerSeatIndex].name : 'Ben';
-    socket.emit('sendChat', { roomId, sender: myName, text });
-    chatInput.value = '';
+  function openChatModal() {
+    if (!chatModal) return;
+    chatModal.classList.remove('hidden');
+    if (lobbyChatBadge) lobbyChatBadge.classList.add('hidden');
+    if (tableChatBadge) tableChatBadge.classList.add('hidden');
+    if (chatInput) {
+      setTimeout(() => chatInput.focus(), 150);
+    }
+    const chatLogs = document.getElementById('chat-messages');
+    if (chatLogs) chatLogs.scrollTop = chatLogs.scrollHeight;
   }
 
-  if (btnSendChat) btnSendChat.addEventListener('click', sendChatMessage);
+  function closeChatModal() {
+    if (chatModal) chatModal.classList.add('hidden');
+  }
+
+  if (btnLobbyChat) btnLobbyChat.addEventListener('click', openChatModal);
+  if (btnTableChat) btnTableChat.addEventListener('click', openChatModal);
+  if (btnCloseChat) btnCloseChat.addEventListener('click', closeChatModal);
+  if (chatModal) {
+    chatModal.addEventListener('click', (e) => {
+      if (e.target === chatModal) closeChatModal();
+    });
+  }
+
+  function sendChatMessage(customText = null) {
+    const text = (customText !== null) ? customText.trim() : (chatInput ? chatInput.value.trim() : '');
+    if (!text) return;
+
+    const myName = currentActivePlayerName || (currentUser ? currentUser.displayName : 'Oyuncu');
+    const targetRoom = roomId || 'lobby';
+
+    socket.emit('sendChat', {
+      roomId: targetRoom,
+      sender: myName,
+      text
+    });
+
+    if (chatInput && customText === null) {
+      chatInput.value = '';
+      chatInput.focus();
+    }
+  }
+
+  if (btnSendChat) btnSendChat.addEventListener('click', () => sendChatMessage());
   if (chatInput) {
     chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') sendChatMessage();
     });
   }
 
+  // Quick message pills
+  document.querySelectorAll('.btn-quick-msg').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const msg = pill.getAttribute('data-msg');
+      if (msg) sendChatMessage(msg);
+    });
+  });
+
   socket.on('chatMessage', (msg) => {
-    ui.appendChatMessage(msg.sender, msg.text, msg.time);
+    const isMe = (msg.sender === currentActivePlayerName) || (currentUser && msg.sender === currentUser.displayName);
+    ui.appendChatMessage(msg.sender, msg.text, msg.time, isMe);
+
+    // If chat is closed and message is from someone else, show unread badge
+    const isChatOpen = chatModal && !chatModal.classList.contains('hidden');
+    if (!isChatOpen && !isMe) {
+      if (lobbyChatBadge) lobbyChatBadge.classList.remove('hidden');
+      if (tableChatBadge) tableChatBadge.classList.remove('hidden');
+      try {
+        if (window.soundEngine && typeof window.soundEngine._playTeaTinkle === 'function') {
+          window.soundEngine._playTeaTinkle();
+        }
+      } catch (e) {}
+    }
   });
 
   // Quick Emoji reactions

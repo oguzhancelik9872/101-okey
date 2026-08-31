@@ -223,15 +223,22 @@ class UIManager {
     }, 2500);
   }
 
-  appendChatMessage(sender, text, time) {
+  appendChatMessage(sender, text, time, isMe = false) {
     const chatLogs = document.getElementById('chat-messages');
     if (!chatLogs) return;
 
+    const welcome = chatLogs.querySelector('.chat-welcome-msg');
+    if (welcome && chatLogs.children.length === 1) {
+      welcome.remove();
+    }
+
     const msgEl = document.createElement('div');
-    msgEl.className = 'chat-message-item';
+    msgEl.className = 'chat-message-item' + (isMe ? ' is-me' : '');
     msgEl.innerHTML = `
-      <span class="chat-time">${time}</span>
-      <strong class="chat-sender">${sender}:</strong>
+      <div class="chat-msg-header">
+        <strong class="chat-sender">${isMe ? 'Siz' : sender}</strong>
+        <span class="chat-time">${time || ''}</span>
+      </div>
       <span class="chat-text">${text}</span>
     `;
 

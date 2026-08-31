@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=24">
+  <link rel="stylesheet" href="css/style.css?v=25">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -47,8 +47,13 @@
           <h1 class="plus-logo-title">101 OKEY</h1>
         </div>
 
-        <!-- Right: Settings & Profile Card -->
+        <!-- Right: Chat & Settings & Profile Card -->
         <div class="lobby-right-panel">
+          <button id="btn-lobby-chat" class="btn-lobby-sound btn-chat-trigger" title="Sohbet">
+            <span>💬 Sohbet</span>
+            <span id="lobby-chat-badge" class="chat-unread-dot hidden"></span>
+          </button>
+
           <button id="btn-lobby-settings" class="btn-lobby-sound" title="Oyun ve Ses Ayarları">
             <span>⚙️ Ayarlar</span>
           </button>
@@ -137,18 +142,25 @@
     <div id="game-view" class="hidden">
       <!-- Main Green Casino Felt Table Area (Full Screen Table) -->
       <main class="plus-table-canvas">
-        <!-- Floating Top-Right Menu Dropdown -->
-        <div class="menu-dropdown-wrapper">
-          <button id="btn-menu-toggle" class="btn-menu-trigger" title="Masa Menüsü">
-            <span>⚙️ Menü</span>
+        <!-- Floating Top-Right Actions Wrapper -->
+        <div class="table-top-actions">
+          <button id="btn-table-chat" class="btn-menu-trigger btn-chat-trigger" title="Masa Sohbeti">
+            <span>💬 Sohbet</span>
+            <span id="table-chat-badge" class="chat-unread-dot hidden"></span>
           </button>
-          <div id="dropdown-table-menu" class="table-dropdown-menu hidden">
-            <button id="btn-toggle-sound" class="menu-item-btn">
-              <span>🔊 Ses: Açık</span>
+
+          <div class="menu-dropdown-wrapper">
+            <button id="btn-menu-toggle" class="btn-menu-trigger" title="Masa Menüsü">
+              <span>⚙️ Menü</span>
             </button>
-            <button id="btn-leave-table" class="menu-item-btn btn-menu-leave">
-              <span>🚪 Masadan Ayrıl</span>
-            </button>
+            <div id="dropdown-table-menu" class="table-dropdown-menu hidden">
+              <button id="btn-toggle-sound" class="menu-item-btn">
+                <span>⚙️ Ayarlar</span>
+              </button>
+              <button id="btn-leave-table" class="menu-item-btn btn-menu-leave">
+                <span>🚪 Masadan Ayrıl</span>
+              </button>
+            </div>
           </div>
         </div>
         
@@ -357,6 +369,39 @@
 
     <!-- ================= PLUS MODALS ================= -->
     
+    <!-- Chat Modal / Drawer -->
+    <div id="chat-modal" class="modal-backdrop hidden">
+      <div class="plus-modal-card chat-modal-card">
+        <div class="plus-modal-header">
+          <h3>💬 SOHBET</h3>
+          <button id="btn-close-chat" class="btn-modal-close" title="Kapat">✕</button>
+        </div>
+
+        <!-- Quick Chat Message Pills -->
+        <div class="quick-chat-pills">
+          <button class="btn-quick-msg" data-msg="İyi oyunlar herkese! 🎲">İyi oyunlar!</button>
+          <button class="btn-quick-msg" data-msg="Bol şanslar! 🍀">Bol şans!</button>
+          <button class="btn-quick-msg" data-msg="Hadi elini aç artık! ⏳">Elini aç!</button>
+          <button class="btn-quick-msg" data-msg="Çifte gidiyorum dikkat edin! 🔥">Çifte gidiyorum</button>
+          <button class="btn-quick-msg" data-msg="Tebrikler güzel eldi 👏">Tebrikler</button>
+          <button class="btn-quick-msg" data-msg="İşlek taşı attın ama! 😱">İşlek attın!</button>
+        </div>
+
+        <!-- Message List Container -->
+        <div id="chat-messages" class="chat-messages-box">
+          <div class="chat-welcome-msg">💬 Sohbete hoş geldiniz! Mesajlarınızı buradan gönderebilirsiniz.</div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="chat-input-bar">
+          <input type="text" id="chat-input" class="plus-input chat-input-field" placeholder="Mesajınızı yazın..." maxlength="120" autocomplete="off" />
+          <button id="btn-send-chat" class="btn-plus-gold btn-send-chat-action">
+            <span>GÖNDER 🚀</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Settings & Audio Modal -->
     <div id="sound-settings-modal" class="modal-backdrop hidden">
       <div class="plus-modal-card" style="max-width: 480px;">
@@ -440,11 +485,11 @@
 
   <!-- Socket.IO & Application Scripts (Cache Busted) -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/audio.js?v=24"></script>
-  <script src="js/validator.js?v=24"></script>
-  <script src="js/istaka.js?v=24"></script>
-  <script src="js/table.js?v=24"></script>
-  <script src="js/ui.js?v=24"></script>
-  <script src="js/gameClient.js?v=24"></script>
+  <script src="js/audio.js?v=25"></script>
+  <script src="js/validator.js?v=25"></script>
+  <script src="js/istaka.js?v=25"></script>
+  <script src="js/table.js?v=25"></script>
+  <script src="js/ui.js?v=25"></script>
+  <script src="js/gameClient.js?v=25"></script>
 </body>
 </html>
