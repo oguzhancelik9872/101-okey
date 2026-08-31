@@ -25,10 +25,15 @@ class UIManager {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
+    // Maximum 3 toasts: remove oldest when exceeding limit
+    while (container.children.length >= 3) {
+      container.firstElementChild.remove();
+    }
+
     const toast = document.createElement('div');
     toast.className = `toast toast-${type} animate-slide-in`;
     toast.innerHTML = `
-      <div class="toast-content">
+      <div class="toast-content" style="display: flex; align-items: center; gap: 8px;">
         <span class="toast-icon">${type === 'error' ? '⚠️' : type === 'success' ? '🎉' : 'ℹ️'}</span>
         <span class="toast-text">${message}</span>
       </div>
@@ -41,8 +46,12 @@ class UIManager {
     }
 
     setTimeout(() => {
-      toast.classList.add('toast-fade-out');
-      setTimeout(() => toast.remove(), 400);
+      if (toast.parentNode) {
+        toast.classList.add('toast-fade-out');
+        setTimeout(() => {
+          if (toast.parentNode) toast.remove();
+        }, 300);
+      }
     }, duration);
   }
 
