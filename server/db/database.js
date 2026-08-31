@@ -140,12 +140,21 @@ class Database {
     return user ? this.sanitizeUser(user) : null;
   }
 
-  updateActiveRoom(userId, roomId) {
+  updateProfile(userId, { displayName, gender, avatarIndex }) {
     const user = this.users.get(userId);
-    if (user) {
-      user.currentRoomId = roomId;
-      this.save();
+    if (!user) return { success: false, reason: 'Kullanıcı bulunamadı.' };
+
+    if (displayName) {
+      user.displayName = displayName.trim().substring(0, 14);
     }
+    if (gender) {
+      user.gender = gender === 'female' ? 'female' : 'male';
+    }
+    if (avatarIndex !== undefined && avatarIndex !== null) {
+      user.avatarIndex = parseInt(avatarIndex, 10);
+    }
+    this.save();
+    return { success: true, user: this.sanitizeUser(user) };
   }
 
   sanitizeUser(user) {
@@ -155,6 +164,7 @@ class Database {
       username: user.username,
       displayName: user.displayName || user.username,
       gender: user.gender || 'male',
+      avatarIndex: (user.avatarIndex !== undefined) ? user.avatarIndex : null,
       stats: user.stats || { gamesPlayed: 0, wins: 0 },
       currentRoomId: user.currentRoomId || null
     };

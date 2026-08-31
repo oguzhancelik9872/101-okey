@@ -62,9 +62,11 @@ body.plus-theme {
 }
 
 /* =========================================================
-   101 OKEY PLUS - LOBBY VIEW
+/* =========================================================
+   101 OKEY PLUS - AUTH & LOBBY VIEWS
    ========================================================= */
 
+#auth-view,
 #lobby-view {
   flex: 1;
   display: flex;
@@ -72,9 +74,14 @@ body.plus-theme {
   justify-content: center;
   background: radial-gradient(circle at 50% 40%, var(--felt-green-light) 0%, var(--felt-green-mid) 45%, var(--felt-green-deep) 100%);
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  min-height: 100vh;
+  width: 100%;
+  padding: 25px 15px;
+  box-sizing: border-box;
 }
 
+#auth-view::before,
 #lobby-view::before {
   content: '';
   position: absolute;
@@ -246,6 +253,29 @@ body.plus-theme {
   font-weight: 700;
 }
 
+.lobby-header-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-profile-edit {
+  background: rgba(52, 152, 219, 0.25);
+  border: 1px solid #3498db;
+  color: #aed6f1;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-profile-edit:hover {
+  background: #2980b9;
+  color: #fff;
+}
+
 .btn-logout {
   background: rgba(231, 76, 60, 0.25);
   border: 1px solid #e74c3c;
@@ -261,6 +291,74 @@ body.plus-theme {
 .btn-logout:hover {
   background: #c0392b;
   color: #fff;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #2980b9;
+  color: #fff;
+  font-size: 8px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  border: 1px solid #fff;
+  z-index: 5;
+}
+
+/* Avatar Picker Grid in Profile Settings */
+.avatar-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 8px 4px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.avatar-pick-item {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.15s;
+  overflow: hidden;
+  margin: 0 auto;
+  background: rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.avatar-pick-item:hover {
+  transform: scale(1.1);
+  border-color: var(--gold-primary);
+}
+
+.avatar-pick-item.selected {
+  border-color: #2ecc71 !important;
+  box-shadow: 0 0 12px rgba(46, 204, 113, 0.8);
+  transform: scale(1.08);
+}
+
+.avatar-pick-item.selected::after {
+  content: '✓';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #2ecc71;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #fff;
 }
 
 /* =========================================================

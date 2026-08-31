@@ -95,13 +95,17 @@
 
         <!-- Logged-in User Profile Card in Lobby -->
         <div class="plus-profile-card">
-          <div class="plus-avatar-box">
+          <div class="plus-avatar-box" id="btn-edit-avatar-trigger" style="cursor: pointer;" title="Avatarı Değiştir">
             <div id="lobby-avatar-img" class="plus-avatar-img">👨</div>
+            <div class="avatar-edit-badge" title="Düzenle">✏️</div>
           </div>
           <div class="plus-profile-details">
             <div class="lobby-user-header">
               <strong id="lobby-display-name" class="lobby-user-name">Oyuncu</strong>
-              <button id="btn-logout" class="btn-logout" title="Çıkış Yap">🚪 Çıkış</button>
+              <div class="lobby-header-btns">
+                <button id="btn-open-profile" class="btn-profile-edit" title="Profili Düzenle">⚙️ Profil</button>
+                <button id="btn-logout" class="btn-logout" title="Çıkış Yap">🚪 Çıkış</button>
+              </div>
             </div>
             <span id="lobby-username-tag" class="lobby-user-tag">@oyuncu</span>
           </div>
@@ -349,6 +353,48 @@
 
     <!-- ================= PLUS MODALS ================= -->
     
+    <!-- Profile Settings Modal -->
+    <div id="modal-profile-settings" class="modal-backdrop hidden">
+      <div class="plus-modal-card" style="max-width: 480px;">
+        <div class="modal-header">
+          <h3>👤 PROFİL AYARLARI</h3>
+          <button class="btn-close-modal" id="btn-close-profile-modal">×</button>
+        </div>
+        
+        <form id="form-profile-settings" class="profile-settings-form">
+          <div class="input-group">
+            <label>Avatarınızı Seçin:</label>
+            <div id="avatar-picker-grid" class="avatar-picker-grid">
+              <!-- Dynamically populated avatar SVG options -->
+            </div>
+          </div>
+
+          <div class="input-group" style="margin-top: 10px;">
+            <label for="edit-display-name">Görünecek İsim:</label>
+            <input type="text" id="edit-display-name" class="plus-input" placeholder="İsminiz" maxlength="14" required>
+          </div>
+
+          <div class="input-group" style="margin-top: 10px;">
+            <label>Cinsiyet:</label>
+            <div class="gender-selector">
+              <label class="gender-option">
+                <input type="radio" name="edit-gender" value="male" id="gender-male">
+                <span>👨 Erkek</span>
+              </label>
+              <label class="gender-option">
+                <input type="radio" name="edit-gender" value="female" id="gender-female">
+                <span>👩 Kadın</span>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-plus-gold" style="width: 100%; margin-top: 15px;">
+            <span>💾 DEĞİŞİKLİKLERİ KAYDET</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
     <!-- Create Room Modal -->
     <div id="modal-create-room" class="modal-backdrop hidden">
       <div class="plus-modal-card">

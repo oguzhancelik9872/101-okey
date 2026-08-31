@@ -100,15 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDocumentTitle(false);
 
     // Update Lobby UI
-    const nameEl = document.getElementById('lobby-display-name');
-    const tagEl = document.getElementById('lobby-username-tag');
-    const avatarEl = document.getElementById('lobby-avatar-img');
-
-    if (nameEl) nameEl.textContent = user.displayName || user.username;
-    if (tagEl) tagEl.textContent = '@' + user.username;
-    if (avatarEl && typeof window.getPlayerAvatarSVG === 'function') {
-      avatarEl.innerHTML = window.getPlayerAvatarSVG(user.displayName || user.username, user.gender);
-    }
+    updateLobbyProfileUI();
 
     // Check if user was in an active game session (F5 reconnect)
     const savedActiveRoom = localStorage.getItem('okey101_active_room') || user.currentRoomId;
@@ -132,6 +124,114 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       showLobby();
     }
+  }
+
+  // --- Profile Settings Modal & Avatar Picker ---
+  let selectedProfileAvatarIndex = 0;
+  let selectedProfileGender = 'male';
+
+  function updateLobbyProfileUI() {
+    if (!currentUser) return;
+    const nameEl = document.getElementById('lobby-display-name');
+    const tagEl = document.getElementById('lobby-username-tag');
+    const avatarEl = document.getElementById('lobby-avatar-img');
+
+    if (nameEl) nameEl.textContent = currentUser.displayName || currentUser.username;
+    if (tagEl) tagEl.textContent = '@' + currentUser.username;
+    if (avatarEl && typeof window.getPlayerAvatarSVG === 'function') {
+      avatarEl.innerHTML = window.getPlayerAvatarSVG(currentUser.displayName || currentUser.username, currentUser.gender, currentUser.avatarIndex);
+    }
+  }
+
+  function renderAvatarPicker() {
+    const grid = document.getElementById('avatar-picker-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const list = (selectedProfileGender === 'female') ? (window.femaleAvatars || []) : (window.maleAvatars || []);
+    list.forEach((svgHtml, idx) => {
+      const item = document.createElement('div');
+      item.className = 'avatar-pick-item' + (selectedProfileAvatarIndex === idx ? ' selected' : '');
+      item.innerHTML = svgHtml;
+      item.addEventListener('click', () => {
+        selectedProfileAvatarIndex = idx;
+        renderAvatarPicker();
+      });
+      grid.appendChild(item);
+    });
+  }
+
+  function openProfileModal() {
+    if (!currentUser) return;
+    const editNameInput = document.getElementById('edit-display-name');
+    if (editNameInput) editNameInput.value = currentUser.displayName || currentUser.username;
+
+    selectedProfileGender = currentUser.gender || 'male';
+    selectedProfileAvatarIndex = (currentUser.avatarIndex !== undefined && currentUser.avatarIndex !== null) ? currentUser.avatarIndex : 0;
+
+    const maleRadio = document.getElementById('gender-male');
+    const femaleRadio = document.getElementById('gender-female');
+    if (maleRadio) maleRadio.checked = (selectedProfileGender === 'male');
+    if (femaleRadio) femaleRadio.checked = (selectedProfileGender === 'female');
+
+    renderAvatarPicker();
+    ui.showModal('modal-profile-settings');
+  }
+
+  const btnOpenProfile = document.getElementById('btn-open-profile');
+  if (btnOpenProfile) btnOpenProfile.addEventListener('click', openProfileModal);
+
+  const btnEditAvatar = document.getElementById('btn-edit-avatar-trigger');
+  if (btnEditAvatar) btnEditAvatar.addEventListener('click', openProfileModal);
+
+  const btnCloseProfile = document.getElementById('btn-close-profile-modal');
+  if (btnCloseProfile) {
+    btnCloseProfile.addEventListener('click', () => {
+      ui.hideModal('modal-profile-settings');
+    });
+  }
+
+  // Gender change in profile modal
+  const genderRadios = document.querySelectorAll('input[name="edit-gender"]');
+  genderRadios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      selectedProfileGender = e.target.value;
+      renderAvatarPicker();
+    });
+  });
+
+  // Profile Settings Form Submit
+  const formProfile = document.getElementById('form-profile-settings');
+  if (formProfile) {
+    formProfile.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const editName = document.getElementById('edit-display-name').value.trim();
+      if (!editName) {
+        ui.showToast('Lütfen geçerli bir isim girin.', 'error');
+        return;
+      }
+
+      socket.emit('auth:updateProfile', {
+        userId: currentUser.id,
+        displayName: editName,
+        gender: selectedProfileGender,
+        avatarIndex: selectedProfileAvatarIndex
+      }, (res) => {
+        if (res.success) {
+          currentUser = res.user;
+          localStorage.setItem('okey101_user', JSON.stringify(currentUser));
+          currentActivePlayerName = currentUser.displayName || currentUser.username;
+          updateDocumentTitle(false);
+          updateLobbyProfileUI();
+          ui.hideModal('modal-profile-settings');
+          ui.showToast('Profiliniz güncellendi!', 'success');
+        } else {
+          ui.showToast(res.reason, 'error');
+        }
+      });
+    });
   }
 
   // Login Form Submit

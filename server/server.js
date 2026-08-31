@@ -67,6 +67,17 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('auth:updateProfile', (data, callback) => {
+    try {
+      const uId = data.userId || socket.userId;
+      if (!uId) return callback && callback({ success: false, reason: 'Oturum bulunamadı.' });
+      const res = db.updateProfile(uId, data);
+      if (callback) callback(res);
+    } catch (err) {
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
   // Reconnect to active room after F5 / disconnection
   socket.on('reconnectRoom', (data, callback) => {
     try {
