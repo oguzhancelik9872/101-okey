@@ -21,15 +21,14 @@ const res1 = Validator.isValidRun(run1, indicator);
 assert.strictEqual(res1.valid, true);
 assert.strictEqual(res1.score, 15);
 
-// Valid: Blue 12, 13, 1 (12-13-1 rule)
+// Invalid: Blue 12, 13, 1 (12-13-1 is not allowed, strictly sequential)
 const run2 = [
   new Tile('4', COLORS.BLUE, 12),
   new Tile('5', COLORS.BLUE, 13),
   new Tile('6', COLORS.BLUE, 1)
 ];
 const res2 = Validator.isValidRun(run2, indicator);
-assert.strictEqual(res2.valid, true);
-assert.strictEqual(res2.score, 26); // 12 + 13 + 1 = 26
+assert.strictEqual(res2.valid, false);
 
 // Invalid: Blue 13, 1, 2 (13-1-2 is not allowed)
 const runInvalid = [

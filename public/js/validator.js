@@ -68,22 +68,12 @@ class ClientValidator {
     let maxScore = -1;
 
     const candidateSequences = [];
-    // 1. Standard linear sequences (1..13)
+    // Standard linear sequential runs (1..13 strictly, no 12-13-1 wrap)
     for (let startNum = 1; startNum <= 13 - len + 1; startNum++) {
       candidateSequences.push(Array.from({ length: len }, (_, i) => ({
         expectedNum: startNum + i,
         score: startNum + i
       })));
-    }
-
-    // 2. Wrap-1 sequences ending with 1 after 13 (e.g. 12-13-1, 11-12-13-1)
-    const wrapStart = 15 - len;
-    if (wrapStart >= 1 && wrapStart <= 12) {
-      const wrapSeq = Array.from({ length: len - 1 }, (_, i) => ({
-        expectedNum: wrapStart + i,
-        score: wrapStart + i
-      })).concat([{ expectedNum: 1, score: 1 }]);
-      candidateSequences.push(wrapSeq);
     }
 
     for (const seq of candidateSequences) {
@@ -247,21 +237,6 @@ class ClientValidator {
 
           this._generateRunCombinations(stepOptions, jokers, indicator, runs);
         }
-      }
-
-      // Wrap-1 runs ending with 1 (e.g. 12-13-1, 11-12-13-1, 10-11-12-13-1)
-      for (let len = 3; len <= 5; len++) {
-        const wrapStart = 15 - len;
-        if (wrapStart < 1 || wrapStart > 12) continue;
-
-        const stepOptions = [];
-        for (let step = 0; step < len - 1; step++) {
-          const targetVal = wrapStart + step;
-          stepOptions.push({ targetVal, options: byVal[targetVal] || [] });
-        }
-        stepOptions.push({ targetVal: 1, options: byVal[1] || [] });
-
-        this._generateRunCombinations(stepOptions, jokers, indicator, runs);
       }
     }
 
