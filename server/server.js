@@ -301,6 +301,18 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Fill All Remaining Seats with Bots in Lobby (Single Click)
+  socket.on('lobby:fillAllBots', (data, callback) => {
+    const cb = typeof data === 'function' ? data : callback;
+    try {
+      const uId = (data && data.userId) || socket.userId;
+      const res = roomManager.fillAllBots(socket.id, uId);
+      if (cb) cb(res);
+    } catch (err) {
+      if (cb) cb({ success: false, reason: err.message });
+    }
+  });
+
   // Quick Match
   socket.on('quickMatch', (data, callback) => {
     try {

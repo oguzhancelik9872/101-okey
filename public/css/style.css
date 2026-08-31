@@ -521,6 +521,36 @@ body.plus-theme {
   margin: 0;
 }
 
+.btn-lobby-fill-bots {
+  pointer-events: auto;
+  background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
+  color: #111;
+  border: 1.5px solid #fff;
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(241, 196, 15, 0.5), 0 2px 6px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.btn-lobby-fill-bots:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(241, 196, 15, 0.8);
+  background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);
+}
+
+.btn-lobby-fill-bots.hidden {
+  display: none !important;
+}
+
 .lobby-countdown-banner {
   display: flex;
   flex-direction: column;

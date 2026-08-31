@@ -307,6 +307,33 @@ class RoomManager {
     return { success: true, bot };
   }
 
+  fillAllBots(socketId, userId = null) {
+    const publicRoom = this.getOrCreatePublicRoom();
+    const game = publicRoom.game;
+    if (game.state !== GAME_STATES.WAITING) {
+      return { success: false, reason: 'Oyun başladıktan sonra bot eklenemez.' };
+    }
+
+    const isMember = game.players.some(p => p && ((userId && p.userId === userId) || p.id === socketId));
+    if (!isMember) {
+      return { success: false, reason: 'Yalnızca masadaki oyuncular bot ekleyebilir.' };
+    }
+
+    for (let i = 0; i < 4; i++) {
+      if (!game.players[i]) {
+        game.addSingleBot(i);
+      }
+    }
+
+    // If 4 players are now present, start 3-second countdown!
+    if (game.players.filter(Boolean).length === 4 && game.state === GAME_STATES.WAITING) {
+      this.startLobbyCountdown(publicRoom);
+    }
+
+    this.broadcastLobbyState();
+    return { success: true };
+  }
+
   removeBotFromSeat(socketId, seatIndex, userId = null) {
     const publicRoom = this.getOrCreatePublicRoom();
     const game = publicRoom.game;

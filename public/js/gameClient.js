@@ -393,9 +393,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    const titleEl = document.getElementById('lobby-table-title');
     const statusEl = document.getElementById('lobby-table-status');
-    if (titleEl) titleEl.textContent = `MASA #${currentLobbyTableId}`;
+    const btnFillBots = document.getElementById('btn-lobby-fill-bots');
+
     if (statusEl) {
       if (tableData.state === 'PLAYING') {
         statusEl.textContent = '🎮 OYUN SÜRÜYOR (DOLU)';
@@ -412,11 +412,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const countdownBanner = document.getElementById('lobby-countdown-banner');
     const countdownNum = document.getElementById('lobby-countdown-num');
     const instructionEl = document.getElementById('lobby-table-instruction');
+    const isCountingDown = tableData.countdown !== null && tableData.countdown !== undefined && tableData.countdown > 0;
 
-    if (tableData.countdown !== null && tableData.countdown !== undefined && tableData.countdown > 0) {
+    if (isCountingDown) {
       if (countdownBanner) countdownBanner.classList.remove('hidden');
       if (countdownNum) countdownNum.textContent = tableData.countdown;
       if (instructionEl) instructionEl.classList.add('hidden');
+      if (btnFillBots) btnFillBots.classList.add('hidden');
       try {
         if (window.soundEngine && typeof window.soundEngine.playTileTouch === 'function') {
           window.soundEngine.playTileTouch();
@@ -425,6 +427,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       if (countdownBanner) countdownBanner.classList.add('hidden');
       if (instructionEl) instructionEl.classList.remove('hidden');
+      if (btnFillBots) {
+        if (mySeatedIndex !== null && tableData.state === 'WAITING' && (tableData.playerCount || 0) < 4) {
+          btnFillBots.classList.remove('hidden');
+        } else {
+          btnFillBots.classList.add('hidden');
+        }
+      }
     }
 
     const seatLabels = ['1. KOLTUĞA OTUR', 'SAĞA OTUR', 'KARŞIYA OTUR', 'SOLA OTUR'];
@@ -596,6 +605,17 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('lobby:stateUpdate', (data) => {
     updateLobbyVirtualTable(data);
   });
+
+  const btnLobbyFillBots = document.getElementById('btn-lobby-fill-bots');
+  if (btnLobbyFillBots) {
+    btnLobbyFillBots.addEventListener('click', () => {
+      socket.emit('lobby:fillAllBots', { userId: getUserId() }, (res) => {
+        if (res && !res.success) {
+          ui.showToast(res.reason || 'Botlar eklenemedi.', 'error');
+        }
+      });
+    });
+  }
 
   // Create Room Modal
   const btnOpenCreate = document.getElementById('btn-open-create-room');
