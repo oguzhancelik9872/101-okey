@@ -1447,9 +1447,10 @@ body.plus-theme {
   flex: 1;
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 10px 75px 6px 75px;
+  justify-content: flex-start;
+  padding: 8px 75px 4px 75px;
   width: 100%;
   overflow: visible;
 }
@@ -1457,7 +1458,7 @@ body.plus-theme {
 .table-felt-mat {
   width: 100%;
   max-width: 1540px;
-  height: 100%;
+  height: calc(100% - 58px);
   max-height: 560px;
   margin: 0 auto;
   background: radial-gradient(ellipse at center, #10663a 0%, #0c4d2c 55%, #072e1a 100%);
@@ -1468,6 +1469,8 @@ body.plus-theme {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 4px 10px;
+  box-sizing: border-box;
 }
 
 .felt-watermark {
@@ -1769,19 +1772,17 @@ body.plus-theme {
    ========================================================= */
 
 .center-table-zone {
-  width: 98%;
-  max-width: 1480px;
-  height: calc(100% - 46px);
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   position: relative;
   z-index: 10;
-  padding: 4px 8px;
+  padding: 4px 6px;
   box-sizing: border-box;
-  margin-top: 10px;
-  margin-bottom: 28px;
+  margin: 0;
 }
 
 /* Sol ve Orta: 2 Tane Yan Yana 13x13 Seri Açma Bölmesi */
@@ -2322,16 +2323,16 @@ body.plus-theme {
   z-index: 30;
 }
 
-/* Bottom Felt Action & Player Strip (Inside Green Felt, Centered Directly Above Istaka) */
-.felt-bottom-strip {
+/* Bottom Outer Player & Action Strip (In Dark Green Canvas, Right Above the Brown Istaka Bar!) */
+.canvas-bottom-strip {
   position: absolute;
-  bottom: 4px;
+  bottom: 6px;
   left: 0;
   right: 0;
   width: 100%;
-  max-width: 1480px;
+  max-width: 1540px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2340,18 +2341,18 @@ body.plus-theme {
   pointer-events: none;
 }
 
-.felt-bottom-strip > * {
+.canvas-bottom-strip > * {
   pointer-events: auto;
 }
 
-.felt-bottom-left {
+.canvas-bottom-left {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: flex-start;
 }
 
-.felt-bottom-right {
+.canvas-bottom-right {
   flex: 1;
   display: flex;
   align-items: center;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=50">
+  <link rel="stylesheet" href="css/style.css?v=51">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -324,40 +324,40 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Bottom Felt Action & Player Strip (Inside Green Felt, Centered Directly Above Istaka) -->
-          <div class="felt-bottom-strip">
-            <div class="felt-bottom-left">
-              <button id="btn-return-discard" class="btn-pill-action btn-pill-warning hidden" title="Yandan aldığınız taşı geri bırakın ve desteden çekin">
-                <span>↩️ Taşı Geri Bırak</span>
+        <!-- Bottom Outer Player & Action Strip (In Dark Green Canvas, Right Above the Brown Istaka Bar!) -->
+        <div class="canvas-bottom-strip">
+          <div class="canvas-bottom-left">
+            <button id="btn-return-discard" class="btn-pill-action btn-pill-warning hidden" title="Yandan aldığınız taşı geri bırakın ve desteden çekin">
+              <span>↩️ Taşı Geri Bırak</span>
+            </button>
+          </div>
+
+          <!-- Center: Bottom Player Profile Card (Centered directly above istaka) -->
+          <div id="seat-bottom" class="player-outer-bar bar-bottom">
+            <div class="avatar-ring-container">
+              <div class="avatar-timer-ring"></div>
+              <div class="pod-avatar">👤</div>
+            </div>
+            <div class="bar-player-info">
+              <span class="player-name">Oyuncu (Siz)</span>
+              <span class="player-open-status not-opened">AÇMADI</span>
+              <div class="player-turn-progress-track">
+                <div class="player-turn-progress-fill"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Open Hand / Pairs Action Buttons (In Dark Green Canvas on the Right) -->
+          <div class="canvas-bottom-right">
+            <div class="play-actions">
+              <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled>
+                <span>Seri Aç</span>
               </button>
-            </div>
-
-            <!-- Center: Bottom Player Profile Card (Centered directly above istaka) -->
-            <div id="seat-bottom" class="player-outer-bar bar-bottom">
-              <div class="avatar-ring-container">
-                <div class="avatar-timer-ring"></div>
-                <div class="pod-avatar">👤</div>
-              </div>
-              <div class="bar-player-info">
-                <span class="player-name">Oyuncu (Siz)</span>
-                <span class="player-open-status not-opened">AÇMADI</span>
-                <div class="player-turn-progress-track">
-                  <div class="player-turn-progress-fill"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right: Open Hand / Pairs Action Buttons (In Green Felt Area on the Right) -->
-            <div class="felt-bottom-right">
-              <div class="play-actions">
-                <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled>
-                  <span>Seri Aç</span>
-                </button>
-                <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled>
-                  <span>Çift Aç</span>
-                </button>
-              </div>
+              <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled>
+                <span>Çift Aç</span>
+              </button>
             </div>
           </div>
         </div>
@@ -485,11 +485,11 @@
 
   <!-- Socket.IO & Application Scripts (Cache Busted) -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/audio.js?v=50"></script>
-  <script src="js/validator.js?v=50"></script>
-  <script src="js/istaka.js?v=50"></script>
-  <script src="js/table.js?v=50"></script>
-  <script src="js/ui.js?v=50"></script>
-  <script src="js/gameClient.js?v=50"></script>
+  <script src="js/audio.js?v=51"></script>
+  <script src="js/validator.js?v=51"></script>
+  <script src="js/istaka.js?v=51"></script>
+  <script src="js/table.js?v=51"></script>
+  <script src="js/ui.js?v=51"></script>
+  <script src="js/gameClient.js?v=51"></script>
 </body>
 </html>
