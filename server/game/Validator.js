@@ -260,6 +260,17 @@ class Validator {
   }
 
   /**
+   * Checks if two tiles form a valid pair (identical color & number, or with Okey)
+   */
+  static isPair(tile1, tile2, indicator) {
+    if (!tile1 || !tile2) return false;
+    const t1 = this.getTileProps(tile1, indicator);
+    const t2 = this.getTileProps(tile2, indicator);
+    if (t1.isOkey || t2.isOkey) return true;
+    return t1.color === t2.color && t1.number === t2.number;
+  }
+
+  /**
    * Validates Çift Açma (Pairs opening) - requires at least 5 pairs.
    */
   static validatePairsOpening(pairs, indicator, minPairs = 5) {

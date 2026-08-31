@@ -667,6 +667,56 @@ class IstakaManager {
     }
   }
 
+  /**
+   * Analyzes contiguous 2-tile pair segments currently arranged on the rack
+   */
+  analyzeRackPairs() {
+    const validPairs = [];
+    const invalidSegments = [];
+    const validTileIds = new Set();
+
+    for (let r = 0; r < this.ROWS; r++) {
+      let currentSegment = [];
+
+      for (let c = 0; c < this.COLS; c++) {
+        const t = this.grid[r][c];
+        if (t) {
+          currentSegment.push(t);
+        } else {
+          if (currentSegment.length > 0) {
+            this._evaluatePairSegment(currentSegment, validPairs, invalidSegments, validTileIds);
+            currentSegment = [];
+          }
+        }
+      }
+
+      if (currentSegment.length > 0) {
+        this._evaluatePairSegment(currentSegment, validPairs, invalidSegments, validTileIds);
+      }
+    }
+
+    return {
+      validPairs,
+      invalidSegments,
+      validTileIds,
+      count: validPairs.length
+    };
+  }
+
+  _evaluatePairSegment(segment, validPairs, invalidSegments, validTileIds) {
+    if (segment.length === 2) {
+      if (ClientValidator.isPair(segment[0], segment[1], this.indicator)) {
+        validPairs.push(segment);
+        validTileIds.add(segment[0].id);
+        validTileIds.add(segment[1].id);
+      } else {
+        invalidSegments.push(segment);
+      }
+    } else {
+      invalidSegments.push(segment);
+    }
+  }
+
   getBestHandMelds(requiredTileId = null) {
     return ClientValidator.findBestMelds(this.getAllTiles(), this.indicator, requiredTileId);
   }

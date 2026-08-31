@@ -1041,23 +1041,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const minPairs = isFirstOpen ? (currentGameState.minOpenPairs || 5) : 1;
       const requiredId = (isMyTurn && isFirstOpen && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
 
-      let pairIdArrays = [];
+      // Analyze 2-tile pair groups currently arranged on the istaka rack
+      const rackPairs = istaka.analyzeRackPairs();
+      const containsRequired = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
 
-      // Find all pairs from hand with required discard tile
-      const allPairs = ClientValidator.findAllPairs(istaka.getAllTiles(), currentGameState.indicator, isFirstOpen ? requiredId : null);
-      const containsRequired = !requiredId || !isFirstOpen || allPairs.some(p => p[0].id === requiredId || p[1].id === requiredId);
+      if (rackPairs.validPairs.length < minPairs || !containsRequired) {
+        const allPairsInHand = ClientValidator.findAllPairs(istaka.getAllTiles(), currentGameState.indicator, isFirstOpen ? requiredId : null);
+        const containsRequiredInHand = !requiredId || !isFirstOpen || allPairsInHand.some(p => p[0].id === requiredId || p[1].id === requiredId);
 
-      if (allPairs.length >= minPairs && containsRequired) {
-        istaka.autoSortPairs(isFirstOpen ? requiredId : null);
-        pairIdArrays = allPairs.map(p => [p[0].id, p[1].id]);
-      }
-
-      if (pairIdArrays.length < minPairs) {
-        if (requiredId && isFirstOpen) {
-          ui.showToast('Yandan çektiğiniz taşı kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
+        if (allPairsInHand.length >= minPairs && containsRequiredInHand) {
+          ui.showToast(`Çift açmak için en az ${minPairs} çifti ıstakanızda 2'şerli kümeler halinde dizmelisiniz (veya 'Çift Diz' butonunu kullanınız).`, 'warning', 4000);
+        } else if (requiredId && isFirstOpen && !containsRequired) {
+          ui.showToast('Yandan çektiğiniz taşı açtığınız çiftlerde kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
+        } else {
+          ui.showToast(`Çift açmak için en az ${minPairs} çiftiniz olmalıdır. (Dizili: ${rackPairs.validPairs.length})`, 'error', 3000);
         }
         return;
       }
+
+      const pairIdArrays = rackPairs.validPairs.map(p => [p[0].id, p[1].id]);
 
       socket.emit('openPairs', { roomId, pairs: pairIdArrays }, (res) => {
         if (res.success) {
@@ -1237,9 +1239,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (isMyTurn && turnState === 'DISCARD' && !cannotOpenPairs) {
-      const allPairs = ClientValidator.findAllPairs(istaka.getAllTiles(), currentGameState.indicator, isFirstOpen ? requiredId : null);
-      const containsRequiredPair = !requiredId || !isFirstOpen || allPairs.some(p => p[0].id === requiredId || p[1].id === requiredId);
-      if (allPairs.length >= minPairs && containsRequiredPair) {
+      const rackPairs = istaka.analyzeRackPairs();
+      const containsRequiredPair = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
+      if (rackPairs.validPairs.length >= minPairs && containsRequiredPair) {
         canOpenPairs = true;
       }
     }
@@ -1254,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnOpenPairs.disabled = !canOpenPairs;
       btnOpenPairs.title = cannotOpenPairs
         ? 'Masada çift açmış bir oyuncu olmadığı için çift açamazsınız'
-        : (canOpenPairs ? 'Elinizi çift olarak açın' : (isFirstOpen ? `Çift açmak için en az ${minPairs} çiftiniz olmalıdır` : 'En az 1 çiftiniz olmalıdır'));
+        : (canOpenPairs ? 'Dizili çiftlerinizi açın' : (isFirstOpen ? `Çift açmak için en az ${minPairs} çifti 2'şerli kümeler halinde dizmelisiniz` : '2\'li çift kümesi oluşturmalısınız'));
     }
 
     // Show "Taşı Geri Bırak" only if viewer has drawn from discard and hasn't opened/discarded yet
@@ -1295,16 +1297,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 2. If NO valid per on rack (score === 0), check if player can open 5+ Pairs
-    const allPairs = ClientValidator.findAllPairs(allTiles, currentGameState.indicator, requiredId);
-    const containsRequiredPair = !requiredId || allPairs.some(p => p[0].id === requiredId || p[1].id === requiredId);
+    // 2. If NO valid per on rack (score === 0), check if player arranged valid Pairs on rack
+    const rackPairs = istaka.analyzeRackPairs();
+    const containsRequiredPair = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
 
-    if (allPairs.length >= 5 && containsRequiredPair && isFirstOpen) {
-      const pairedIds = new Set();
-      for (let i = 0; i < 5; i++) {
-        pairedIds.add(allPairs[i][0].id);
-        pairedIds.add(allPairs[i][1].id);
-      }
+    if (rackPairs.validPairs.length >= 5 && containsRequiredPair && isFirstOpen) {
+      const pairedIds = rackPairs.validTileIds;
       const leftoverTiles = allTiles.filter(t => !pairedIds.has(t.id));
       const penaltyScore = leftoverTiles.reduce((sum, t) => {
         const p = ClientValidator.getTileProps(t, currentGameState.indicator);
@@ -1312,7 +1310,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 0);
 
       pointsBadge.className = 'points-badge points-penalty-active';
-      pointsBadge.innerHTML = `💎 5 Çift (Kalan Ceza: <strong>${penaltyScore}</strong> Puan)`;
+      pointsBadge.innerHTML = `💎 ${rackPairs.validPairs.length} Çift (Kalan Ceza: <strong>${penaltyScore}</strong> Puan)`;
       updateActionBarUI();
       return;
     }

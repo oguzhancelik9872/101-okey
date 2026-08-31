@@ -323,6 +323,17 @@ class ClientValidator {
   }
 
   /**
+   * Checks if two tiles form a valid pair (identical color & number, or with Okey)
+   */
+  static isPair(tile1, tile2, indicator) {
+    if (!tile1 || !tile2) return false;
+    const t1 = this.getTileProps(tile1, indicator);
+    const t2 = this.getTileProps(tile2, indicator);
+    if (t1.isOkey || t2.isOkey) return true;
+    return t1.color === t2.color && t1.number === t2.number;
+  }
+
+  /**
    * Finds all pairs in hand (with optional requiredTileId prioritization)
    */
   static findAllPairs(tiles, indicator, requiredTileId = null) {
