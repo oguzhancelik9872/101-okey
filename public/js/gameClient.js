@@ -706,20 +706,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Socket.IO Game State Updates ---
   socket.on('gameStateUpdate', (state) => {
     if (!state) return;
+    const gameRoomId = state.id || state.gameId;
 
     // Transition from lobby to game table ONLY when round starts and user is seated in THIS room
     if (state.state === 'PLAYING') {
       const mySeat = state.players ? state.players.findIndex(p => p && ((currentUser && p.userId === currentUser.id) || p.id === socket.id)) : -1;
-      if (mySeat !== -1) {
-        if (roomId === state.id || (!roomId && state.id === currentLobbyTableId)) {
-          viewerSeatIndex = mySeat;
-          roomId = state.id;
-          localStorage.setItem('okey101_active_room', roomId);
-          table.setViewerSeatIndex(viewerSeatIndex);
-          if (authView) authView.classList.add('hidden');
-          if (lobbyView) lobbyView.classList.add('hidden');
-          if (gameView) gameView.classList.remove('hidden');
-        }
+      if (mySeat !== -1 || (mySeatedIndex !== null && (roomId === gameRoomId || !roomId))) {
+        const effectiveSeat = (mySeat !== -1) ? mySeat : (mySeatedIndex !== null ? mySeatedIndex : 0);
+        viewerSeatIndex = effectiveSeat;
+        roomId = gameRoomId;
+        localStorage.setItem('okey101_active_room', roomId);
+        table.setViewerSeatIndex(viewerSeatIndex);
+        if (authView) authView.classList.add('hidden');
+        if (lobbyView) lobbyView.classList.add('hidden');
+        if (gameView) gameView.classList.remove('hidden');
       }
     }
 

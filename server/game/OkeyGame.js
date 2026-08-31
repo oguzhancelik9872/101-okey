@@ -897,6 +897,7 @@ class OkeyGame {
     const okeyInfo = this.deck ? this.deck.getOkeyInfo() : null;
 
     return {
+      id: this.id,
       gameId: this.id,
       state: this.state,
       mode: this.mode,

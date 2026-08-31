@@ -62,7 +62,6 @@ body.plus-theme {
 }
 
 /* =========================================================
-/* =========================================================
    101 OKEY PLUS - AUTH & LOBBY VIEWS
    ========================================================= */
 
@@ -74,8 +73,8 @@ body.plus-theme {
   background: radial-gradient(circle at 50% 40%, var(--felt-green-light) 0%, var(--felt-green-mid) 45%, var(--felt-green-deep) 100%);
   position: relative;
   overflow-y: auto;
-  min-height: 100vh;
-  width: 100%;
+  height: 100vh;
+  width: 100vw;
   padding: 30px 20px;
   box-sizing: border-box;
 }
@@ -106,11 +105,11 @@ body.plus-theme {
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  min-height: 100vh;
-  width: 100%;
+  height: 100vh;
+  width: 100vw;
   background: radial-gradient(circle at 50% 40%, var(--felt-green-light) 0%, var(--felt-green-mid) 45%, var(--felt-green-deep) 100%);
   position: relative;
-  overflow-x: hidden;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
