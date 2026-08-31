@@ -157,6 +157,15 @@ class Database {
     return { success: true, user: this.sanitizeUser(user) };
   }
 
+  updateActiveRoom(userId, roomId) {
+    if (!userId) return;
+    const user = this.users.get(userId);
+    if (user) {
+      user.currentRoomId = roomId || null;
+      this.save();
+    }
+  }
+
   sanitizeUser(user) {
     if (!user) return null;
     return {
