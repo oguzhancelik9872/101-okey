@@ -377,16 +377,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const avatarSvg = (typeof window.getPlayerAvatarSVG === 'function')
           ? window.getPlayerAvatarSVG(seatInfo.name, seatInfo.gender, seatInfo.avatarIndex)
           : '👤';
-        const isHost = seatInfo.isHost || (tableData.hostId === seatInfo.id);
 
         podEl.innerHTML = `
-          <div class="lobby-occupied-card ${isMe ? 'is-me' : (isHost ? 'is-host' : '')}">
+          <div class="lobby-occupied-card ${isMe ? 'is-me' : ''}">
             <div class="lobby-occupied-avatar">${avatarSvg}</div>
             <div class="lobby-occupied-info">
               <span class="lobby-occupied-name" title="${seatInfo.name}">${seatInfo.name}${isMe ? ' (Siz)' : ''}</span>
-              <span class="lobby-occupied-badge">${isHost ? '👑 Kurucu' : (seatInfo.isBot ? '🤖 Bot' : '🟢 Hazır')}</span>
+              <span class="lobby-occupied-badge">${seatInfo.isBot ? '🤖 Bot' : '🟢 Hazır'}</span>
             </div>
             ${isMe && tableData.state === 'WAITING' ? '<button class="btn-leave-seat-pill" title="Koltuktan Kalk">❌ Kalk</button>' : ''}
+            ${!isMe && seatInfo.isBot && mySeatedIndex !== null && tableData.state === 'WAITING' ? `<button class="btn-remove-bot-pill" data-seat="${seatIdx}" title="Botu Kaldır">❌ Kaldır</button>` : ''}
           </div>
         `;
 
@@ -404,6 +404,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           }
         }
+
+        if (!isMe && seatInfo.isBot && mySeatedIndex !== null && tableData.state === 'WAITING') {
+          const btnRemoveBot = podEl.querySelector('.btn-remove-bot-pill');
+          if (btnRemoveBot) {
+            btnRemoveBot.addEventListener('click', (e) => {
+              e.stopPropagation();
+              socket.emit('lobby:removeBot', { seatIndex: seatIdx, userId: getUserId() }, (res) => {
+                if (!res.success) {
+                  ui.showToast(res.reason, 'error');
+                }
+              });
+            });
+          }
+        }
       } else {
         // Seat is empty
         if (tableData.state === 'PLAYING') {
@@ -412,29 +426,53 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="busy-label">🔒 Dolu</span>
             </div>
           `;
+        } else if (mySeatedIndex !== null) {
+          // Seated player sees switch seat & add bot buttons
+          podEl.innerHTML = `
+            <div class="empty-seat-controls">
+              <button class="btn-sit-seat" data-seat="${seatIdx}">
+                <span class="sit-icon">➕</span>
+                <span class="sit-label">BURAYA GEÇ</span>
+              </button>
+              <button class="btn-add-bot-pill" data-seat="${seatIdx}" title="Bu Koltuğa Bot Oturt">
+                🤖 + Bot
+              </button>
+            </div>
+          `;
+          const btnSit = podEl.querySelector('.btn-sit-seat');
+          if (btnSit) {
+            btnSit.addEventListener('click', () => {
+              socket.emit('lobby:switchSeat', { targetSeatIndex: seatIdx, userId: getUserId() }, (res) => {
+                if (res.success) {
+                  mySeatedIndex = res.seatIndex;
+                } else {
+                  ui.showToast(res.reason, 'error');
+                }
+              });
+            });
+          }
+          const btnAddBot = podEl.querySelector('.btn-add-bot-pill');
+          if (btnAddBot) {
+            btnAddBot.addEventListener('click', () => {
+              socket.emit('lobby:addBot', { seatIndex: seatIdx, userId: getUserId() }, (res) => {
+                if (!res.success) {
+                  ui.showToast(res.reason, 'error');
+                }
+              });
+            });
+          }
         } else {
+          // Unseated viewer sees join seat button
           podEl.innerHTML = `
             <button class="btn-sit-seat" data-seat="${seatIdx}">
               <span class="sit-icon">➕</span>
-              <span class="sit-label">${mySeatedIndex !== null ? 'BURAYA GEÇ' : seatLabels[seatIdx]}</span>
+              <span class="sit-label">${seatLabels[seatIdx]}</span>
             </button>
           `;
           const btnSit = podEl.querySelector('.btn-sit-seat');
           if (btnSit) {
             btnSit.addEventListener('click', () => {
-              if (mySeatedIndex !== null) {
-                // Switch seat
-                socket.emit('lobby:switchSeat', { targetSeatIndex: seatIdx, userId: getUserId() }, (res) => {
-                  if (res.success) {
-                    mySeatedIndex = res.seatIndex;
-                  } else {
-                    ui.showToast(res.reason, 'error');
-                  }
-                });
-              } else {
-                // Sit in empty seat
-                handleSitAtSeat(currentLobbyTableId, seatIdx);
-              }
+              handleSitAtSeat(currentLobbyTableId, seatIdx);
             });
           }
         }

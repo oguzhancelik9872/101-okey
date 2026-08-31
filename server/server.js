@@ -251,6 +251,28 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Add Bot to Seat in Lobby
+  socket.on('lobby:addBot', (data, callback) => {
+    try {
+      const uId = (data && data.userId) || socket.userId;
+      const res = roomManager.addBotToSeat(socket.id, data.seatIndex, uId);
+      if (callback) callback(res);
+    } catch (err) {
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
+  // Remove Bot from Seat in Lobby
+  socket.on('lobby:removeBot', (data, callback) => {
+    try {
+      const uId = (data && data.userId) || socket.userId;
+      const res = roomManager.removeBotFromSeat(socket.id, data.seatIndex, uId);
+      if (callback) callback(res);
+    } catch (err) {
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
   // Quick Match
   socket.on('quickMatch', (data, callback) => {
     try {

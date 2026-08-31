@@ -98,7 +98,10 @@ class TableManager {
         seatEl.classList.toggle('active-turn', isCurrentTurn);
 
         const nameEl = seatEl.querySelector('.player-name');
-        if (nameEl) nameEl.textContent = player.name;
+        if (nameEl) {
+          const displayName = (player.isBot && !player.name.includes('(Bot)')) ? `${player.name} (Bot)` : player.name;
+          nameEl.textContent = displayName;
+        }
 
         const avatarEl = seatEl.querySelector('.pod-avatar');
         if (avatarEl) {

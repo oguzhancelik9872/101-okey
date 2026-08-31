@@ -233,6 +233,60 @@ class RoomManager {
     return { success: false, reason: 'Masada oturmuyorsunuz.' };
   }
 
+  addBotToSeat(socketId, seatIndex, userId = null) {
+    const publicRoom = this.getOrCreatePublicRoom();
+    const game = publicRoom.game;
+    if (game.state !== GAME_STATES.WAITING) {
+      return { success: false, reason: 'Oyun başladıktan sonra bot eklenemez.' };
+    }
+
+    const isMember = game.players.some(p => p && ((userId && p.userId === userId) || p.id === socketId));
+    if (!isMember) {
+      return { success: false, reason: 'Yalnızca masadaki oyuncular bot ekleyebilir.' };
+    }
+
+    if (seatIndex < 0 || seatIndex > 3 || game.players[seatIndex]) {
+      return { success: false, reason: 'Seçilen koltuk dolu veya geçersiz.' };
+    }
+
+    const bot = game.addSingleBot(seatIndex);
+    if (!bot) {
+      return { success: false, reason: 'Bot eklenemedi.' };
+    }
+
+    // If 4 players are now present, start round!
+    if (game.players.filter(Boolean).length === 4 && game.state === GAME_STATES.WAITING) {
+      game.startRound();
+      publicRoom.lastBotActionTime = Date.now() - 400;
+      this.startBotAutomation(publicRoom);
+      this.broadcastGameState(publicRoom.id);
+    }
+
+    this.broadcastLobbyState();
+    return { success: true, bot };
+  }
+
+  removeBotFromSeat(socketId, seatIndex, userId = null) {
+    const publicRoom = this.getOrCreatePublicRoom();
+    const game = publicRoom.game;
+    if (game.state !== GAME_STATES.WAITING) {
+      return { success: false, reason: 'Oyun başladıktan sonra bot kaldırılamaz.' };
+    }
+
+    const isMember = game.players.some(p => p && ((userId && p.userId === userId) || p.id === socketId));
+    if (!isMember) {
+      return { success: false, reason: 'Yalnızca masadaki oyuncular bot kaldırabilir.' };
+    }
+
+    if (seatIndex < 0 || seatIndex > 3 || !game.players[seatIndex] || !game.players[seatIndex].isBot) {
+      return { success: false, reason: 'Seçilen koltukta bot bulunmuyor.' };
+    }
+
+    game.players[seatIndex] = null;
+    this.broadcastLobbyState();
+    return { success: true };
+  }
+
   reconnectPlayer(roomId, newSocketId, userId) {
     const room = this.rooms.get(roomId);
     if (!room) return { success: false, reason: 'Oda bulunamadı veya oyun sona erdi.' };
