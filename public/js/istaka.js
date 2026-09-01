@@ -79,11 +79,15 @@ class IstakaManager {
           }
 
           if (action === 'ACTION:DRAW_DECK') {
+            window.lastManualDragTime = Date.now();
+            window.lastActionWasManualDrag = true;
             this.pendingDropTarget = { row: r, col: c };
             if (this.onDrawDeck) this.onDrawDeck();
             return;
           }
           if (action === 'ACTION:DRAW_DISCARD') {
+            window.lastManualDragTime = Date.now();
+            window.lastActionWasManualDrag = true;
             this.pendingDropTarget = { row: r, col: c };
             if (this.onDrawDiscard) this.onDrawDiscard();
             return;
@@ -317,15 +321,20 @@ class IstakaManager {
 
     if (groupTiles.length === 0) return;
 
-    // 2. Adjust targetCol so the entire group fits on the rack
-    if (targetCol + groupTiles.length > this.COLS) {
-      targetCol = Math.max(0, this.COLS - groupTiles.length);
+    // 2. The cursor is holding the rightmost tile (where the green handle is located),
+    // so targetCol is where the rightmost tile will sit! The meld starts at (targetCol - count + 1).
+    let computedStartCol = targetCol - groupTiles.length + 1;
+    if (computedStartCol < 0) {
+      computedStartCol = 0;
+    }
+    if (computedStartCol + groupTiles.length > this.COLS) {
+      computedStartCol = Math.max(0, this.COLS - groupTiles.length);
     }
 
-    // 3. Find any existing tiles occupying slots from targetCol to targetCol + groupTiles.length - 1
+    // 3. Find any existing tiles occupying slots from computedStartCol to computedStartCol + groupTiles.length - 1
     const displacedTiles = [];
     for (let i = 0; i < groupTiles.length; i++) {
-      const col = targetCol + i;
+      const col = computedStartCol + i;
       if (this.grid[targetRow][col] !== null) {
         displacedTiles.push(this.grid[targetRow][col]);
         this.grid[targetRow][col] = null;
@@ -334,7 +343,7 @@ class IstakaManager {
 
     // 4. Place the groupTiles into the target slots contiguously
     for (let i = 0; i < groupTiles.length; i++) {
-      this.grid[targetRow][targetCol + i] = groupTiles[i];
+      this.grid[targetRow][computedStartCol + i] = groupTiles[i];
     }
 
     // 5. Re-place any displaced tiles into the nearest available empty slots on the rack
@@ -725,12 +734,14 @@ class IstakaManager {
       }
 
       if (action === 'ACTION:DRAW_DECK') {
+        window.lastManualDragTime = Date.now();
         window.lastActionWasManualDrag = true;
         this.pendingDropTarget = { row, col };
         if (this.onDrawDeck) this.onDrawDeck();
         return;
       }
       if (action === 'ACTION:DRAW_DISCARD') {
+        window.lastManualDragTime = Date.now();
         window.lastActionWasManualDrag = true;
         this.pendingDropTarget = { row, col };
         if (this.onDrawDiscard) this.onDrawDiscard();

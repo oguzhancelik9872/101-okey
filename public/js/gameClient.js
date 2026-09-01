@@ -862,27 +862,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Detect pending discard and meld tiles before updating table DOM to prevent 1-frame pre-render flash
-    window.pendingDiscardTileIds = new Set();
     window.pendingMeldTileIds = new Set();
 
     if (lastGameState && lastGameState.state === 'PLAYING' && state.state === 'PLAYING') {
-      const countDiscards = (s) => (s && s.discards) ? s.discards.reduce((acc, p) => acc + (p ? p.length : 0), 0) : 0;
-      const lastDiscardCount = countDiscards(lastGameState);
-      const currentDiscardCount = countDiscards(state);
-
-      if (currentDiscardCount > lastDiscardCount && state.discards && lastGameState.discards) {
-        for (let p = 0; p < 4; p++) {
-          const curPile = state.discards[p] || [];
-          const lastPile = lastGameState.discards[p] || [];
-          if (curPile.length > lastPile.length) {
-            const discardedTile = curPile[curPile.length - 1];
-            if (discardedTile) {
-              window.pendingDiscardTileIds.add(discardedTile.id);
-            }
-            break;
-          }
-        }
-      }
 
       const lastMeldsCount = lastGameState.tableMelds ? lastGameState.tableMelds.length : 0;
       const currentMeldsCount = state.tableMelds ? state.tableMelds.length : 0;
@@ -1015,6 +997,8 @@ document.addEventListener('DOMContentLoaded', () => {
           discardedByPlayer === ((viewerSeatIndex + 3) % 4)
         );
 
+        const isRecentManualDrag = (Date.now() - (window.lastManualDragTime || 0)) < 3000;
+
         if (isReturnDiscardByViewer) {
           // Viewer returns the drawn discard tile back to the left player's corner box
           const leftPos = table.getRelativePosition(discardedByPlayer); // 'left'
@@ -1026,8 +1010,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (discardedByPlayer === viewerSeatIndex && discardedTile) {
           // Viewer discarded a tile
           const seatPos = table.getRelativePosition(viewerSeatIndex);
-          if (window.lastActionWasManualDrag) {
-            window.lastActionWasManualDrag = false;
+          if (isRecentManualDrag) {
+            window.lastManualDragTime = 0;
           } else {
             anim.animateDiscard(seatPos, discardedTile, true);
           }
@@ -1042,8 +1026,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const seatPos = table.getRelativePosition(turnPlayer);
             const isViewer = (turnPlayer === viewerSeatIndex);
 
-            if (isViewer && window.lastActionWasManualDrag) {
-              window.lastActionWasManualDrag = false;
+            if (isViewer && isRecentManualDrag) {
+              window.lastManualDragTime = 0;
             } else {
               if (state.drawnFromDiscard && state.drawnFromDiscard.playerIndex === turnPlayer) {
                 const fromSeat = (turnPlayer + 3) % 4;

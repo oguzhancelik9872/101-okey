@@ -245,6 +245,7 @@ class TableManager {
       centerDeckEl.draggable = isViewerTurnToDraw;
       centerDeckEl.ondragstart = (e) => {
         window.draggedTileId = 'ACTION:DRAW_DECK';
+        window.lastManualDragTime = Date.now();
         e.dataTransfer.setData('text/plain', 'ACTION:DRAW_DECK');
         e.dataTransfer.effectAllowed = 'copyMove';
       };
@@ -275,23 +276,9 @@ class TableManager {
 
       if (pile && pile.length > 0) {
         const topTile = pile[pile.length - 1];
-        const isPending = Boolean(window.pendingDiscardTileIds && window.pendingDiscardTileIds.has(topTile.id));
-
-        if (isPending) {
-          // If a new tile is flying in and there was already a tile in this pile,
-          // keep the previous tile visible with 100% normal flex styling so the box never blinks!
-          if (pile.length > 1) {
-            const prevTile = pile[pile.length - 2];
-            const prevTileEl = this.createTileDOM(prevTile, false);
-            prevTileEl.style.opacity = '1';
-            discardSlot.appendChild(prevTileEl);
-          }
-        } else {
-          // Normal display of current top tile
-          const tileEl = this.createTileDOM(topTile, false);
-          tileEl.style.opacity = '1';
-          discardSlot.appendChild(tileEl);
-        }
+        const tileEl = this.createTileDOM(topTile, false);
+        tileEl.style.opacity = '1';
+        discardSlot.appendChild(tileEl);
       }
 
       const leftPlayerSeat = (this.viewerSeatIndex + 3) % 4;
@@ -304,6 +291,7 @@ class TableManager {
         discardSlot.draggable = true;
         discardSlot.ondragstart = (e) => {
           window.draggedTileId = 'ACTION:DRAW_DISCARD';
+          window.lastManualDragTime = Date.now();
           e.dataTransfer.setData('text/plain', 'ACTION:DRAW_DISCARD');
           e.dataTransfer.effectAllowed = 'copyMove';
         };
