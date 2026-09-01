@@ -1677,18 +1677,6 @@ body.plus-theme {
   transform: translateX(-50%) translateY(-25px) scale(0.8) !important;
 }
 
-.my-turn-focus .bar-left {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transform: translateY(-50%) translateX(-30px) scale(0.8) !important;
-}
-
-.my-turn-focus .bar-right {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transform: translateY(-50%) translateX(30px) scale(0.8) !important;
-}
-
 .my-turn-focus .bar-bottom {
   opacity: 0 !important;
   pointer-events: none !important;
@@ -2376,11 +2364,25 @@ body.plus-theme {
 }
 
 .plus-discard-box.can-draw-pulse {
-  border-color: #2ecc71;
-  background: rgba(46, 204, 113, 0.25);
-  box-shadow: 0 0 15px rgba(46, 204, 113, 0.7);
-  animation: pulse 1.2s infinite;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  box-shadow: none !important;
+  animation: none !important;
   cursor: pointer;
+}
+
+.plus-discard-box.can-draw-pulse .okey-tile {
+  animation: discardTileBob 1.2s infinite alternate ease-in-out !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.8) !important;
+}
+
+@keyframes discardTileBob {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-6px);
+  }
 }
 
 /* =========================================================
