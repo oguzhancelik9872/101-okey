@@ -1484,7 +1484,7 @@ body.plus-theme {
   justify-content: center;
   padding: 4px 8px;
   box-sizing: border-box;
-  transition: all 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: opacity 0.2s ease;
 }
 
 .felt-watermark {
@@ -1700,7 +1700,7 @@ body.plus-theme {
 }
 
 .my-turn-focus .table-felt-mat {
-  top: 10px !important;
+  top: 18px !important;
   bottom: 58px !important;
   left: 68px !important;
   right: 68px !important;
@@ -2442,23 +2442,12 @@ body.plus-theme {
   outline: 3px solid #2ecc71 !important;
 }
 
-/* Newly Drawn Tile Shining / Glowing Effect */
+/* Newly Drawn Tile (Subtle non-laggy green border, no animation, no bobbing) */
 .okey-tile.tile-just-drawn {
-  box-shadow: 0 0 16px rgba(241, 196, 15, 0.95), 0 0 28px rgba(230, 126, 34, 0.75), inset 0 0 10px rgba(255, 255, 255, 0.8) !important;
-  border: 2px solid #f1c40f !important;
-  animation: tileGlowPulse 1.4s infinite alternate ease-in-out;
-  z-index: 25;
-}
-
-@keyframes tileGlowPulse {
-  0% {
-    box-shadow: 0 0 12px rgba(241, 196, 15, 0.8), inset 0 0 6px rgba(255, 255, 255, 0.6);
-    transform: translateY(-2px);
-  }
-  100% {
-    box-shadow: 0 0 22px rgba(241, 196, 15, 1), 0 0 32px rgba(230, 126, 34, 0.85), inset 0 0 12px rgba(255, 255, 255, 0.95);
-    transform: translateY(-5px);
-  }
+  border: 2px solid #2ecc71 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+  transform: none !important;
+  z-index: 5;
 }
 
 /* Real Okey (Joker) Styling - Turned Face-Down Plain Bone Tile */
@@ -2591,7 +2580,6 @@ body.plus-theme {
   background: linear-gradient(180deg, #e67e22, #d35400);
   color: #fff;
   border-color: #f39c12;
-  animation: pulse 1.3s infinite;
 }
 
 .btn-pill-danger {
@@ -2599,7 +2587,6 @@ body.plus-theme {
   color: #fff;
   border-color: #ff7675;
   box-shadow: 0 4px 14px rgba(231, 76, 60, 0.6);
-  animation: pulse 1.5s infinite;
 }
 
 .btn-pill-green {
