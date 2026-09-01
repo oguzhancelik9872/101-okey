@@ -731,8 +731,8 @@ class OkeyGame {
     const p2Name = this.players[2] ? this.players[2].name : 'Oyuncu 3';
     const p3Name = this.players[3] ? this.players[3].name : 'Oyuncu 4';
 
-    const team1Score = (this.players[0] ? this.players[0].score : 0) + (this.players[2] ? this.players[2].score : 0);
-    const team2Score = (this.players[1] ? this.players[1].score : 0) + (this.players[3] ? this.players[3].score : 0);
+    const team1Score = (this.players[0] ? this.players[0].roundScore : 0) + (this.players[2] ? this.players[2].roundScore : 0);
+    const team2Score = (this.players[1] ? this.players[1].roundScore : 0) + (this.players[3] ? this.players[3].roundScore : 0);
     const isTeam1Winner = team1Score <= team2Score;
 
     this.state = GAME_STATES.GAME_OVER;
@@ -801,8 +801,8 @@ class OkeyGame {
     const p2Name = this.players[2] ? this.players[2].name : 'Oyuncu 3';
     const p3Name = this.players[3] ? this.players[3].name : 'Oyuncu 4';
 
-    const team1Score = (this.players[0] ? this.players[0].score : 0) + (this.players[2] ? this.players[2].score : 0);
-    const team2Score = (this.players[1] ? this.players[1].score : 0) + (this.players[3] ? this.players[3].score : 0);
+    const team1Score = (this.players[0] ? this.players[0].roundScore : 0) + (this.players[2] ? this.players[2].roundScore : 0);
+    const team2Score = (this.players[1] ? this.players[1].roundScore : 0) + (this.players[3] ? this.players[3].roundScore : 0);
     const isTeam1Winner = team1Score <= team2Score;
 
     this.state = GAME_STATES.GAME_OVER;

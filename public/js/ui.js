@@ -80,22 +80,35 @@ class UIManager {
       if (!playerName) return '';
       const pEntry = Object.values(roundScores).find(p => p.name === playerName) || {};
       const points = pEntry.points !== undefined ? pEntry.points : 0;
-      const isBitti = points < 0;
+      const isFinisher = pEntry.isFinisher || points < 0;
       const isPartner = pEntry.isPartner;
+      const penaltyPoints = pEntry.penaltyPoints || 0;
+      const basePoints = pEntry.basePoints !== undefined ? pEntry.basePoints : points;
 
       let statusText = '';
-      if (isBitti) {
-        statusText = '🏆 Bitti (-101)';
+      if (isFinisher) {
+        if (results.isOkeyDiscard && results.isPairsFinish) {
+          statusText = '🔥 Okey + Çift Bitti (-404)';
+        } else if (results.isOkeyDiscard) {
+          statusText = '🔥 Okey ile Bitti (-202)';
+        } else if (results.isPairsFinish) {
+          statusText = '✨ Çift Bitti (-202)';
+        } else {
+          statusText = '🏆 Bitti (-101)';
+        }
       } else if (isPartner) {
         statusText = '🤝 Ortağı Bitti (0)';
       } else if (pEntry.opened) {
-        statusText = pEntry.openType === 'pairs' ? `Çift (${(pEntry.handSum || 0) * 2})` : `Açtı (${pEntry.handSum || 0})`;
+        if (pEntry.openType === 'pairs') {
+          const multText = (results.isOkeyDiscard || results.isPairsFinish) ? ' x4' : ' x2';
+          statusText = `Çift Açtı (Kalan${multText}: ${basePoints})`;
+        } else {
+          const multText = (results.isOkeyDiscard || results.isPairsFinish) ? ' x2' : '';
+          statusText = `Açtı (Kalan${multText}: ${basePoints})`;
+        }
       } else {
-        statusText = 'Açmadı (+202)';
-      }
-
-      if (pEntry.penaltyPoints && pEntry.penaltyPoints > 0) {
-        statusText += ` <span style="color: #ff7675;">(+${pEntry.penaltyPoints})</span>`;
+        const multText = (results.isOkeyDiscard || results.isPairsFinish) ? ' (2x)' : '';
+        statusText = `Açmadı (+${basePoints}${multText})`;
       }
 
       const pointStyle = points <= 0 ? 'color: #2ecc71; font-weight: 900;' : 'color: #f1c40f; font-weight: 800;';
@@ -105,8 +118,11 @@ class UIManager {
           <div>
             <div style="font-size: 13px; font-weight: 800; color: #fff;">${playerName}</div>
             <div style="font-size: 11px; color: #bdc3c7; margin-top: 2px;">${statusText}</div>
+            ${penaltyPoints > 0 ? `<div style="font-size: 10px; color: #ff7675; font-weight: 800; margin-top: 2px;">⚠️ Oyun İçi Hata Cezası: +${penaltyPoints}</div>` : ''}
           </div>
-          <div style="font-size: 14px; ${pointStyle}">${points > 0 ? '+' : ''}${points}</div>
+          <div style="text-align: right;">
+            <div style="font-size: 14px; ${pointStyle}">${points > 0 ? '+' : ''}${points}</div>
+          </div>
         </div>
       `;
     };
@@ -129,8 +145,8 @@ class UIManager {
             ${renderPlayerCard(t1 ? t1.players[1] : null)}
           </div>
           <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 800;">
-            <span style="color: #bdc3c7;">Toplam Ceza:</span>
-            <span style="color: ${t1 && t1.isWinner ? '#2ecc71' : '#f1c40f'}; font-size: 15px; font-weight: 900;">${t1 ? t1.score : 0}</span>
+            <span style="color: #bdc3c7;">Takım Toplamı:</span>
+            <span style="color: ${t1 && t1.isWinner ? '#2ecc71' : '#f1c40f'}; font-size: 15px; font-weight: 900;">${t1 ? (t1.score > 0 ? `+${t1.score}` : `${t1.score}`) : 0}</span>
           </div>
         </div>
 
@@ -142,8 +158,8 @@ class UIManager {
             ${renderPlayerCard(t2 ? t2.players[1] : null)}
           </div>
           <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 800;">
-            <span style="color: #bdc3c7;">Toplam Ceza:</span>
-            <span style="color: ${t2 && t2.isWinner ? '#2ecc71' : '#f1c40f'}; font-size: 15px; font-weight: 900;">${t2 ? t2.score : 0}</span>
+            <span style="color: #bdc3c7;">Takım Toplamı:</span>
+            <span style="color: ${t2 && t2.isWinner ? '#2ecc71' : '#f1c40f'}; font-size: 15px; font-weight: 900;">${t2 ? (t2.score > 0 ? `+${t2.score}` : `${t2.score}`) : 0}</span>
           </div>
         </div>
       </div>
