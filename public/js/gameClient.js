@@ -974,17 +974,33 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       } else if (lastGameState.tableMelds && state.tableMelds && anim) {
-        // Check for tile processed into existing melds (İşleme)
+        // Check for tile processed into existing melds (İşleme - Seri veya Çifte Taş İşleme)
         for (let mIdx = 0; mIdx < state.tableMelds.length; mIdx++) {
           const lastM = lastGameState.tableMelds[mIdx];
           const curM = state.tableMelds[mIdx];
-          if (lastM && curM && curM.tiles && lastM.tiles && curM.tiles.length > lastM.tiles.length) {
-            const addedTile = curM.tiles[curM.tiles.length - 1];
-            const turnPlayer = (discardedByPlayer !== null) ? discardedByPlayer : state.currentTurn;
-            const seatPos = table.getRelativePosition(turnPlayer);
-            const isViewer = (turnPlayer === viewerSeatIndex);
-            anim.animateProcessTile(seatPos, addedTile, isViewer);
-            break;
+          if (lastM && curM && curM.tiles && lastM.tiles) {
+            // Case 1: Tile appended to run or group meld
+            if (curM.tiles.length > lastM.tiles.length) {
+              const lastIds = new Set(lastM.tiles.map(t => t.id));
+              const addedTile = curM.tiles.find(t => !lastIds.has(t.id)) || curM.tiles[curM.tiles.length - 1];
+              const turnPlayer = (discardedByPlayer !== null) ? discardedByPlayer : state.currentTurn;
+              const seatPos = table.getRelativePosition(turnPlayer);
+              const isViewer = (turnPlayer === viewerSeatIndex);
+              anim.animateProcessTile(seatPos, addedTile, isViewer);
+              break;
+            }
+            // Case 2: Tile processed to a pair meld (e.g. replacing Okey Joker in pair)
+            else if (curM.type === 'pairs') {
+              const lastIds = new Set(lastM.tiles.map(t => t.id));
+              const replacedTile = curM.tiles.find(t => !lastIds.has(t.id));
+              if (replacedTile) {
+                const turnPlayer = (discardedByPlayer !== null) ? discardedByPlayer : state.currentTurn;
+                const seatPos = table.getRelativePosition(turnPlayer);
+                const isViewer = (turnPlayer === viewerSeatIndex);
+                anim.animateProcessTile(seatPos, replacedTile, isViewer);
+                break;
+              }
+            }
           }
         }
       }

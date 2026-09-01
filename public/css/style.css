@@ -2091,7 +2091,7 @@ body.plus-theme {
 
 
 
-/* Orta/Ayırıcı: Deste ve Gösterge Ahşap Şeridi */
+/* Orta/Ayırıcı: Deste ve Gösterge Ahşap Şeridi (Bölmenin En Altına Yapışık) */
 .center-deck-strip {
   width: fit-content;
   min-width: 106px;
@@ -2101,11 +2101,13 @@ body.plus-theme {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 4px 6px;
+  justify-content: flex-end;
+  gap: 5px;
+  padding: 4px 6px 5px 6px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.6);
   z-index: 15;
+  align-self: flex-end;
+  margin-top: auto;
 }
 
 .center-deck-side-by-side {
@@ -2114,6 +2116,63 @@ body.plus-theme {
   justify-content: center;
   gap: 8px;
   width: 100%;
+}
+
+/* =========================================================
+   PER & ÇİFT GRUBU TOPLU TAŞIMA TUTAMACI (GREEN DRAG HANDLE)
+   ========================================================= */
+
+.meld-group-drag-handle {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: #ffffff;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 8px rgba(46, 204, 113, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: grab;
+  z-index: 50;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+  opacity: 0.85;
+}
+
+.meld-group-drag-handle:hover {
+  transform: scale(1.22);
+  opacity: 1;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.9), 0 0 12px rgba(46, 204, 113, 1);
+  cursor: grab;
+}
+
+.meld-group-drag-handle:active {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.okey-tile.active-meld-group-focus {
+  outline: 2px solid #2ecc71 !important;
+  box-shadow: 0 0 12px rgba(46, 204, 113, 0.9), inset 0 0 6px rgba(46, 204, 113, 0.4) !important;
+  transform: translateY(-3px) !important;
+}
+
+.meld-group-drag-preview {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  border-radius: 6px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.9);
 }
 
 /* 1. 3D Plain Face-Down Bone Deck Tile */

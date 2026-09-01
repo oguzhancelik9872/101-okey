@@ -23,6 +23,7 @@ class IstakaManager {
     this.draggedSource = null; // { row, col, tile }
     this.indicator = null;
     this.activeTile = null;
+    this.activeMeldGroup = null; // { row, startCol, count, tiles }
     this.tableMelds = [];
     this.viewerOpened = false;
     this.lastDrawnTileId = null;
@@ -67,6 +68,16 @@ class IstakaManager {
           slotEl.classList.remove('drag-over');
 
           const action = e.dataTransfer.getData('text/plain') || window.draggedTileId;
+          if (action === 'ACTION:MOVE_MELD_GROUP' || window.draggedMeldGroup) {
+            const mg = window.draggedMeldGroup;
+            window.draggedMeldGroup = null;
+            if (mg) {
+              this.moveMeldGroup(mg.row, mg.startCol, mg.count, r, c);
+              this.render();
+              return;
+            }
+          }
+
           if (action === 'ACTION:DRAW_DECK') {
             this.pendingDropTarget = { row: r, col: c };
             if (this.onDrawDeck) this.onDrawDeck();
@@ -85,6 +96,7 @@ class IstakaManager {
 
           this.draggedSource = null;
           this.activeTile = null;
+          this.activeMeldGroup = null;
           this.render();
         });
 
@@ -230,6 +242,104 @@ class IstakaManager {
       } else {
         this.placeInFirstEmptySlot(newTile);
       }
+    }
+  }
+
+  findIsolatedRackMeldsAndPairs() {
+    const isolatedGroups = [];
+
+    for (let r = 0; r < this.ROWS; r++) {
+      let startCol = -1;
+      let segment = [];
+
+      for (let c = 0; c < this.COLS; c++) {
+        const t = this.grid[r][c];
+        if (t) {
+          if (startCol === -1) startCol = c;
+          segment.push(t);
+        } else {
+          if (segment.length > 0) {
+            this._checkIfIsolatedValidGroup(r, startCol, segment, isolatedGroups);
+            startCol = -1;
+            segment = [];
+          }
+        }
+      }
+
+      if (segment.length > 0) {
+        this._checkIfIsolatedValidGroup(r, startCol, segment, isolatedGroups);
+      }
+    }
+
+    return isolatedGroups;
+  }
+
+  _checkIfIsolatedValidGroup(row, startCol, segment, isolatedGroups) {
+    if (typeof ClientValidator === 'undefined') return;
+
+    if (segment.length >= 3) {
+      const check = ClientValidator.isValidMeld(segment, this.indicator);
+      if (check && check.valid) {
+        isolatedGroups.push({
+          type: check.type,
+          row,
+          startCol,
+          endCol: startCol + segment.length - 1,
+          count: segment.length,
+          tiles: [...segment]
+        });
+        return;
+      }
+    } else if (segment.length === 2) {
+      if (ClientValidator.isPair(segment[0], segment[1], this.indicator)) {
+        isolatedGroups.push({
+          type: 'pairs',
+          row,
+          startCol,
+          endCol: startCol + segment.length - 1,
+          count: segment.length,
+          tiles: [...segment]
+        });
+        return;
+      }
+    }
+  }
+
+  moveMeldGroup(srcRow, srcStartCol, count, targetRow, targetCol) {
+    // 1. Extract the group tiles
+    const groupTiles = [];
+    for (let c = srcStartCol; c < srcStartCol + count; c++) {
+      if (this.grid[srcRow][c]) {
+        groupTiles.push(this.grid[srcRow][c]);
+        this.grid[srcRow][c] = null;
+      }
+    }
+
+    if (groupTiles.length === 0) return;
+
+    // 2. Adjust targetCol so the entire group fits on the rack
+    if (targetCol + groupTiles.length > this.COLS) {
+      targetCol = Math.max(0, this.COLS - groupTiles.length);
+    }
+
+    // 3. Find any existing tiles occupying slots from targetCol to targetCol + groupTiles.length - 1
+    const displacedTiles = [];
+    for (let i = 0; i < groupTiles.length; i++) {
+      const col = targetCol + i;
+      if (this.grid[targetRow][col] !== null) {
+        displacedTiles.push(this.grid[targetRow][col]);
+        this.grid[targetRow][col] = null;
+      }
+    }
+
+    // 4. Place the groupTiles into the target slots contiguously
+    for (let i = 0; i < groupTiles.length; i++) {
+      this.grid[targetRow][targetCol + i] = groupTiles[i];
+    }
+
+    // 5. Re-place any displaced tiles into the nearest available empty slots on the rack
+    for (const dTile of displacedTiles) {
+      this.placeInFirstEmptySlot(dTile);
     }
   }
 
@@ -390,6 +500,18 @@ class IstakaManager {
   render() {
     // Detect valid melds formed on rack (contiguous segments between empty slots)
     const rackAnalysis = this.analyzeRackMelds();
+    const isolatedGroups = this.findIsolatedRackMeldsAndPairs();
+
+    const groupHandleMap = new Map();
+    const groupActiveTileIdSet = new Set();
+
+    if (this.activeMeldGroup) {
+      this.activeMeldGroup.tiles.forEach(t => groupActiveTileIdSet.add(t.id));
+    }
+
+    isolatedGroups.forEach(g => {
+      groupHandleMap.set(`${g.row}_${g.endCol}`, g);
+    });
 
     for (let r = 0; r < this.ROWS; r++) {
       for (let c = 0; c < this.COLS; c++) {
@@ -401,7 +523,72 @@ class IstakaManager {
 
         const tile = this.grid[r][c];
         if (tile) {
+          const isGroupActive = groupActiveTileIdSet.has(tile.id);
           const tileEl = this.createTileElement(tile, r, c);
+          if (isGroupActive) {
+            tileEl.classList.add('active-meld-group-focus');
+          }
+
+          // Attach green group move handle to the last tile of each isolated valid meld group
+          const group = groupHandleMap.get(`${r}_${c}`);
+          if (group) {
+            const handleEl = document.createElement('div');
+            handleEl.className = 'meld-group-drag-handle';
+            handleEl.title = `Per Grubunu Taşı (${group.count} Taş) - Sürükle veya Tıkla`;
+            handleEl.innerHTML = '✥';
+            handleEl.draggable = true;
+
+            handleEl.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (this.activeMeldGroup && this.activeMeldGroup.row === group.row && this.activeMeldGroup.startCol === group.startCol) {
+                this.activeMeldGroup = null;
+              } else {
+                this.activeMeldGroup = group;
+                this.activeTile = null;
+              }
+              this.render();
+            });
+
+            handleEl.addEventListener('dragstart', (e) => {
+              e.stopPropagation();
+              window.draggedMeldGroup = group;
+              e.dataTransfer.setData('text/plain', 'ACTION:MOVE_MELD_GROUP');
+              e.dataTransfer.effectAllowed = 'move';
+
+              const preview = document.createElement('div');
+              preview.className = 'meld-group-drag-preview';
+              preview.style.display = 'flex';
+              preview.style.gap = '2px';
+              preview.style.position = 'fixed';
+              preview.style.top = '-9999px';
+              preview.style.left = '-9999px';
+              preview.style.zIndex = '999999';
+              preview.style.pointerEvents = 'none';
+
+              group.tiles.forEach(t => {
+                const clone = this.createTileElement(t, group.row, group.startCol);
+                clone.style.transform = 'none';
+                preview.appendChild(clone);
+              });
+              document.body.appendChild(preview);
+
+              if (e.dataTransfer.setDragImage) {
+                e.dataTransfer.setDragImage(preview, 20, 26);
+              }
+
+              setTimeout(() => {
+                if (preview.parentNode) preview.parentNode.removeChild(preview);
+              }, 0);
+            });
+
+            handleEl.addEventListener('dragend', () => {
+              window.draggedMeldGroup = null;
+              document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
+            });
+
+            tileEl.appendChild(handleEl);
+          }
+
           slotEl.appendChild(tileEl);
         }
       }
@@ -524,6 +711,16 @@ class IstakaManager {
       if (slot) slot.classList.remove('drag-over');
 
       const action = e.dataTransfer.getData('text/plain') || window.draggedTileId;
+      if (action === 'ACTION:MOVE_MELD_GROUP' || window.draggedMeldGroup) {
+        const mg = window.draggedMeldGroup;
+        window.draggedMeldGroup = null;
+        if (mg) {
+          this.moveMeldGroup(mg.row, mg.startCol, mg.count, row, col);
+          this.render();
+          return;
+        }
+      }
+
       if (action === 'ACTION:DRAW_DECK') {
         window.lastActionWasManualDrag = true;
         this.pendingDropTarget = { row, col };
@@ -544,6 +741,7 @@ class IstakaManager {
 
       this.draggedSource = null;
       this.activeTile = null;
+      this.activeMeldGroup = null;
       this.render();
     });
 
@@ -561,6 +759,15 @@ class IstakaManager {
         if (this.onTileDoubleClicked) {
           this.onTileDoubleClicked(tile);
         }
+        return;
+      }
+
+      // If active meld group is selected, move it to this slot on click!
+      if (this.activeMeldGroup) {
+        const mg = this.activeMeldGroup;
+        this.activeMeldGroup = null;
+        this.moveMeldGroup(mg.row, mg.startCol, mg.count, row, col);
+        this.render();
         return;
       }
 
@@ -600,10 +807,19 @@ class IstakaManager {
 
   clearSelection() {
     this.activeTile = null;
+    this.activeMeldGroup = null;
     this.render();
   }
 
   handleSlotClick(e, row, col) {
+    if (this.activeMeldGroup) {
+      const mg = this.activeMeldGroup;
+      this.activeMeldGroup = null;
+      this.moveMeldGroup(mg.row, mg.startCol, mg.count, row, col);
+      this.render();
+      return;
+    }
+
     // If we clicked a tile then click any slot (empty or occupied), insert it there
     if (!this.activeTile) return;
 
