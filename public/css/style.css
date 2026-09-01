@@ -1651,19 +1651,21 @@ body.plus-theme {
 
 .my-turn-focus .table-felt-mat {
   top: 8px !important;
-  bottom: 46px !important;
-  left: 14px !important;
-  right: 14px !important;
-  border-radius: 46px !important;
+  bottom: 54px !important;
+  left: 68px !important;
+  right: 68px !important;
+  border-radius: 36px !important;
   box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.9), 0 16px 45px rgba(0, 0, 0, 0.95), 0 0 0 3px rgba(241, 196, 15, 0.6) !important;
 }
 
 .my-turn-focus .canvas-bottom-strip {
-  bottom: 4px !important;
+  bottom: 5px !important;
+  left: 68px !important;
+  right: 68px !important;
 }
 
 .my-turn-focus .grid-cell-slot .okey-tile .tile-number {
-  font-size: 16px !important;
+  font-size: 15px !important;
 }
 
 .bar-player-info {
@@ -1910,18 +1912,18 @@ body.plus-theme {
   min-height: 0;
   display: grid;
   grid-template-rows: repeat(13, 1fr);
-  gap: 2.5px;
+  gap: 2px;
   overflow: hidden !important;
   z-index: 2;
   box-sizing: border-box;
   padding: 1px;
 }
 
-/* 13-Column Meld Row (Natural Board Slots) */
+/* 13-Column Meld Row (Natural Board Slots - Zero horizontal gap) */
 .table-grid-row {
   display: grid;
   grid-template-columns: repeat(13, 1fr);
-  gap: 1.5px;
+  gap: 0px;
   height: 100%;
   min-height: 0;
   max-height: 100%;
@@ -1941,9 +1943,9 @@ body.plus-theme {
   aspect-ratio: 1 / 1.37;
   max-width: 100%;
   max-height: 100%;
-  border-radius: 4px;
+  border-radius: 3px;
   background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   min-width: 0;
   box-sizing: border-box;
   transition: all 0.15s;
@@ -2156,18 +2158,18 @@ body.plus-theme {
   min-height: 0;
   display: grid;
   grid-template-rows: repeat(13, 1fr);
-  gap: 2.5px;
+  gap: 2px;
   overflow: hidden !important;
   z-index: 2;
   box-sizing: border-box;
   padding: 1px;
 }
 
-/* 2-Column Pairs Row (Natural Board Slots) */
+/* 2-Column Pairs Row (Natural Board Slots - Zero horizontal gap) */
 .table-pairs-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 2px;
+  gap: 0px;
   height: 100%;
   min-height: 0;
   max-height: 100%;
@@ -2659,10 +2661,10 @@ body.plus-theme {
   background: linear-gradient(180deg, #441e0d 0%, #291005 50%, #150601 100%);
   border: 4px solid #140501;
   border-radius: 12px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   box-shadow: inset 0 4px 10px rgba(0,0,0,0.9), 0 8px 24px rgba(0,0,0,0.8);
   position: relative;
 }
@@ -2684,11 +2686,11 @@ body.plus-theme {
 .istaka-row {
   display: grid;
   grid-template-columns: repeat(16, 1fr);
-  gap: 5px;
+  gap: 0px;
   min-height: 58px;
   background: rgba(0, 0, 0, 0.4);
-  border-radius: 8px;
-  padding: 3px 6px;
+  border-radius: 6px;
+  padding: 2px 4px;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -2697,9 +2699,11 @@ body.plus-theme {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.2);
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.03);
   transition: background 0.15s, border-color 0.15s;
+  margin: 0;
+  padding: 0;
 }
 
 
