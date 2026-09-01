@@ -1484,6 +1484,7 @@ body.plus-theme {
   justify-content: center;
   padding: 4px 8px;
   box-sizing: border-box;
+  transition: all 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .felt-watermark {
@@ -1578,7 +1579,7 @@ body.plus-theme {
   border: 1.5px solid rgba(241, 196, 15, 0.35);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75);
   z-index: 30;
-  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+  transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s, box-shadow 0.3s;
 }
 
 /* Top Balanced Outer Bar (In Canvas Above Oval Table) */
@@ -1624,6 +1625,45 @@ body.plus-theme {
   border-radius: 18px;
   width: 105px;
   text-align: center;
+}
+
+/* =========================================================
+   DYNAMIC ACTIVE TURN FOCUS MODE (OVAL TABLE EXPANSION)
+   ========================================================= */
+
+.my-turn-focus .bar-top {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateX(-50%) translateY(-25px) scale(0.8) !important;
+}
+
+.my-turn-focus .bar-left {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-50%) translateX(-30px) scale(0.8) !important;
+}
+
+.my-turn-focus .bar-right {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-50%) translateX(30px) scale(0.8) !important;
+}
+
+.my-turn-focus .table-felt-mat {
+  top: 8px !important;
+  bottom: 46px !important;
+  left: 14px !important;
+  right: 14px !important;
+  border-radius: 46px !important;
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.9), 0 16px 45px rgba(0, 0, 0, 0.95), 0 0 0 3px rgba(241, 196, 15, 0.6) !important;
+}
+
+.my-turn-focus .canvas-bottom-strip {
+  bottom: 4px !important;
+}
+
+.my-turn-focus .grid-cell-slot .okey-tile .tile-number {
+  font-size: 16px !important;
 }
 
 .bar-player-info {
@@ -1898,7 +1938,8 @@ body.plus-theme {
   align-items: center;
   justify-content: center;
   height: 100%;
-  min-height: 0;
+  aspect-ratio: 1 / 1.37;
+  max-width: 100%;
   max-height: 100%;
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.35);
@@ -1907,6 +1948,7 @@ body.plus-theme {
   box-sizing: border-box;
   transition: all 0.15s;
   padding: 0;
+  margin: 0 auto;
 }
 
 .grid-cell-slot.has-tile {
@@ -1918,6 +1960,7 @@ body.plus-theme {
 .grid-cell-slot .okey-tile.tile-small {
   width: 100% !important;
   height: 100% !important;
+  aspect-ratio: 1 / 1.37 !important;
   max-width: 100% !important;
   max-height: 100% !important;
   min-width: 0 !important;

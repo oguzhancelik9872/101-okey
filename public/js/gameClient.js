@@ -266,6 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
     stopTurnTimerLoop();
     closeAllDrawers();
     clearChatMessages();
+    const tc = document.querySelector('.plus-table-canvas');
+    if (tc) tc.classList.remove('my-turn-focus');
     if (authView) {
       authView.classList.add('hidden');
       authView.style.setProperty('display', 'none', 'important');
@@ -285,6 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function showAuth() {
     stopTurnTimerLoop();
     currentUser = null;
+    const tc = document.querySelector('.plus-table-canvas');
+    if (tc) tc.classList.remove('my-turn-focus');
     if (lobbyView) {
       lobbyView.classList.add('hidden');
       lobbyView.style.setProperty('display', 'none', 'important');
@@ -1407,6 +1411,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
     const turnState = currentGameState.turnState;
     const viewerPlayer = currentGameState.players[viewerSeatIndex];
+    const isPlayingGame = currentGameState.state === 'PLAYING';
+
+    // Dynamic Turn Focus Mode: When it's viewer's turn in a live match, expand the oval table felt!
+    const tableCanvas = document.querySelector('.plus-table-canvas');
+    if (tableCanvas) {
+      tableCanvas.classList.toggle('my-turn-focus', Boolean(isMyTurn && isPlayingGame));
+    }
 
     const cannotOpenSeri = viewerPlayer && viewerPlayer.opened && viewerPlayer.openType === 'pairs';
     const hasPairsOnTable = currentGameState.tableMelds.some(m => m.type === 'pairs') || currentGameState.players.some(p => p.opened && p.openType === 'pairs');
