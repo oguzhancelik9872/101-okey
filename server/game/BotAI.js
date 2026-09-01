@@ -100,9 +100,11 @@ class BotAI {
           const check3 = Validator.isValidGroup(distinctTiles, indicator);
           if (check3.valid) groups.push({ type: 'group', tiles: distinctTiles, score: check3.score });
         } else if (distinctTiles.length === 2 && jokers.length >= 1) {
-          const g3 = [...distinctTiles, jokers[0]];
-          const check3 = Validator.isValidGroup(g3, indicator);
-          if (check3.valid) groups.push({ type: 'group', tiles: g3, score: check3.score });
+          for (const jTile of jokers) {
+            const g3 = [...distinctTiles, jTile];
+            const check3 = Validator.isValidGroup(g3, indicator);
+            if (check3.valid) groups.push({ type: 'group', tiles: g3, score: check3.score });
+          }
         }
 
         // 4-tile group
@@ -110,7 +112,13 @@ class BotAI {
           const check4 = Validator.isValidGroup(distinctTiles, indicator);
           if (check4.valid) groups.push({ type: 'group', tiles: distinctTiles, score: check4.score });
         } else if (distinctTiles.length === 3 && jokers.length >= 1) {
-          const g4 = [...distinctTiles, jokers[0]];
+          for (const jTile of jokers) {
+            const g4 = [...distinctTiles, jTile];
+            const check4 = Validator.isValidGroup(g4, indicator);
+            if (check4.valid) groups.push({ type: 'group', tiles: g4, score: check4.score });
+          }
+        } else if (distinctTiles.length === 2 && jokers.length >= 2) {
+          const g4 = [...distinctTiles, jokers[0], jokers[1]];
           const check4 = Validator.isValidGroup(g4, indicator);
           if (check4.valid) groups.push({ type: 'group', tiles: g4, score: check4.score });
         }

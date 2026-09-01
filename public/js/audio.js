@@ -105,11 +105,11 @@ class OkeyAudio {
   updateAmbientVolume() {}
 
   // =========================================================================
-  // 1. GAMEPLAY SOUND EFFECTS (Tok, derin, ahşap & kemik vuruşları / MP3)
+  // 1. GAMEPLAY SOUND EFFECTS (Tok, gerçekçi, ahşap & kemik vuruşları)
   // =========================================================================
 
   /**
-   * Yana Taş Atma (Discard) - Tok, pürüzsüz ve doyurucu ahşap-kemik vuruşu
+   * Yana Taş Atma (Discard) - Tok, pürüzsüz ve gerçekçi ahşap-kemik vuruşu
    */
   playDiscard() {
     this._playMP3OrFallback('discard', 'sfx', this._synthDiscard);
@@ -123,70 +123,92 @@ class OkeyAudio {
 
     const t = this.ctx.currentTime;
 
-    // 1. Tok kemik gövdesi (Warm low body)
-    const oscBody = this.ctx.createOscillator();
-    const gainBody = this.ctx.createGain();
-    const filterBody = this.ctx.createBiquadFilter();
+    // 1. Tok ve sıcak ahşap kemik vuruşu
+    const osc1 = this.ctx.createOscillator();
+    const gain1 = this.ctx.createGain();
+    const filter1 = this.ctx.createBiquadFilter();
 
-    filterBody.type = 'lowpass';
-    filterBody.frequency.setValueAtTime(450, t);
+    filter1.type = 'lowpass';
+    filter1.frequency.setValueAtTime(480, t);
 
-    oscBody.type = 'sine';
-    oscBody.frequency.setValueAtTime(220, t);
-    oscBody.frequency.exponentialRampToValueAtTime(80, t + 0.06);
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(260, t);
+    osc1.frequency.exponentialRampToValueAtTime(75, t + 0.05);
 
-    gainBody.gain.setValueAtTime(vol * 0.85, t);
-    gainBody.gain.exponentialRampToValueAtTime(0.0001, t + 0.065);
+    gain1.gain.setValueAtTime(vol * 0.75, t);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
 
-    oscBody.connect(filterBody);
-    filterBody.connect(gainBody);
-    gainBody.connect(this.ctx.destination);
+    osc1.connect(filter1);
+    filter1.connect(gain1);
+    gain1.connect(this.ctx.destination);
 
-    oscBody.start(t);
-    oscBody.stop(t + 0.07);
+    osc1.start(t);
+    osc1.stop(t + 0.06);
 
-    // 2. Derin ahşap rezonansı (Hollow wood table thump)
-    const oscWood = this.ctx.createOscillator();
-    const gainWood = this.ctx.createGain();
-    oscWood.type = 'triangle';
-    oscWood.frequency.setValueAtTime(140, t);
-    oscWood.frequency.exponentialRampToValueAtTime(55, t + 0.08);
+    // 2. Masa rezonansı (Hollow body resonance)
+    const osc2 = this.ctx.createOscillator();
+    const gain2 = this.ctx.createGain();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(130, t);
+    osc2.frequency.exponentialRampToValueAtTime(45, t + 0.07);
 
-    gainWood.gain.setValueAtTime(vol * 0.65, t);
-    gainWood.gain.exponentialRampToValueAtTime(0.0001, t + 0.085);
+    gain2.gain.setValueAtTime(vol * 0.5, t);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
 
-    oscWood.connect(gainWood);
-    gainWood.connect(this.ctx.destination);
+    osc2.connect(gain2);
+    gain2.connect(this.ctx.destination);
 
-    oscWood.start(t);
-    oscWood.stop(t + 0.09);
-
-    // 3. Yumuşak temas çıtlatması (Muted tactile snap - no harsh treble)
-    if (this.noiseBuffer) {
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = this.noiseBuffer;
-
-      const nFilter = this.ctx.createBiquadFilter();
-      nFilter.type = 'bandpass';
-      nFilter.frequency.setValueAtTime(900, t);
-      nFilter.Q.setValueAtTime(1.8, t);
-
-      const nGain = this.ctx.createGain();
-      nGain.gain.setValueAtTime(vol * 0.35, t);
-      nGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
-
-      noise.connect(nFilter);
-      nFilter.connect(nGain);
-      nGain.connect(this.ctx.destination);
-
-      noise.start(t);
-      noise.stop(t + 0.035);
-    }
+    osc2.start(t);
+    osc2.stop(t + 0.08);
   }
 
   // Alias for backward compatibility
   playTilePlace() {
-    this.playDiscard();
+    this._synthTilePlace();
+  }
+
+  _synthTilePlace() {
+    const vol = this.getEffectiveVolume('sfx');
+    if (vol <= 0) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(320, t);
+    osc.frequency.exponentialRampToValueAtTime(110, t + 0.035);
+
+    gain.gain.setValueAtTime(vol * 0.45, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.045);
+  }
+
+  playTileSelect() {
+    const vol = this.getEffectiveVolume('sfx');
+    if (vol <= 0) return;
+    this.init();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(480, t);
+    osc.frequency.exponentialRampToValueAtTime(280, t + 0.02);
+
+    gain.gain.setValueAtTime(vol * 0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.03);
   }
 
   /**
@@ -204,44 +226,20 @@ class OkeyAudio {
 
     const t = this.ctx.currentTime;
 
-    // Yumuşak çuha sürtünmesi
-    if (this.noiseBuffer) {
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = this.noiseBuffer;
-
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(550, t);
-      filter.frequency.exponentialRampToValueAtTime(1100, t + 0.05);
-      filter.Q.setValueAtTime(2.0, t);
-
-      const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(vol * 0.4, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      noise.start(t);
-      noise.stop(t + 0.06);
-    }
-
-    // Tok hafif kaldırma tonu
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(180, t + 0.01);
-    osc.frequency.exponentialRampToValueAtTime(95, t + 0.05);
+    osc.frequency.setValueAtTime(220, t);
+    osc.frequency.exponentialRampToValueAtTime(120, t + 0.045);
 
-    gain.gain.setValueAtTime(vol * 0.45, t + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
+    gain.gain.setValueAtTime(vol * 0.4, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
-    osc.start(t + 0.01);
-    osc.stop(t + 0.06);
+    osc.start(t);
+    osc.stop(t + 0.055);
   }
 
   playDraw() {
@@ -264,8 +262,8 @@ class OkeyAudio {
     const t = this.ctx.currentTime;
 
     [
-      { offset: 0.00, freq: 190, gainVal: 0.5 },
-      { offset: 0.035, freq: 240, gainVal: 0.7 }
+      { offset: 0.00, freq: 200, gainVal: 0.4 },
+      { offset: 0.03, freq: 270, gainVal: 0.55 }
     ].forEach(({ offset, freq, gainVal }) => {
       const clickTime = t + offset;
       const osc = this.ctx.createOscillator();
@@ -277,22 +275,22 @@ class OkeyAudio {
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, clickTime);
-      osc.frequency.exponentialRampToValueAtTime(85, clickTime + 0.045);
+      osc.frequency.exponentialRampToValueAtTime(90, clickTime + 0.04);
 
       gain.gain.setValueAtTime(vol * gainVal, clickTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, clickTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, clickTime + 0.045);
 
       osc.connect(filter);
       filter.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(clickTime);
-      osc.stop(clickTime + 0.055);
+      osc.stop(clickTime + 0.05);
     });
   }
 
   /**
-   * Birisi El Açtığında (Open Hand) - Kalabalık ve tok taş yığını efekti
+   * Birisi El Açtığında (Open Hand) - Tok taşlar ve tatlı casino tınısı
    */
   playOpenHand() {
     this._playMP3OrFallback('open_hand', 'sfx', this._synthOpenHand);
@@ -306,35 +304,51 @@ class OkeyAudio {
 
     const t = this.ctx.currentTime;
     const clacks = [
-      { time: 0.00, freq: 230, decay: 0.05, gVal: 0.5 },
-      { time: 0.03, freq: 190, decay: 0.05, gVal: 0.6 },
-      { time: 0.06, freq: 260, decay: 0.06, gVal: 0.7 },
-      { time: 0.09, freq: 140, decay: 0.12, gVal: 0.9 } // Tok masa çarpması
+      { time: 0.00, freq: 220, decay: 0.04, gVal: 0.4 },
+      { time: 0.03, freq: 280, decay: 0.05, gVal: 0.5 },
+      { time: 0.06, freq: 340, decay: 0.06, gVal: 0.6 }
     ];
 
     clacks.forEach(({ time, freq, decay, gVal }) => {
       const clackT = t + time;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      const filter = this.ctx.createBiquadFilter();
 
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(550, clackT);
-
-      osc.type = 'triangle';
+      osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, clackT);
-      osc.frequency.exponentialRampToValueAtTime(65, clackT + decay);
+      osc.frequency.exponentialRampToValueAtTime(80, clackT + decay);
 
       gain.gain.setValueAtTime(vol * gVal, clackT);
       gain.gain.exponentialRampToValueAtTime(0.0001, clackT + decay);
 
-      osc.connect(filter);
-      filter.connect(gain);
+      osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(clackT);
       osc.stop(clackT + decay + 0.01);
     });
+
+    // Tatlı melodik akor (C5 -> E5 -> G5)
+    [523.25, 659.25, 783.99].forEach((freq, i) => {
+      const noteT = t + 0.08 + (i * 0.06);
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, noteT);
+
+      gain.gain.setValueAtTime(vol * 0.35, noteT);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteT + 0.25);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(noteT);
+      osc.stop(noteT + 0.28);
+    });
+  }
+
+  playProcess() {
+    this._synthTilePlace();
   }
 
   /**
@@ -350,28 +364,23 @@ class OkeyAudio {
     this.init();
     if (!this.ctx) return;
 
-    const notes = [349.23, 523.25]; // F4 -> C5 (Tok ve sıcak 5'li akor)
+    const notes = [392.00, 587.33]; // G4 -> D5 (Yumuşak, dinlendirici 5'li akor)
     notes.forEach((freq, i) => {
-      const t = this.ctx.currentTime + (i * 0.09);
+      const t = this.ctx.currentTime + (i * 0.08);
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      const filter = this.ctx.createBiquadFilter();
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1100, t);
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, t);
 
-      gain.gain.setValueAtTime(vol * 0.45, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      gain.gain.setValueAtTime(vol * 0.4, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
 
-      osc.connect(filter);
-      filter.connect(gain);
+      osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(t);
-      osc.stop(t + 0.32);
+      osc.stop(t + 0.27);
     });
   }
 
@@ -392,24 +401,19 @@ class OkeyAudio {
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(600, t);
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(320, t);
-    osc.frequency.exponentialRampToValueAtTime(140, t + 0.04);
+    osc.frequency.setValueAtTime(440, t);
+    osc.frequency.exponentialRampToValueAtTime(180, t + 0.03);
 
-    gain.gain.setValueAtTime(vol * 0.3, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+    gain.gain.setValueAtTime(vol * 0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.035);
 
-    osc.connect(filter);
-    filter.connect(gain);
+    osc.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(t);
-    osc.stop(t + 0.05);
+    osc.stop(t + 0.04);
   }
 
   /**
@@ -436,28 +440,23 @@ class OkeyAudio {
     this.init();
     if (!this.ctx) return;
 
-    const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5 (Tok sıcak C Major)
+    const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5 (Sıcak C Major)
     notes.forEach((freq, i) => {
-      const t = this.ctx.currentTime + (i * 0.08);
+      const t = this.ctx.currentTime + (i * 0.07);
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      const filter = this.ctx.createBiquadFilter();
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(900, t);
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, t);
 
-      gain.gain.setValueAtTime(vol * 0.45, t);
+      gain.gain.setValueAtTime(vol * 0.4, t);
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
 
-      osc.connect(filter);
-      filter.connect(gain);
+      osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(t);
-      osc.stop(t + 0.37);
+      osc.stop(t + 0.38);
     });
   }
 
@@ -478,18 +477,18 @@ class OkeyAudio {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(130, t);
-    osc.frequency.exponentialRampToValueAtTime(60, t + 0.16);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(160, t);
+    osc.frequency.exponentialRampToValueAtTime(65, t + 0.14);
 
     gain.gain.setValueAtTime(vol * 0.45, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(t);
-    osc.stop(t + 0.19);
+    osc.stop(t + 0.17);
   }
 
   // =========================================================================

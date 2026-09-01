@@ -74,91 +74,80 @@ class UIManager {
 
     const t1 = results.teamResults ? results.teamResults.team1 : null;
     const t2 = results.teamResults ? results.teamResults.team2 : null;
-    const currentRound = results.currentRound || 1;
-    const targetRounds = results.targetRounds || 3;
-    const hasNext = !!results.hasNextRound;
+    const roundScores = results.roundScores || {};
 
-    let html = `
-      <div class="round-result-header">
-        <div style="font-size: 13px; font-weight: 800; color: #f1c40f; letter-spacing: 1px; margin-bottom: 4px;">
-          ${hasNext ? `EL ${currentRound} / ${targetRounds} TAMAMLANDI` : `🏆 3. EL TAMAMLANDI (MAÇ BİTTİ)`}
-        </div>
-        <h3 style="font-size: 20px;">${results.finisher ? `🎉 ${results.finisher} Eli Bitirdi!` : `⏸️ ${results.reason || 'El Berabere Bitti'}`}</h3>
-        ${results.isOkeyDiscard ? '<span class="badge-okey-discard">🔥 OKEY ATTI (2x CEZA)</span>' : ''}
-        ${results.isPairsFinish ? '<span class="badge-pairs-finish">✨ ÇİFT BİTTİ (2x CEZA)</span>' : ''}
-      </div>
-    `;
+    const renderPlayerCard = (playerName) => {
+      if (!playerName) return '';
+      const pEntry = Object.values(roundScores).find(p => p.name === playerName) || {};
+      const points = pEntry.points !== undefined ? pEntry.points : 0;
+      const isBitti = points < 0;
+      const isPartner = pEntry.isPartner;
 
-    if (t1 && t2) {
-      html += `
-        <div class="team-results-box" style="background: rgba(0,0,0,0.6); border: 2px solid #f1c40f; border-radius: 14px; padding: 14px; margin: 14px 0; text-align: center;">
-          <h4 style="color: #f1c40f; font-size: 15px; margin-bottom: 10px; letter-spacing: 0.5px;">🏆 TOPLAM EŞLİ SKOR</h4>
-          <div style="display: flex; justify-content: space-around; gap: 12px; font-size: 13px; font-weight: 800;">
-            <div style="flex: 1; padding: 10px; border-radius: 10px; background: ${t1.isWinner ? 'rgba(46, 204, 113, 0.25)' : 'rgba(255,255,255,0.05)'}; border: 1.5px solid ${t1.isWinner ? '#2ecc71' : 'rgba(255,255,255,0.1)'};">
-              <div style="color: #fff; font-size: 14px; font-weight: 900;">${t1.players.filter(Boolean).join(' & ')}</div>
-              <div style="font-size: 16px; color: ${t1.isWinner ? '#2ecc71' : '#f1c40f'}; margin-top: 6px;">${t1.score} Ceza ${t1.isWinner ? '👑 ÖNDE' : ''}</div>
-            </div>
-            <div style="flex: 1; padding: 10px; border-radius: 10px; background: ${t2.isWinner ? 'rgba(46, 204, 113, 0.25)' : 'rgba(255,255,255,0.05)'}; border: 1.5px solid ${t2.isWinner ? '#2ecc71' : 'rgba(255,255,255,0.1)'};">
-              <div style="color: #fff; font-size: 14px; font-weight: 900;">${t2.players.filter(Boolean).join(' & ')}</div>
-              <div style="font-size: 16px; color: ${t2.isWinner ? '#2ecc71' : '#f1c40f'}; margin-top: 6px;">${t2.score} Ceza ${t2.isWinner ? '👑 ÖNDE' : ''}</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    html += `
-      <table class="scoreboard-table">
-        <thead>
-          <tr>
-            <th>Sıra & Oyuncu</th>
-            <th>Durum</th>
-            <th>El Cezası</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    const sortedEntries = Object.entries(results.roundScores || {}).sort(([, a], [, b]) => (a.points || 0) - (b.points || 0));
-    const minPoint = sortedEntries.length > 0 ? (sortedEntries[0][1].points || 0) : 0;
-
-    sortedEntries.forEach(([id, rData], idx) => {
       let statusText = '';
-      const isWinner = (rData.points === minPoint);
-
-      if (rData.points < 0) {
+      if (isBitti) {
         statusText = '🏆 Bitti (-101)';
-      } else if (rData.isPartner) {
+      } else if (isPartner) {
         statusText = '🤝 Ortağı Bitti (0)';
-      } else if (rData.opened) {
-        statusText = rData.openType === 'pairs' ? `Çift (${(rData.handSum || 0) * 2})` : `Açtı (${rData.handSum || 0})`;
+      } else if (pEntry.opened) {
+        statusText = pEntry.openType === 'pairs' ? `Çift (${(pEntry.handSum || 0) * 2})` : `Açtı (${pEntry.handSum || 0})`;
       } else {
         statusText = 'Açmadı (+202)';
       }
 
-      if (rData.penaltyPoints && rData.penaltyPoints > 0) {
-        statusText += ` <span style="color: #ff7675; font-weight: 900;">(+${rData.penaltyPoints} Ceza)</span>`;
+      if (pEntry.penaltyPoints && pEntry.penaltyPoints > 0) {
+        statusText += ` <span style="color: #ff7675;">(+${pEntry.penaltyPoints})</span>`;
       }
 
-      if (isWinner && rData.points >= 0 && !rData.isPartner) {
-        statusText += ' 👑';
-      }
+      const pointStyle = points <= 0 ? 'color: #2ecc71; font-weight: 900;' : 'color: #f1c40f; font-weight: 800;';
 
-      html += `
-        <tr class="${isWinner || rData.points < 0 || rData.isPartner ? 'winner-row' : ''}">
-          <td class="player-col">
-            <span style="font-weight: 800; color: ${isWinner ? '#2ecc71' : '#bdc3c7'}; margin-right: 6px;">#${idx + 1}</span>
-            ${rData.name} ${isWinner ? '👑' : ''}
-          </td>
-          <td>${statusText}</td>
-          <td class="points-col ${rData.points <= 0 ? 'negative-points' : ''}" style="${isWinner ? 'color: #2ecc71; font-weight: 900;' : ''}">${rData.points > 0 ? '+' : ''}${rData.points}</td>
-        </tr>
+      return `
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 10px;">
+          <div>
+            <div style="font-size: 13px; font-weight: 800; color: #fff;">${playerName}</div>
+            <div style="font-size: 11px; color: #bdc3c7; margin-top: 2px;">${statusText}</div>
+          </div>
+          <div style="font-size: 14px; ${pointStyle}">${points > 0 ? '+' : ''}${points}</div>
+        </div>
       `;
-    });
+    };
 
-    html += `
-        </tbody>
-      </table>
+    let html = `
+      <div class="round-result-header" style="text-align: center; margin-bottom: 16px;">
+        <h2 style="font-family: 'Cinzel', serif; font-size: 24px; font-weight: 900; color: #f1c40f; letter-spacing: 2px; margin: 0 0 6px 0;">OYUN BİTTİ</h2>
+        ${results.finisher ? `<div style="font-size: 13px; font-weight: 700; color: #a8d5ba;">🎉 <strong>${results.finisher}</strong> oyunu bitirdi!</div>` : `<div style="font-size: 13px; font-weight: 700; color: #bdc3c7;">${results.reason || 'Oyun Tamamlandı'}</div>`}
+        ${results.isOkeyDiscard ? '<span class="badge-okey-discard" style="display:inline-block; margin-top: 4px;">🔥 OKEY ATTI (2x CEZA)</span>' : ''}
+        ${results.isPairsFinish ? '<span class="badge-pairs-finish" style="display:inline-block; margin-top: 4px;">✨ ÇİFT BİTTİ (2x CEZA)</span>' : ''}
+      </div>
+
+      <!-- 2 Side-by-Side Team Clusters -->
+      <div class="team-clusters-wrapper" style="display: flex; gap: 14px; margin-bottom: 20px;">
+        <!-- Left Cluster: Team 1 (Oyuncu 1 & 3) -->
+        <div class="team-cluster-card ${t1 && t1.isWinner ? 'team-winner' : ''}" style="flex: 1; border-radius: 18px; padding: 14px; background: ${t1 && t1.isWinner ? 'radial-gradient(ellipse at center, rgba(16, 102, 58, 0.6) 0%, rgba(7, 46, 26, 0.8) 100%)' : 'rgba(0, 0, 0, 0.45)'}; border: 2px solid ${t1 && t1.isWinner ? '#2ecc71' : 'rgba(255, 255, 255, 0.12)'}; position: relative; box-shadow: ${t1 && t1.isWinner ? '0 0 25px rgba(46, 204, 113, 0.4), inset 0 0 15px rgba(46, 204, 113, 0.2)' : 'none'};">
+          ${t1 && t1.isWinner ? '<div style="position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; font-size: 11px; font-weight: 900; padding: 3px 14px; border-radius: 12px; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #fff;">🏆 KAZANAN</div>' : ''}
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: ${t1 && t1.isWinner ? '6px' : '0'};">
+            ${renderPlayerCard(t1 ? t1.players[0] : null)}
+            ${renderPlayerCard(t1 ? t1.players[1] : null)}
+          </div>
+          <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 800;">
+            <span style="color: #bdc3c7;">Toplam Ceza:</span>
+            <span style="color: ${t1 && t1.isWinner ? '#2ecc71' : '#f1c40f'}; font-size: 15px; font-weight: 900;">${t1 ? t1.score : 0}</span>
+          </div>
+        </div>
+
+        <!-- Right Cluster: Team 2 (Oyuncu 2 & 4) -->
+        <div class="team-cluster-card ${t2 && t2.isWinner ? 'team-winner' : ''}" style="flex: 1; border-radius: 18px; padding: 14px; background: ${t2 && t2.isWinner ? 'radial-gradient(ellipse at center, rgba(16, 102, 58, 0.6) 0%, rgba(7, 46, 26, 0.8) 100%)' : 'rgba(0, 0, 0, 0.45)'}; border: 2px solid ${t2 && t2.isWinner ? '#2ecc71' : 'rgba(255, 255, 255, 0.12)'}; position: relative; box-shadow: ${t2 && t2.isWinner ? '0 0 25px rgba(46, 204, 113, 0.4), inset 0 0 15px rgba(46, 204, 113, 0.2)' : 'none'};">
+          ${t2 && t2.isWinner ? '<div style="position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; font-size: 11px; font-weight: 900; padding: 3px 14px; border-radius: 12px; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #fff;">🏆 KAZANAN</div>' : ''}
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: ${t2 && t2.isWinner ? '6px' : '0'};">
+            ${renderPlayerCard(t2 ? t2.players[0] : null)}
+            ${renderPlayerCard(t2 ? t2.players[1] : null)}
+          </div>
+          <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 800;">
+            <span style="color: #bdc3c7;">Toplam Ceza:</span>
+            <span style="color: ${t2 && t2.isWinner ? '#2ecc71' : '#f1c40f'}; font-size: 15px; font-weight: 900;">${t2 ? t2.score : 0}</span>
+          </div>
+        </div>
+      </div>
+
       <div class="round-result-actions" style="margin-top: 16px; display: flex; gap: 10px; justify-content: center;">
         <button id="btn-vote-rematch" class="btn-plus-gold" style="flex: 2; padding: 12px 18px; font-size: 14px; font-weight: 900;">
           🔄 Tekrar Oyna

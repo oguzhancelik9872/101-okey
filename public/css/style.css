@@ -573,36 +573,36 @@ body.plus-theme {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  background: radial-gradient(circle, rgba(231, 76, 60, 0.95) 0%, rgba(192, 57, 43, 0.95) 100%);
+  background: radial-gradient(circle, rgba(16, 102, 58, 0.95) 0%, rgba(7, 46, 26, 0.95) 100%);
   border: 3px solid #f1c40f;
   padding: 12px 28px;
   border-radius: 30px;
-  box-shadow: 0 10px 30px rgba(231, 76, 60, 0.8), 0 0 40px rgba(241, 196, 15, 0.6);
+  box-shadow: 0 10px 30px rgba(16, 102, 58, 0.8), 0 0 40px rgba(241, 196, 15, 0.6);
   animation: countdownPulse 1s ease-in-out infinite alternate;
   z-index: 20;
 }
 
 @keyframes countdownPulse {
-  0% { transform: scale(1); box-shadow: 0 10px 30px rgba(231, 76, 60, 0.8), 0 0 20px rgba(241, 196, 15, 0.4); }
-  100% { transform: scale(1.05); box-shadow: 0 14px 40px rgba(231, 76, 60, 1), 0 0 50px rgba(241, 196, 15, 0.9); }
+  0% { transform: scale(1); box-shadow: 0 10px 30px rgba(16, 102, 58, 0.8), 0 0 20px rgba(241, 196, 15, 0.4); }
+  100% { transform: scale(1.05); box-shadow: 0 14px 40px rgba(16, 102, 58, 1), 0 0 50px rgba(241, 196, 15, 0.9); }
 }
 
 .countdown-pulse-ring {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #f1c40f;
+  background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 12px rgba(241, 196, 15, 0.7);
 }
 
 .countdown-big-num {
   font-family: 'Oswald', sans-serif;
   font-size: 32px;
   font-weight: 900;
-  color: #c0392b;
+  color: #072e1a;
   line-height: 1;
 }
 
@@ -610,8 +610,8 @@ body.plus-theme {
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 1px;
-  color: #fff;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  color: #f1c40f;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
 }
 
 .plus-101 {
@@ -2950,8 +2950,8 @@ body.plus-theme {
 .drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: none;
   z-index: 450;
   opacity: 1;
   transition: opacity 0.25s ease;
@@ -2968,7 +2968,7 @@ body.plus-theme {
   bottom: 0;
   z-index: 500;
   background: linear-gradient(180deg, rgba(8, 28, 16, 0.98) 0%, rgba(4, 15, 8, 0.98) 100%);
-  backdrop-filter: blur(18px);
+  backdrop-filter: none;
   border-left: 2px solid rgba(241, 196, 15, 0.4);
   display: flex;
   flex-direction: column;

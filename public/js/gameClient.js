@@ -831,12 +831,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const me = state.players[viewerSeatIndex];
     istaka.setViewerOpened(me ? me.opened : false);
     if (me && me.hand) {
-      const isInitialDeal = !roundStartedHandSorted && state.state === 'PLAYING' && me.hand.length >= 21;
+      const isInitialDeal = (!roundStartedHandSorted && state.state === 'PLAYING' && me.hand.length >= 21);
       if (isInitialDeal) {
         roundStartedHandSorted = true;
         istaka.setHand(me.hand, false);
-        // Oyun ilk başladığında seri diz tuşuna bir kez basılmış gibi otomatik dizilsin
-        istaka.autoSortRuns();
+        // Oyun her başladığında seri diz tuşuna basılmış gibi otomatik dizilsin
+        setTimeout(() => {
+          istaka.autoSortRuns();
+        }, 50);
       } else {
         istaka.setHand(me.hand, true);
       }
@@ -959,6 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.hideModal('round-result-modal');
     ui.hideModal('game-over-modal');
     window.roundResultModalActive = false;
+    roundStartedHandSorted = false;
     istaka.clearSelection();
     ui.showToast('🎮 Yeni Maç Başladı!', 'success', 2500);
   });
@@ -1120,7 +1123,10 @@ document.addEventListener('DOMContentLoaded', () => {
           if (requiredId && isFirstOpen && !containsRequired) {
             ui.showToast('Yandan çektiğiniz taşı açtığınız perlerde kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
           } else if (isFirstOpen) {
-            ui.showToast(`Seri açmak için elinizde en az ${minRequired} puan olmalıdır.`, 'error', 3000);
+            const formattedScore = (window.formatOkeyScore && typeof window.formatOkeyScore === 'function')
+              ? window.formatOkeyScore(minRequired)
+              : `${minRequired}`;
+            ui.showToast(`Seri açmak için elinizde en az ${formattedScore} (${minRequired} puan) olmalıdır.`, 'error', 3000);
           } else {
             ui.showToast('Geçerli bir per oluşturulamadı.', 'error', 3000);
           }
@@ -1129,7 +1135,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (meldIdArrays.length === 0) {
-        ui.showToast(isFirstOpen ? `Seri açmak için elinizde en az ${minRequired} puan olmalıdır.` : 'Geçerli bir per oluşturulamadı.', 'error', 3000);
+        const formattedScore = (window.formatOkeyScore && typeof window.formatOkeyScore === 'function')
+          ? window.formatOkeyScore(minRequired)
+          : `${minRequired}`;
+        ui.showToast(isFirstOpen ? `Seri açmak için elinizde en az ${formattedScore} (${minRequired} puan) olmalıdır.` : 'Geçerli bir per oluşturulamadı.', 'error', 3000);
         return;
       }
 

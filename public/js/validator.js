@@ -268,14 +268,15 @@ class ClientValidator {
         }
       }
 
-      if (usedJokersCount < jokers.length) {
-        const j = jokers[usedJokersCount];
-        if (!usedTileIds.has(j.id)) {
+      const availableJokers = jokers.filter(j => !usedTileIds.has(j.id));
+      if (availableJokers.length > 0) {
+        for (const j of availableJokers) {
           usedTileIds.add(j.id);
           currentTiles.push(j);
           build(stepIdx + 1, currentTiles, usedTileIds, usedJokersCount + 1);
           currentTiles.pop();
           usedTileIds.delete(j.id);
+          break; // One joker candidate per slot is sufficient to avoid identical permutations
         }
       }
     }
@@ -334,9 +335,11 @@ class ClientValidator {
         for (const t1 of byColor[c1]) {
           for (const t2 of byColor[c2]) {
             for (const t3 of byColor[c3]) {
-              const g = [t1, t2, t3, jokers[0]];
-              const c = this.isValidGroup(g, indicator);
-              if (c.valid) groups.push({ type: 'group', tiles: g, score: c.score });
+              for (const jTile of jokers) {
+                const g = [t1, t2, t3, jTile];
+                const c = this.isValidGroup(g, indicator);
+                if (c.valid) groups.push({ type: 'group', tiles: g, score: c.score });
+              }
             }
           }
         }
@@ -367,7 +370,25 @@ class ClientValidator {
             const c1 = availableColors[i], c2 = availableColors[j];
             for (const t1 of byColor[c1]) {
               for (const t2 of byColor[c2]) {
-                const g = [t1, t2, jokers[0]];
+                for (const jTile of jokers) {
+                  const g = [t1, t2, jTile];
+                  const c = this.isValidGroup(g, indicator);
+                  if (c.valid) groups.push({ type: 'group', tiles: g, score: c.score });
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // 2 colors + 2 jokers (4-tile group)
+      if (jokers.length >= 2) {
+        for (let i = 0; i < availableColors.length; i++) {
+          for (let j = i + 1; j < availableColors.length; j++) {
+            const c1 = availableColors[i], c2 = availableColors[j];
+            for (const t1 of byColor[c1]) {
+              for (const t2 of byColor[c2]) {
+                const g = [t1, t2, jokers[0], jokers[1]];
                 const c = this.isValidGroup(g, indicator);
                 if (c.valid) groups.push({ type: 'group', tiles: g, score: c.score });
               }

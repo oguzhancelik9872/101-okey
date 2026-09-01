@@ -1,3 +1,15 @@
+/**
+ * 101 Okey "X yan Y" Scoring Formatter (Division by 3)
+ */
+function formatOkeyScore(score) {
+  if (!score || typeof score !== 'number') return `${score || 0}`;
+  const quotient = Math.floor(score / 3);
+  const remainder = score % 3;
+  if (remainder === 0) return `${quotient}`;
+  return `${quotient} yan ${remainder}`;
+}
+window.formatOkeyScore = formatOkeyScore;
+
 const FEMALE_NAMES = new Set([
   'zeynep', 'ayse', 'fatma', 'elif', 'merve', 'ece', 'selin', 'gizem', 'busra',
   'derya', 'seda', 'ceren', 'irem', 'ebru', 'gamze', 'melis', 'pinar',
@@ -146,17 +158,20 @@ class TableManager {
           if (this.gameState.state === 'WAITING') {
             statusEl.className = 'player-open-status';
             statusEl.textContent = 'Hazır';
+            statusEl.classList.remove('hidden');
           } else if (player.opened) {
+            statusEl.classList.remove('hidden');
             if (player.openType === 'pairs') {
               statusEl.className = 'player-open-status opened-pairs';
               statusEl.textContent = `Çift (${player.openedMeldsCount || 5} Çift)`;
             } else {
               statusEl.className = 'player-open-status opened';
-              statusEl.textContent = `Seri (${player.openedScore || 101} Puan)`;
+              statusEl.textContent = `Seri (${formatOkeyScore(player.openedScore || 101)})`;
             }
           } else {
-            statusEl.className = 'player-open-status not-opened';
-            statusEl.textContent = 'Açmadı';
+            // Açmadı yazılarını kaldır (açtığında göster)
+            statusEl.className = 'player-open-status not-opened hidden';
+            statusEl.textContent = '';
           }
         }
 
