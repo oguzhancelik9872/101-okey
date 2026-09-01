@@ -1710,8 +1710,10 @@ body.plus-theme {
 
 .my-turn-focus .canvas-bottom-strip {
   bottom: 6px !important;
-  left: 68px !important;
-  right: 68px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 100% !important;
+  max-width: 852px !important;
 }
 
 .my-turn-focus .grid-cell-slot .okey-tile .tile-number {
@@ -2509,11 +2511,12 @@ body.plus-theme {
 .canvas-bottom-strip {
   position: absolute;
   bottom: 6px;
-  left: 125px;
-  right: 125px;
-  width: auto;
-  margin: 0;
-  padding: 0 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 852px;
+  margin: 0 auto;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2531,6 +2534,7 @@ body.plus-theme {
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  gap: 8px;
 }
 
 .canvas-bottom-right {
@@ -2561,19 +2565,23 @@ body.plus-theme {
   gap: 8px;
 }
 
-/* 3D Glossy Action Buttons */
+/* 3D Glossy Action Buttons - Consistent 38px Height */
 .btn-pill-action {
   font-size: 12px;
   font-weight: 800;
-  padding: 7px 16px;
-  border-radius: 20px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 19px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  gap: 6px;
   transition: all 0.15s;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .btn-pill-warning {
