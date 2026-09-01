@@ -87,12 +87,8 @@ class UIManager {
 
       let statusText = '';
       if (isFinisher) {
-        if (results.isOkeyDiscard && results.isPairsFinish) {
-          statusText = '🔥 Okey + Çift Bitti (-404)';
-        } else if (results.isOkeyDiscard) {
+        if (results.isOkeyDiscard) {
           statusText = '🔥 Okey ile Bitti (-202)';
-        } else if (results.isPairsFinish) {
-          statusText = '✨ Çift Bitti (-202)';
         } else {
           statusText = '🏆 Bitti (-101)';
         }
@@ -100,15 +96,12 @@ class UIManager {
         statusText = '🤝 Ortağı Bitti (0)';
       } else if (pEntry.opened) {
         if (pEntry.openType === 'pairs') {
-          const multText = (results.isOkeyDiscard || results.isPairsFinish) ? ' x4' : ' x2';
-          statusText = `Çift Açtı (Kalan${multText}: ${basePoints})`;
+          statusText = `Çift Açtı (Kalan x2: ${basePoints})`;
         } else {
-          const multText = (results.isOkeyDiscard || results.isPairsFinish) ? ' x2' : '';
-          statusText = `Açtı (Kalan${multText}: ${basePoints})`;
+          statusText = `Açtı (Kalan: ${basePoints})`;
         }
       } else {
-        const multText = (results.isOkeyDiscard || results.isPairsFinish) ? ' (2x)' : '';
-        statusText = `Açmadı (+${basePoints}${multText})`;
+        statusText = `Açmadı (+202)`;
       }
 
       const pointStyle = points <= 0 ? 'color: #2ecc71; font-weight: 900;' : 'color: #f1c40f; font-weight: 800;';

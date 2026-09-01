@@ -653,12 +653,7 @@ class OkeyGame {
     if (!finisher) return;
 
     const isPairsFinish = finisher.openType === 'pairs';
-    const okeyMultiplier = isOkeyDiscard ? 2 : 1;
-    const pairsMultiplier = isPairsFinish ? 2 : 1;
-    const totalMultiplier = okeyMultiplier * pairsMultiplier;
-
-    // Finisher gets -101 (or -202 / -404 if okey/pairs)
-    const finisherPoints = -101 * totalMultiplier;
+    const finisherPoints = isOkeyDiscard ? -202 : -101;
     finisher.roundScore = finisherPoints + (finisher.penaltyPoints || 0);
     finisher.score += finisher.roundScore;
 
@@ -704,13 +699,12 @@ class OkeyGame {
       let handSum = 0;
 
       if (!p.opened) {
-        // Player never opened: 202 penalty points
-        pPoints = 202 * totalMultiplier;
+        // Player never opened: standard 202 penalty points
+        pPoints = 202;
       } else {
-        // Player opened: sum of leftover tiles. If opened as pairs, 2x leftover tiles
+        // Player opened: sum of leftover tiles. If opened as pairs, only their own penalty is 2x
         handSum = p.hand ? p.hand.reduce((sum, t) => sum + (t ? t.getValue(this.indicator) : 0), 0) : 0;
-        const playerPairsMultiplier = (p.openType === 'pairs') ? 2 : 1;
-        pPoints = handSum * playerPairsMultiplier * totalMultiplier;
+        pPoints = (p.openType === 'pairs') ? (handSum * 2) : handSum;
       }
 
       p.roundScore = pPoints + (p.penaltyPoints || 0);
@@ -744,7 +738,7 @@ class OkeyGame {
       finisher: finisher.name,
       isOkeyDiscard,
       isPairsFinish,
-      multiplier: totalMultiplier,
+      multiplier: isOkeyDiscard ? 2 : 1,
       roundScores,
       teamResults: {
         team1: {
