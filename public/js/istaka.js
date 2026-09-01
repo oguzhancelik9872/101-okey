@@ -239,7 +239,7 @@ class IstakaManager {
   /**
    * Loads incoming hand tiles into the rack
    */
-  setHand(tiles, preservePositions = true) {
+  setHand(tiles, preservePositions = true, autoSortRuns = false) {
     const tileMap = new Map();
     tiles.forEach(t => tileMap.set(t.id, t));
 
@@ -277,13 +277,29 @@ class IstakaManager {
       }
     } else {
       this.clearGrid();
-      let index = 0;
-      for (const tile of tiles) {
-        const r = Math.floor(index / this.COLS);
-        const c = index % this.COLS;
-        if (r < this.ROWS) {
-          this.grid[r][c] = tile;
-          index++;
+      if (autoSortRuns && typeof ClientValidator !== 'undefined' && ClientValidator.findBestMelds) {
+        const { melds } = ClientValidator.findBestMelds(tiles, this.indicator, null);
+        const meldTileIds = new Set();
+        melds.forEach(m => m.forEach(t => meldTileIds.add(t.id)));
+
+        const leftovers = tiles.filter(t => !meldTileIds.has(t.id));
+        leftovers.sort((a, b) => {
+          const ca = a.effectiveColor || a.color;
+          const cb = b.effectiveColor || b.color;
+          if (ca !== cb) return ca.localeCompare(cb);
+          return (a.effectiveValue || a.number) - (b.effectiveValue || b.number);
+        });
+
+        this._placeTilesSafely(melds, leftovers, tiles);
+      } else {
+        let index = 0;
+        for (const tile of tiles) {
+          const r = Math.floor(index / this.COLS);
+          const c = index % this.COLS;
+          if (r < this.ROWS) {
+            this.grid[r][c] = tile;
+            index++;
+          }
         }
       }
     }
