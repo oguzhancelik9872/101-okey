@@ -1496,7 +1496,7 @@ document.addEventListener('DOMContentLoaded', () => {
       topTimerBar.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
     }
 
-    // Update Opening Target Requirements Badge at the top of the center deck strip
+    // Update Opening Target Requirements Badge at the top of the center deck strip (Stacked Alt Alta)
     const centerTargetBadge = document.getElementById('center-target-badge');
     const minOpenScore = currentGameState.minOpenScore || 101;
     const minOpenPairs = currentGameState.minOpenPairs || 5;
@@ -1505,7 +1505,10 @@ document.addEventListener('DOMContentLoaded', () => {
       : `${minOpenScore}`;
 
     if (centerTargetBadge) {
-      centerTargetBadge.textContent = `${minOpenScore} (${formattedScore}) / ${minOpenPairs} Çift`;
+      centerTargetBadge.innerHTML = `
+        <span class="target-seri-line">${minOpenScore} (${formattedScore})</span>
+        <span class="target-pairs-line">${minOpenPairs} Çift</span>
+      `;
     }
 
     const isFirstOpen = viewerPlayer ? !viewerPlayer.opened : true;

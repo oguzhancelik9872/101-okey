@@ -228,7 +228,10 @@ class TableManager {
       const formattedScore = (typeof formatOkeyScore === 'function')
         ? formatOkeyScore(minOpenScore)
         : `${minOpenScore}`;
-      centerTargetBadge.textContent = `${minOpenScore} (${formattedScore}) / ${minOpenPairs} Çift`;
+      centerTargetBadge.innerHTML = `
+        <span class="target-seri-line">${minOpenScore} (${formattedScore})</span>
+        <span class="target-pairs-line">${minOpenPairs} Çift</span>
+      `;
     }
 
     const deckCountEl = document.getElementById('deck-count');
