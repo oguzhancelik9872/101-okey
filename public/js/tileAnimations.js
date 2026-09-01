@@ -281,7 +281,7 @@ class TileAnimationEngine {
         return;
       }
 
-      const destTile = discardEl.querySelector('.okey-tile');
+      const destTile = discardEl.querySelector('.okey-tile:not(.underlying-discard-tile)') || discardEl.querySelector('.okey-tile');
       if (destTile) {
         destTile.style.opacity = '0';
       }
@@ -295,6 +295,10 @@ class TileAnimationEngine {
         onComplete: () => {
           if (destTile) {
             destTile.style.opacity = '1';
+          }
+          const underTile = discardEl.querySelector('.underlying-discard-tile');
+          if (underTile && underTile.parentNode) {
+            underTile.parentNode.removeChild(underTile);
           }
           if (typeof onDone === 'function') onDone();
           done();

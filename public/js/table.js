@@ -275,9 +275,28 @@ class TableManager {
 
       if (pile && pile.length > 0) {
         const topTile = pile[pile.length - 1];
+        const isPending = Boolean(window.pendingDiscardTileIds && window.pendingDiscardTileIds.has(topTile.id));
+
+        // If a new discard tile is flying in and there was an existing tile in this pile,
+        // keep the previous tile visible underneath so the box never goes blank!
+        if (isPending && pile.length > 1) {
+          const prevTile = pile[pile.length - 2];
+          const prevTileEl = this.createTileDOM(prevTile, false);
+          prevTileEl.style.position = 'absolute';
+          prevTileEl.style.top = '0';
+          prevTileEl.style.left = '0';
+          prevTileEl.style.opacity = '1';
+          prevTileEl.classList.add('underlying-discard-tile');
+          discardSlot.appendChild(prevTileEl);
+        }
+
         const tileEl = this.createTileDOM(topTile, false);
-        if (window.pendingDiscardTileIds && window.pendingDiscardTileIds.has(topTile.id)) {
+        if (isPending) {
           tileEl.style.opacity = '0';
+          if (pile.length > 1) {
+            tileEl.style.position = 'relative';
+            tileEl.style.zIndex = '2';
+          }
         }
         discardSlot.appendChild(tileEl);
       }
