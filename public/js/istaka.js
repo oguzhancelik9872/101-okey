@@ -461,7 +461,7 @@ class IstakaManager {
       el.appendChild(dot);
     }
 
-    // Drag handlers (Mouse / Pointer)
+    // Drag handlers
     el.addEventListener('dragstart', (e) => {
       this.draggedSource = { row, col, tile };
       window.draggedTileId = tile.id;
@@ -502,112 +502,6 @@ class IstakaManager {
       window.draggedTileId = null;
       document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
       document.querySelectorAll('.meld-drag-hover').forEach(m => m.classList.remove('meld-drag-hover'));
-    });
-
-    // Touch event handlers for mobile devices
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchMoveActive = false;
-    let ghostEl = null;
-
-    el.addEventListener('touchstart', (e) => {
-      if (e.touches.length > 1) return;
-      const touch = e.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-      touchMoveActive = false;
-      this.draggedSource = { row, col, tile };
-      window.draggedTileId = tile.id;
-    }, { passive: false });
-
-    el.addEventListener('touchmove', (e) => {
-      if (e.touches.length > 1) return;
-      const touch = e.touches[0];
-      const dx = touch.clientX - touchStartX;
-      const dy = touch.clientY - touchStartY;
-
-      if (!touchMoveActive && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
-        touchMoveActive = true;
-        ghostEl = el.cloneNode(true);
-        ghostEl.classList.remove('active-focus', 'tile-just-drawn', 'dragging');
-        ghostEl.style.position = 'fixed';
-        ghostEl.style.zIndex = '9999999';
-        ghostEl.style.pointerEvents = 'none';
-        ghostEl.style.opacity = '0.96';
-        ghostEl.style.transform = 'translate(-50%, -50%) scale(1.15)';
-        ghostEl.style.boxShadow = '0 16px 36px rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.7)';
-        ghostEl.style.left = `${touch.clientX}px`;
-        ghostEl.style.top = `${touch.clientY}px`;
-        document.body.appendChild(ghostEl);
-        el.classList.add('dragging');
-      }
-
-      if (touchMoveActive) {
-        e.preventDefault(); // Prevent page scroll / pull-to-refresh
-        if (ghostEl) {
-          ghostEl.style.left = `${touch.clientX}px`;
-          ghostEl.style.top = `${touch.clientY}px`;
-        }
-
-        const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-        document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
-        document.querySelectorAll('.plus-discard-box').forEach(b => b.classList.remove('drag-over'));
-        document.querySelectorAll('.table-grid-row, .table-pairs-row').forEach(m => m.classList.remove('meld-drag-hover'));
-        
-        if (elemBelow) {
-          const slot = elemBelow.closest('.istaka-slot');
-          if (slot) slot.classList.add('drag-over');
-          const discard = elemBelow.closest('#discard-pile-bottom') || elemBelow.closest('.corner-bottom-right');
-          if (discard) {
-            const box = discard.querySelector('.plus-discard-box') || discard;
-            box.classList.add('drag-over');
-          }
-          const meldRow = elemBelow.closest('.table-grid-row') || elemBelow.closest('.table-pairs-row');
-          if (meldRow) meldRow.classList.add('meld-drag-hover');
-        }
-      }
-    }, { passive: false });
-
-    el.addEventListener('touchend', (e) => {
-      if (ghostEl) {
-        if (ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl);
-        ghostEl = null;
-      }
-      el.classList.remove('dragging');
-      document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
-      document.querySelectorAll('.plus-discard-box').forEach(b => b.classList.remove('drag-over'));
-      document.querySelectorAll('.table-grid-row, .table-pairs-row').forEach(m => m.classList.remove('meld-drag-hover'));
-
-      if (touchMoveActive && e.changedTouches.length > 0) {
-        const touch = e.changedTouches[0];
-        const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (elemBelow) {
-          const targetSlot = elemBelow.closest('.istaka-slot');
-          const targetDiscard = elemBelow.closest('#discard-pile-bottom') || elemBelow.closest('.corner-bottom-right');
-          const targetMeldRow = elemBelow.closest('.table-grid-row') || elemBelow.closest('.table-pairs-row');
-
-          if (targetDiscard) {
-            if (this.onTileDoubleClicked) {
-              this.onTileDoubleClicked(tile);
-            }
-          } else if (targetMeldRow) {
-            const meldId = targetMeldRow.dataset.meldId;
-            if (meldId && window.onProcessTileTouch) {
-              window.onProcessTileTouch(tile.id, meldId);
-            }
-          } else if (targetSlot) {
-            const targetRow = parseInt(targetSlot.dataset.row, 10);
-            const targetCol = parseInt(targetSlot.dataset.col, 10);
-            if (!isNaN(targetRow) && !isNaN(targetCol) && this.draggedSource) {
-              const { row: srcRow, col: srcCol, tile: srcTile } = this.draggedSource;
-              this.insertTileAt(srcRow, srcCol, targetRow, targetCol, srcTile);
-              this.render();
-            }
-          }
-        }
-        this.draggedSource = null;
-        window.draggedTileId = null;
-      }
     });
 
     // Drop onto this specific tile to insert directly before/at this tile

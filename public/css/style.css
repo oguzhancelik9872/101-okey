@@ -30,17 +30,6 @@
   --glow-green: 0 0 14px rgba(34, 197, 94, 0.65);
   --glow-orange: 0 0 14px rgba(249, 115, 22, 0.65);
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.7);
-
-  /* Responsive Fluid Scaling Variables */
-  --tile-w: clamp(20px, 3.4vw, 38px);
-  --tile-h: calc(var(--tile-w) * 1.37);
-  --tile-font: clamp(13px, 2.1vw, 24px);
-  --slot-gap: clamp(2px, 0.35vw, 5px);
-  --side-sort-w: clamp(36px, 4.5vw, 54px);
-  --pod-w: clamp(75px, 8.5vw, 110px);
-  --felt-offset-x: clamp(60px, 8.5vw, 125px);
-  --felt-offset-top: clamp(45px, 7vh, 76px);
-  --felt-offset-bottom: clamp(45px, 7vh, 72px);
 }
 
 * {
@@ -50,7 +39,6 @@
   user-select: none;
   -webkit-user-select: none;
   font-family: 'Montserrat', sans-serif;
-  -webkit-tap-highlight-color: transparent;
 }
 
 body.plus-theme {
@@ -58,23 +46,18 @@ body.plus-theme {
   color: #ffffff;
   overflow: hidden;
   height: 100vh;
-  height: 100dvh;
   width: 100vw;
-  width: 100dvw;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   margin: 0;
   box-sizing: border-box;
-  touch-action: manipulation;
 }
 
 #app-container {
   width: 100vw;
-  width: 100dvw;
   height: 100vh;
-  height: 100dvh;
   max-width: 100vw;
   max-height: 100vh;
   display: flex;
@@ -85,10 +68,6 @@ body.plus-theme {
   background: #020f08;
   border: none;
   box-shadow: none;
-  padding-top: env(safe-area-inset-top, 0);
-  padding-bottom: env(safe-area-inset-bottom, 0);
-  padding-left: env(safe-area-inset-left, 0);
-  padding-right: env(safe-area-inset-right, 0);
 }
 
 .hidden {
@@ -1478,40 +1457,10 @@ body.plus-theme {
 }
 
 /* =========================================================
-   101 OKEY PLUS - VIRTUAL GAME STAGE (1200x680 AUTO-SCALER)
+   101 OKEY PLUS - CASINO TABLE CANVAS & FELT MAT
    ========================================================= */
 
-#game-view {
-  width: 100vw;
-  width: 100dvw;
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: #020f08;
-  position: relative;
-}
-
-.game-stage {
-  width: 1200px;
-  height: 680px;
-  min-width: 1200px;
-  min-height: 680px;
-  max-width: 1200px;
-  max-height: 680px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-  transform-origin: center center;
-  background: #020f08;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
-}
-
 .plus-table-canvas {
-  height: 524px;
   flex: 1;
   position: relative;
   width: 100%;
@@ -1521,14 +1470,14 @@ body.plus-theme {
 
 .table-felt-mat {
   position: absolute;
-  top: 60px;
-  bottom: 58px;
-  left: 118px;
-  right: 118px;
+  top: 78px;
+  bottom: 72px;
+  left: 125px;
+  right: 125px;
   margin: 0;
   background: radial-gradient(ellipse at center, #10663a 0%, #0c4d2c 55%, #072e1a 100%);
-  border: 6px solid #241108;
-  border-radius: 36px;
+  border: 7px solid #241108;
+  border-radius: 40px;
   box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.85), 0 10px 35px rgba(0, 0, 0, 0.9), 0 0 0 2px rgba(241, 196, 15, 0.4);
   display: flex;
   align-items: center;
@@ -1540,10 +1489,10 @@ body.plus-theme {
 .felt-watermark {
   position: absolute;
   font-family: 'Cinzel', serif;
-  font-size: 48px;
+  font-size: 54px;
   font-weight: 900;
   color: rgba(255, 255, 255, 0.03);
-  letter-spacing: 6px;
+  letter-spacing: 8px;
   pointer-events: none;
   z-index: 1;
 }
@@ -1639,12 +1588,12 @@ body.plus-theme {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 3px 14px 3px 5px;
+  gap: 10px;
+  padding: 4px 14px 4px 6px;
   border-radius: 28px;
   width: auto;
   min-width: 170px;
-  max-width: 230px;
+  max-width: 220px;
   justify-content: center;
 }
 
@@ -1656,10 +1605,10 @@ body.plus-theme {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 6px;
-  border-radius: 16px;
-  width: 98px;
+  gap: 5px;
+  padding: 10px 8px;
+  border-radius: 18px;
+  width: 105px;
   text-align: center;
 }
 
@@ -1670,17 +1619,17 @@ body.plus-theme {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 6px;
-  border-radius: 16px;
-  width: 98px;
+  gap: 5px;
+  padding: 10px 8px;
+  border-radius: 18px;
+  width: 105px;
   text-align: center;
 }
 
 .bar-player-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   align-items: center;
   justify-content: center;
 }
@@ -1688,20 +1637,20 @@ body.plus-theme {
 /* Avatar Ring & Active Turn Timer */
 .avatar-ring-container {
   position: relative;
-  width: clamp(32px, 4.4vw, 48px);
-  height: clamp(32px, 4.4vw, 48px);
+  width: 48px;
+  height: 48px;
 }
 
 .pod-avatar {
-  width: 100%;
-  height: 100%;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: linear-gradient(135deg, #1b3a4b, #006466);
   border: 2px solid #f1c40f;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(14px, 2vw, 20px);
+  font-size: 20px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.6);
   position: relative;
   z-index: 2;
@@ -1753,25 +1702,25 @@ body.plus-theme {
 }
 
 .player-name {
-  font-size: clamp(9px, 1.1vw, 11px);
+  font-size: 11px;
   font-weight: 800;
   color: #fff;
-  max-width: clamp(60px, 8vw, 90px);
+  max-width: 85px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .player-score {
-  font-size: clamp(9px, 1.1vw, 11px);
+  font-size: 11px;
   font-weight: 700;
   color: #f1c40f;
 }
 
 .player-open-status {
-  font-size: clamp(7.5px, 0.9vw, 9px);
+  font-size: 9px;
   font-weight: 900;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 8px;
   width: fit-content;
   letter-spacing: 0.5px;
@@ -2131,7 +2080,7 @@ body.plus-theme {
   align-items: stretch;
   background-color: #071d13;
   border: 2px solid #1a3a2a;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: inset 0 2px 10px rgba(0,0,0,0.75), 0 8px 24px rgba(0,0,0,0.5);
   position: relative;
@@ -2164,7 +2113,7 @@ body.plus-theme {
   min-height: 0;
   display: grid;
   grid-template-rows: repeat(13, 1fr);
-  gap: 2px;
+  gap: 2.5px;
   overflow: hidden !important;
   z-index: 2;
   box-sizing: border-box;
@@ -2217,23 +2166,23 @@ body.plus-theme {
 }
 
 .corner-top-left {
-  top: 10px;
-  left: 12px;
+  top: 14px;
+  left: 16px;
 }
 
 .corner-top-right {
-  top: 10px;
-  right: 12px;
+  top: 14px;
+  right: 16px;
 }
 
 .corner-bottom-left {
-  bottom: 8px;
-  left: 12px;
+  bottom: 14px;
+  left: 16px;
 }
 
 .corner-bottom-right {
-  bottom: 8px;
-  right: 12px;
+  bottom: 14px;
+  right: 16px;
 }
 
 .corner-discard-label {
@@ -2244,7 +2193,7 @@ body.plus-theme {
   text-shadow: 0 1px 3px rgba(0,0,0,0.8);
   background: rgba(0, 0, 0, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 6px;
 }
 
@@ -2253,7 +2202,7 @@ body.plus-theme {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 }
 
 .zone-label {
@@ -2265,10 +2214,10 @@ body.plus-theme {
 
 .plus-discard-box {
   width: 44px;
-  height: 58px;
+  height: 60px;
   background: rgba(0, 0, 0, 0.35);
   border: 2px dashed rgba(255, 255, 255, 0.25);
-  border-radius: 7px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2292,7 +2241,7 @@ body.plus-theme {
   width: 38px;
   height: 52px;
   background: var(--tile-bg);
-  border-radius: 5px;
+  border-radius: 6px;
   border: 1px solid #d5c8b5;
   box-shadow: var(--tile-shadow);
   display: flex;
@@ -2303,12 +2252,11 @@ body.plus-theme {
   cursor: grab;
   transition: transform 0.15s, box-shadow 0.15s;
   user-select: none;
-  touch-action: none;
 }
 
 .tile-small {
-  width: 23px;
-  height: 32px;
+  width: 24px;
+  height: 34px;
 }
 
 .tile-number {
@@ -2320,7 +2268,7 @@ body.plus-theme {
 }
 
 .tile-small .tile-number {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -2328,7 +2276,7 @@ body.plus-theme {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .tile-small .tile-dot {
@@ -2427,32 +2375,29 @@ body.plus-theme {
   display: none;
 }
 
-/* =========================================================
-   ISTAKA SECTION & WOODEN BOARD (PLUS 2-SHELF RACK)
-   ==============================================.plus-istaka-section {
-  height: 156px;
-  flex-shrink: 0;
+/* =========================================   ISTAKA SECTION & WOODEN BOARD (PLUS 2-SHELF RACK)
+   ========================================================= */
+ 
+.plus-istaka-section {
   background: linear-gradient(180deg, #1b0a04 0%, #100502 100%);
-  border-top: 3px solid #5c2c16;
-  padding: 6px 14px 8px 14px;
+  border-top: 4px solid #5c2c16;
+  padding: 6px 16px 10px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   box-shadow: 0 -12px 35px rgba(0, 0, 0, 0.9);
   z-index: 30;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 /* Bottom Outer Player & Action Strip (In Dark Green Canvas, Right Above the Brown Istaka Bar!) */
 .canvas-bottom-strip {
   position: absolute;
   bottom: 6px;
-  left: 118px;
-  right: 118px;
+  left: 125px;
+  right: 125px;
   width: auto;
   margin: 0;
-  padding: 0 8px;
+  padding: 0 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2470,7 +2415,6 @@ body.plus-theme {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px;
 }
 
 .canvas-bottom-right {
@@ -2478,7 +2422,6 @@ body.plus-theme {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
 }
 
 /* Centered Bottom Player Card (Viewer) */
@@ -2487,11 +2430,11 @@ body.plus-theme {
   transform: none !important;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 3px 14px 3px 5px;
+  gap: 10px;
+  padding: 4px 16px 4px 8px;
   border-radius: 28px;
   width: auto;
-  min-width: 170px;
+  min-width: 175px;
   max-width: 230px;
   justify-content: center;
 }
@@ -2506,16 +2449,15 @@ body.plus-theme {
 .btn-pill-action {
   font-size: 12px;
   font-weight: 800;
-  padding: 6px 14px;
+  padding: 7px 16px;
   border-radius: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   transition: all 0.15s;
   box-shadow: 0 4px 10px rgba(0,0,0,0.6);
   border: 1px solid rgba(255,255,255,0.3);
-  white-space: nowrap;
 }
 
 .btn-pill-warning {
@@ -2551,7 +2493,7 @@ body.plus-theme {
 }
 
 .btn-pill-action:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(1px);
 }
 
 .btn-pill-action:disabled {
@@ -2617,13 +2559,12 @@ body.plus-theme {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  max-width: 1180px;
-  height: 140px;
+  max-width: 1240px;
 }
 
 .btn-side-sort {
-  width: 52px;
-  border-radius: 10px;
+  width: 54px;
+  border-radius: 12px;
   border: 1.5px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   cursor: pointer;
@@ -2631,22 +2572,22 @@ body.plus-theme {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
   transition: all 0.15s;
-  padding: 6px 2px;
+  padding: 8px 3px;
 }
 
 .btn-side-sort .icon {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .btn-side-sort .sort-text {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.5px;
   text-align: center;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 .btn-sort-left {
@@ -2671,25 +2612,22 @@ body.plus-theme {
 /* 3D 2-Shelf Wooden Istaka Board */
 .plus-istaka-board {
   flex: 1;
-  max-width: 1080px;
-  height: 100%;
+  max-width: 1120px;
   background: linear-gradient(180deg, #441e0d 0%, #291005 50%, #150601 100%);
-  border: 3px solid #140501;
-  border-radius: 10px;
-  padding: 6px 10px;
+  border: 4px solid #140501;
+  border-radius: 12px;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   box-shadow: inset 0 4px 10px rgba(0,0,0,0.9), 0 8px 24px rgba(0,0,0,0.8);
   position: relative;
-  min-width: 0;
-  box-sizing: border-box;
 }
 
 .istaka-brass-corner {
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   background: var(--gold-gradient);
   border: 1px solid #7d5c07;
   border-radius: 2px;
@@ -2703,13 +2641,12 @@ body.plus-theme {
 .istaka-row {
   display: grid;
   grid-template-columns: repeat(16, 1fr);
-  gap: 4px;
-  height: 58px;
+  gap: 5px;
+  min-height: 58px;
   background: rgba(0, 0, 0, 0.4);
-  border-radius: 6px;
-  padding: 2px 4px;
+  border-radius: 8px;
+  padding: 3px 6px;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  align-items: center;
 }
 
 .istaka-slot {
@@ -2717,12 +2654,12 @@ body.plus-theme {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.2);
-  border-radius: 5px;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.03);
   transition: background 0.15s, border-color 0.15s;
-  min-width: 0;
-  height: 54px;
 }
+
+
 
 .istaka-slot.drag-over {
   background: rgba(241, 196, 15, 0.25);
@@ -3373,64 +3310,4 @@ body.plus-theme {
   font-size: 12px;
   font-weight: 900;
   white-space: nowrap;
-}
-
-/* =========================================================
-   MOBILE PORTRAIT ORIENTATION HELPER OVERLAY
-   ========================================================= */
-
-.orientation-overlay {
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(circle at center, #0d3222 0%, #03100a 100%);
-  z-index: 999999;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  text-align: center;
-}
-
-@media screen and (orientation: portrait) and (max-width: 900px) {
-  .orientation-overlay {
-    display: flex !important;
-  }
-}
-
-.orientation-box {
-  background: rgba(14, 40, 24, 0.95);
-  border: 2px solid var(--gold-primary);
-  border-radius: 24px;
-  padding: 36px 28px;
-  max-width: 340px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 30px rgba(241, 196, 15, 0.25);
-}
-
-.phone-rotate-icon {
-  font-size: 58px;
-  animation: phoneRotateAnim 2.2s infinite ease-in-out;
-}
-
-@keyframes phoneRotateAnim {
-  0%, 20% { transform: rotate(0deg); }
-  50%, 70% { transform: rotate(90deg); }
-  90%, 100% { transform: rotate(0deg); }
-}
-
-.orientation-box h2 {
-  font-family: 'Cinzel', serif;
-  font-size: 20px;
-  color: var(--gold-primary);
-  margin: 0;
-}
-
-.orientation-box p {
-  font-size: 14px;
-  color: #a8d5ba;
-  line-height: 1.5;
-  margin: 0;
 }

@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     () => handleDrawDeck(),
     () => handleDrawDiscard()
   );
-  window.istakaManager = istaka;
 
   const table = new TableManager({
     onDrawDeck: () => handleDrawDeck(),
@@ -31,26 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     onProcessTile: (targetMeldId) => handleProcessTileToMeld(targetMeldId),
     onProcessTileDragDrop: (tileId, targetMeldId) => handleProcessTileById(tileId, targetMeldId)
   });
-
-  // --- Dynamic Virtual Game Stage Auto-Scaler (Fit-to-Screen Scale) ---
-  function updateGameStageScale() {
-    const stage = document.getElementById('game-stage');
-    if (!stage) return;
-    const vw = window.innerWidth || document.documentElement.clientWidth || 1200;
-    const vh = window.innerHeight || document.documentElement.clientHeight || 680;
-    const targetW = 1200;
-    const targetH = 680;
-    const scale = Math.min(vw / targetW, vh / targetH);
-    stage.style.transform = `scale(${scale})`;
-  }
-
-  window.addEventListener('resize', updateGameStageScale);
-  window.addEventListener('orientationchange', () => {
-    setTimeout(updateGameStageScale, 100);
-    setTimeout(updateGameStageScale, 300);
-  });
-  window.updateGameStageScale = updateGameStageScale;
-  updateGameStageScale();
 
   // --- Dynamic Title, LocalStorage & Global UI State ---
   let currentActivePlayerName = 'Oyuncu';
@@ -821,7 +800,6 @@ document.addEventListener('DOMContentLoaded', () => {
       gameView.classList.remove('hidden');
       gameView.style.removeProperty('display');
       gameView.style.setProperty('display', 'flex', 'important');
-      updateGameStageScale();
     }
 
     const codeEl = document.getElementById('display-room-code');
@@ -856,7 +834,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameView) {
           gameView.classList.remove('hidden');
           gameView.style.display = 'flex';
-          updateGameStageScale();
         }
       }
     }
@@ -1635,21 +1612,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const pos = table.getRelativePosition(data.seatIndex);
     ui.triggerReaction(pos, data.reaction, data.label);
   });
-
-  // Global Touch handler for dragging tile to table melds
-  window.onProcessTileTouch = (tileId, meldId) => {
-    handleProcessTileById(tileId, meldId);
-  };
-
-  // Orientation Overlay Dismiss for Mobile
-  const btnDismissOrientation = document.getElementById('btn-dismiss-orientation');
-  const mobileOrientationOverlay = document.getElementById('mobile-orientation-overlay');
-  if (btnDismissOrientation && mobileOrientationOverlay) {
-    btnDismissOrientation.addEventListener('click', () => {
-      mobileOrientationOverlay.classList.add('dismissed');
-      mobileOrientationOverlay.classList.add('hidden');
-    });
-  }
 
   // Initialize Sound UI on load
   syncSettingsDrawer();

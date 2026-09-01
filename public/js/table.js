@@ -238,79 +238,6 @@ class TableManager {
       centerDeckEl.ondragend = () => {
         window.draggedTileId = null;
       };
-
-      // Touch drag for mobile
-      let deckTouchStartX = 0;
-      let deckTouchStartY = 0;
-      let deckGhostEl = null;
-      let deckTouchActive = false;
-
-      centerDeckEl.ontouchstart = (e) => {
-        if (!isViewerTurnToDraw || e.touches.length > 1) return;
-        const touch = e.touches[0];
-        deckTouchStartX = touch.clientX;
-        deckTouchStartY = touch.clientY;
-        deckTouchActive = false;
-        window.draggedTileId = 'ACTION:DRAW_DECK';
-      };
-
-      centerDeckEl.ontouchmove = (e) => {
-        if (!isViewerTurnToDraw || e.touches.length > 1) return;
-        const touch = e.touches[0];
-        const dx = touch.clientX - deckTouchStartX;
-        const dy = touch.clientY - deckTouchStartY;
-
-        if (!deckTouchActive && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
-          deckTouchActive = true;
-          deckGhostEl = document.createElement('div');
-          deckGhostEl.className = 'okey-tile dragging';
-          deckGhostEl.style.position = 'fixed';
-          deckGhostEl.style.zIndex = '9999999';
-          deckGhostEl.style.pointerEvents = 'none';
-          deckGhostEl.style.opacity = '0.95';
-          deckGhostEl.style.transform = 'translate(-50%, -50%) scale(1.15)';
-          deckGhostEl.style.boxShadow = '0 16px 36px rgba(0,0,0,0.9)';
-          deckGhostEl.style.left = `${touch.clientX}px`;
-          deckGhostEl.style.top = `${touch.clientY}px`;
-          document.body.appendChild(deckGhostEl);
-        }
-
-        if (deckTouchActive) {
-          e.preventDefault();
-          if (deckGhostEl) {
-            deckGhostEl.style.left = `${touch.clientX}px`;
-            deckGhostEl.style.top = `${touch.clientY}px`;
-          }
-          const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-          document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
-          if (elemBelow) {
-            const slot = elemBelow.closest('.istaka-slot');
-            if (slot) slot.classList.add('drag-over');
-          }
-        }
-      };
-
-      centerDeckEl.ontouchend = (e) => {
-        if (deckGhostEl) {
-          if (deckGhostEl.parentNode) deckGhostEl.parentNode.removeChild(deckGhostEl);
-          deckGhostEl = null;
-        }
-        document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
-        if (deckTouchActive && e.changedTouches.length > 0) {
-          const touch = e.changedTouches[0];
-          const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-          if (elemBelow) {
-            const targetSlot = elemBelow.closest('.istaka-slot');
-            if (targetSlot && window.istakaManager) {
-              const r = parseInt(targetSlot.dataset.row, 10);
-              const c = parseInt(targetSlot.dataset.col, 10);
-              window.istakaManager.pendingDropTarget = { row: r, col: c };
-            }
-          }
-          if (this.onDrawDeck) this.onDrawDeck();
-        }
-        window.draggedTileId = null;
-      };
     }
 
     const indicatorSlot = document.getElementById('indicator-tile-slot');
@@ -355,88 +282,12 @@ class TableManager {
         discardSlot.ondragend = () => {
           window.draggedTileId = null;
         };
-
-        // Mobile touch drag for left discard
-        let discardTouchStartX = 0;
-        let discardTouchStartY = 0;
-        let discardGhostEl = null;
-        let discardTouchActive = false;
-
-        discardSlot.ontouchstart = (e) => {
-          if (e.touches.length > 1) return;
-          const touch = e.touches[0];
-          discardTouchStartX = touch.clientX;
-          discardTouchStartY = touch.clientY;
-          discardTouchActive = false;
-          window.draggedTileId = 'ACTION:DRAW_DISCARD';
-        };
-
-        discardSlot.ontouchmove = (e) => {
-          if (e.touches.length > 1) return;
-          const touch = e.touches[0];
-          const dx = touch.clientX - discardTouchStartX;
-          const dy = touch.clientY - discardTouchStartY;
-
-          if (!discardTouchActive && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
-            discardTouchActive = true;
-            discardGhostEl = discardSlot.cloneNode(true);
-            discardGhostEl.classList.remove('can-draw-pulse');
-            discardGhostEl.style.position = 'fixed';
-            discardGhostEl.style.zIndex = '9999999';
-            discardGhostEl.style.pointerEvents = 'none';
-            discardGhostEl.style.opacity = '0.95';
-            discardGhostEl.style.transform = 'translate(-50%, -50%) scale(1.15)';
-            discardGhostEl.style.boxShadow = '0 16px 36px rgba(0,0,0,0.9)';
-            discardGhostEl.style.left = `${touch.clientX}px`;
-            discardGhostEl.style.top = `${touch.clientY}px`;
-            document.body.appendChild(discardGhostEl);
-          }
-
-          if (discardTouchActive) {
-            e.preventDefault();
-            if (discardGhostEl) {
-              discardGhostEl.style.left = `${touch.clientX}px`;
-              discardGhostEl.style.top = `${touch.clientY}px`;
-            }
-            const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-            document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
-            if (elemBelow) {
-              const slot = elemBelow.closest('.istaka-slot');
-              if (slot) slot.classList.add('drag-over');
-            }
-          }
-        };
-
-        discardSlot.ontouchend = (e) => {
-          if (discardGhostEl) {
-            if (discardGhostEl.parentNode) discardGhostEl.parentNode.removeChild(discardGhostEl);
-            discardGhostEl = null;
-          }
-          document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
-          if (discardTouchActive && e.changedTouches.length > 0) {
-            const touch = e.changedTouches[0];
-            const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (elemBelow) {
-              const targetSlot = elemBelow.closest('.istaka-slot');
-              if (targetSlot && window.istakaManager) {
-                const r = parseInt(targetSlot.dataset.row, 10);
-                const c = parseInt(targetSlot.dataset.col, 10);
-                window.istakaManager.pendingDropTarget = { row: r, col: c };
-              }
-            }
-            if (this.onDrawDiscard) this.onDrawDiscard();
-          }
-          window.draggedTileId = null;
-        };
       } else {
         discardSlot.classList.remove('can-draw-pulse');
         discardSlot.title = '';
         discardSlot.draggable = false;
         discardSlot.ondragstart = null;
         discardSlot.ondragend = null;
-        discardSlot.ontouchstart = null;
-        discardSlot.ontouchmove = null;
-        discardSlot.ontouchend = null;
       }
     }
   }
