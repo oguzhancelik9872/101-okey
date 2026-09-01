@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser = null;
   let turnTimerLoop = null;
   let lastTickedSecond = null;
+  let isUndoingTurn = false;
 
   function updateDocumentTitle(isMyTurn = false) {
     if (titleBlinkInterval) {
@@ -873,7 +874,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (me && me.hand) {
       const isInitialDeal = (!roundStartedHandSorted && state.state === 'PLAYING' && me.hand.length >= 21);
 
-      if (isInitialDeal) {
+      if (isUndoingTurn) {
+        isUndoingTurn = false;
+        istaka.restoreTurnSnapshot(me.hand);
+      } else if (isInitialDeal) {
         roundStartedHandSorted = true;
         // Yalnızca oyun ilk başladığında veya yeni maçta bir kez otomatik seri dizilir
         istaka.setHand(me.hand, false, true);
@@ -931,6 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isMyTurn = state.currentTurn === viewerSeatIndex && state.state === 'PLAYING';
     if (!isMyTurn || state.turnState !== 'DISCARD') {
       istaka.setDrawnTileId(null);
+      istaka.clearTurnSnapshot();
     }
     updateDocumentTitle(isMyTurn);
 
@@ -1082,6 +1087,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!roomId) return;
       socket.emit('undoTurn', { roomId }, (res) => {
         if (res.success) {
+          isUndoingTurn = true;
           ui.showToast('↩️ Açılan perler ve işlenen taşlar geri alındı.', 'info', 2500);
           window.soundEngine.playTilePlace();
         } else {
@@ -1187,6 +1193,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const meldIdArrays = rackAnalysis.validMelds.map(m => m.tiles.map(t => t.id));
 
+      if (!istaka.hasTurnSnapshot()) {
+        istaka.saveTurnSnapshot();
+      }
+
       socket.emit('openHand', { roomId, melds: meldIdArrays }, (res) => {
         if (res.success) {
           window.soundEngine.playOpenHand();
@@ -1230,6 +1240,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const pairIdArrays = rackPairs.validPairs.map(p => [p[0].id, p[1].id]);
+
+      if (!istaka.hasTurnSnapshot()) {
+        istaka.saveTurnSnapshot();
+      }
 
       socket.emit('openPairs', { roomId, pairs: pairIdArrays }, (res) => {
         if (res.success) {
@@ -1304,6 +1318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     istaka.setDrawnTileId(null);
+    istaka.clearTurnSnapshot();
     socket.emit('discardTile', { roomId, tileId: activeTile.id }, (res) => {
       if (res.success) {
         istaka.clearSelection();
@@ -1332,6 +1347,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     istaka.setDrawnTileId(null);
+    istaka.clearTurnSnapshot();
     socket.emit('discardTile', { roomId, tileId: tile.id }, (res) => {
       if (res.success) {
         istaka.clearSelection();
@@ -1356,6 +1372,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!viewerPlayer || !viewerPlayer.opened) {
       ui.showToast('Taş işlemek için önce elinizi açmış olmalısınız.', 'error');
       return;
+    }
+
+    if (!istaka.hasTurnSnapshot()) {
+      istaka.saveTurnSnapshot();
     }
 
     socket.emit('processTile', { roomId, tileId, targetMeldId }, (res) => {

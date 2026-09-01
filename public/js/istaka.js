@@ -245,6 +245,48 @@ class IstakaManager {
     this.viewerOpened = !!opened;
   }
 
+  saveTurnSnapshot() {
+    this.savedTurnRack = this.grid.map(row => row.map(t => (t ? { id: t.id, color: t.color, number: t.number, isFake: t.isFake, effectiveColor: t.effectiveColor, effectiveValue: t.effectiveValue, isOkey: t.isOkey } : null)));
+  }
+
+  hasTurnSnapshot() {
+    return Boolean(this.savedTurnRack);
+  }
+
+  clearTurnSnapshot() {
+    this.savedTurnRack = null;
+  }
+
+  restoreTurnSnapshot(tiles) {
+    if (!this.savedTurnRack) {
+      this.setHand(tiles, true, false);
+      return;
+    }
+
+    const tileMap = new Map();
+    tiles.forEach(t => tileMap.set(t.id, t));
+
+    this.clearGrid();
+
+    // 1. Restore tiles to their exact saved slot positions
+    for (let r = 0; r < this.ROWS; r++) {
+      for (let c = 0; c < this.COLS; c++) {
+        const saved = this.savedTurnRack[r][c];
+        if (saved && tileMap.has(saved.id)) {
+          this.grid[r][c] = tileMap.get(saved.id);
+          tileMap.delete(saved.id);
+        }
+      }
+    }
+
+    // 2. Place any remaining tiles into first empty slots
+    for (const [id, tile] of tileMap.entries()) {
+      this.placeInFirstEmptySlot(tile);
+    }
+
+    this.render();
+  }
+
   /**
    * Loads incoming hand tiles into the rack
    */
