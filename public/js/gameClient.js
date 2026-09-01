@@ -826,24 +826,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (state.state !== 'PLAYING') {
       roundStartedHandSorted = false;
-      lastHandSignature = '';
     }
 
     // Update Istaka hand if viewer hand is provided
     const me = state.players[viewerSeatIndex];
     istaka.setViewerOpened(me ? me.opened : false);
     if (me && me.hand) {
-      const currentHandSig = me.hand.map(t => t.id).sort().join(',');
-      const isCompletelyNewHand = Boolean(currentHandSig && (currentHandSig !== lastHandSignature) && (me.hand.length >= 21));
-      const isInitialDeal = (!roundStartedHandSorted && state.state === 'PLAYING' && me.hand.length >= 21) || isCompletelyNewHand;
+      const isInitialDeal = (!roundStartedHandSorted && state.state === 'PLAYING' && me.hand.length >= 21);
 
       if (isInitialDeal) {
         roundStartedHandSorted = true;
-        lastHandSignature = currentHandSig;
-        // Oyun her başladığında veya yeni maçta anında seri dizilir
+        // Yalnızca oyun ilk başladığında veya yeni maçta bir kez otomatik seri dizilir
         istaka.setHand(me.hand, false, true);
       } else {
-        istaka.setHand(me.hand, true);
+        // Taş çekerken/atarken dizilim aynen korunur, asla otomatik dizilmez
+        istaka.setHand(me.hand, true, false);
       }
     }
 
