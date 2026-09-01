@@ -288,11 +288,12 @@ class TileAnimationEngine {
         isClosed: false,
         duration: 380,
         onComplete: () => {
-          discardEl.innerHTML = '';
-          const landedTileEl = this.createTileDOM(tile, false);
-          landedTileEl.style.opacity = '1';
-          discardEl.appendChild(landedTileEl);
-
+          if (tile && tile.id && window.pendingDiscardTileIds) {
+            window.pendingDiscardTileIds.delete(tile.id);
+          }
+          if (window.tableManager) {
+            window.tableManager.renderDiscards();
+          }
           if (typeof onDone === 'function') onDone();
           done();
         }
@@ -337,11 +338,12 @@ class TileAnimationEngine {
         isClosed: false,
         duration: 380,
         onComplete: () => {
-          discardEl.innerHTML = '';
-          const landedTileEl = this.createTileDOM(tile, false);
-          landedTileEl.style.opacity = '1';
-          discardEl.appendChild(landedTileEl);
-
+          if (tile && tile.id && window.pendingDiscardTileIds) {
+            window.pendingDiscardTileIds.delete(tile.id);
+          }
+          if (window.tableManager) {
+            window.tableManager.renderDiscards();
+          }
           if (typeof onDone === 'function') onDone();
           done();
         }

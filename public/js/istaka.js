@@ -573,7 +573,10 @@ class IstakaManager {
               document.body.appendChild(preview);
 
               if (e.dataTransfer.setDragImage) {
-                e.dataTransfer.setDragImage(preview, 20, 26);
+                const previewRect = preview.getBoundingClientRect();
+                const offsetX = previewRect.width > 0 ? Math.max(10, previewRect.width - 6) : (group.tiles.length * 36 - 6);
+                const offsetY = 6;
+                e.dataTransfer.setDragImage(preview, offsetX, offsetY);
               }
 
               setTimeout(() => {
