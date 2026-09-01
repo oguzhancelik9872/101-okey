@@ -167,7 +167,7 @@ class TableManager {
             } else {
               statusEl.className = 'player-open-status opened';
               const sVal = player.openedScore || 101;
-              statusEl.textContent = `Seri (${formatOkeyScore(sVal)} (${sVal}))`;
+              statusEl.textContent = `Seri ${formatOkeyScore(sVal)} (${sVal})`;
             }
           } else {
             // Açmadı yazılarını kaldır (açtığında göster)

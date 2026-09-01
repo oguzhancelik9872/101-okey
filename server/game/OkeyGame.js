@@ -1069,9 +1069,20 @@ class OkeyGame {
         this.drawTile(playerIndex, 'deck');
       }
 
-      // 3. Auto-discard a non-Okey tile to conclude turn
+      // 3. Auto-discard a safe non-Okey, non-işlek tile with lowest number (1, 2, 3...) to conclude turn
       if (this.turnState === 'DISCARD' && player.hand.length > 0) {
-        const discardTile = player.hand.find(t => !t.isOkey(this.indicator)) || player.hand[player.hand.length - 1];
+        // Exclude real Okeys and Sahte Okeys acting as Okey
+        const nonOkeyTiles = player.hand.filter(t => !t.isOkey(this.indicator));
+        const basePool = nonOkeyTiles.length > 0 ? nonOkeyTiles : player.hand;
+
+        // Exclude işlek (playable to table melds) tiles
+        const safeNonIslek = basePool.filter(t => !Validator.isPlayableToTable(t, this.tableMelds, this.indicator));
+        const candidatePool = safeNonIslek.length > 0 ? safeNonIslek : basePool;
+
+        // Sort by lowest effective number (1 first, then 2, then 3...)
+        candidatePool.sort((a, b) => a.getValue(this.indicator) - b.getValue(this.indicator));
+
+        const discardTile = candidatePool[0];
         this.discardTile(playerIndex, discardTile.id);
       }
     } catch (e) {
