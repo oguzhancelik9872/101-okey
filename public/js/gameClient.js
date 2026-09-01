@@ -895,12 +895,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lastGameState && lastGameState.state === 'PLAYING' && state.state === 'PLAYING') {
       const anim = window.tileAnimations;
 
-      // 1. Draw Tile Animation (Deck or Discard)
+      // 1. Draw Tile Animation (Deck or Discard) - Detects both human & instantaneous bot draws!
       const wasDraw = lastGameState.turnState === 'DRAW';
       const isDiscardNow = state.turnState === 'DISCARD';
       const sameTurnPlayer = lastGameState.currentTurn === state.currentTurn;
+      const turnChanged = lastGameState.currentTurn !== state.currentTurn;
+      const newPlayerAlreadyDrawn = isDiscardNow && turnChanged;
 
-      if (wasDraw && isDiscardNow && sameTurnPlayer && anim) {
+      if (((wasDraw && isDiscardNow && sameTurnPlayer) || newPlayerAlreadyDrawn) && anim) {
         const turnPlayer = state.currentTurn;
         const seatPos = table.getRelativePosition(turnPlayer);
         const isViewer = (turnPlayer === viewerSeatIndex);
@@ -915,7 +917,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // 2. Open Melds Animation (Seri or Pairs)
+      // 2. Open Melds Animation (Seri or Pairs) - Tile-by-tile flow onto exact grid spots!
       const lastMeldsCount = lastGameState.tableMelds ? lastGameState.tableMelds.length : 0;
       const currentMeldsCount = state.tableMelds ? state.tableMelds.length : 0;
       if (currentMeldsCount > lastMeldsCount) {
@@ -933,6 +935,20 @@ document.addEventListener('DOMContentLoaded', () => {
               const playerMelds = state.tableMelds.filter(m => m.playerIndex === p);
               anim.animateOpenMelds(seatPos, playerMelds, newP.openType, isViewer);
             }
+          }
+        }
+      } else if (lastGameState.tableMelds && state.tableMelds && anim) {
+        // Check for tile processed into existing melds (İşleme)
+        for (let mIdx = 0; mIdx < state.tableMelds.length; mIdx++) {
+          const lastM = lastGameState.tableMelds[mIdx];
+          const curM = state.tableMelds[mIdx];
+          if (lastM && curM && curM.tiles && lastM.tiles && curM.tiles.length > lastM.tiles.length) {
+            const addedTile = curM.tiles[curM.tiles.length - 1];
+            const turnPlayer = state.currentTurn;
+            const seatPos = table.getRelativePosition(turnPlayer);
+            const isViewer = (turnPlayer === viewerSeatIndex);
+            anim.animateProcessTile(seatPos, addedTile, isViewer);
+            break;
           }
         }
       }

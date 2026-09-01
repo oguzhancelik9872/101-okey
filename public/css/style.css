@@ -1471,7 +1471,7 @@ body.plus-theme {
 .table-felt-mat {
   position: absolute;
   top: 78px;
-  bottom: 72px;
+  bottom: 78px;
   left: 50%;
   transform: translateX(-50%);
   width: fit-content;
@@ -1703,7 +1703,7 @@ body.plus-theme {
 
 .my-turn-focus .table-felt-mat {
   top: 18px !important;
-  bottom: 46px !important;
+  bottom: 66px !important;
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%) !important;
@@ -2587,13 +2587,13 @@ body.plus-theme {
   gap: 8px;
 }
 
-/* 3D Glossy Action Buttons - Compact 32px Height (Zero table collision) */
+/* 3D Glossy Action Buttons - Compact 30px Height (Zero table collision) */
 .btn-pill-action {
   font-size: 11px;
   font-weight: 800;
-  height: 32px;
-  padding: 0 13px;
-  border-radius: 16px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 15px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
