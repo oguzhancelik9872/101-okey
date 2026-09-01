@@ -974,7 +974,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (discardedByPlayer === viewerSeatIndex && discardedTile) {
           // Viewer discarded a tile
           const seatPos = table.getRelativePosition(viewerSeatIndex);
-          anim.animateDiscard(seatPos, discardedTile, true);
+          if (window.lastActionWasManualDrag) {
+            window.lastActionWasManualDrag = false;
+          } else {
+            anim.animateDiscard(seatPos, discardedTile, true);
+          }
         } else {
           // Human or live player drawing during their turn
           const wasDraw = lastGameState.turnState === 'DRAW';
@@ -986,13 +990,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const seatPos = table.getRelativePosition(turnPlayer);
             const isViewer = (turnPlayer === viewerSeatIndex);
 
-            if (state.drawnFromDiscard && state.drawnFromDiscard.playerIndex === turnPlayer) {
-              const fromSeat = (turnPlayer + 3) % 4;
-              const fromPos = table.getRelativePosition(fromSeat);
-              const drawnTile = state.drawnFromDiscard.tile || { id: state.drawnFromDiscard.tileId };
-              anim.animateDrawFromDiscard(seatPos, fromPos, drawnTile, isViewer);
+            if (isViewer && window.lastActionWasManualDrag) {
+              window.lastActionWasManualDrag = false;
             } else {
-              anim.animateDrawFromDeck(seatPos, isViewer);
+              if (state.drawnFromDiscard && state.drawnFromDiscard.playerIndex === turnPlayer) {
+                const fromSeat = (turnPlayer + 3) % 4;
+                const fromPos = table.getRelativePosition(fromSeat);
+                const drawnTile = state.drawnFromDiscard.tile || { id: state.drawnFromDiscard.tileId };
+                anim.animateDrawFromDiscard(seatPos, fromPos, drawnTile, isViewer);
+              } else {
+                anim.animateDrawFromDeck(seatPos, isViewer);
+              }
             }
           }
         }
@@ -1224,14 +1232,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Click on Center Deck / Discard directly
   const centerDeckEl = document.getElementById('center-deck-pile');
-  if (centerDeckEl) centerDeckEl.addEventListener('click', () => handleDrawDeck());
+  if (centerDeckEl) {
+    centerDeckEl.addEventListener('click', () => {
+      window.lastActionWasManualDrag = false;
+      handleDrawDeck();
+    });
+  }
 
   const leftDiscardEl = document.getElementById('discard-pile-left');
-  if (leftDiscardEl) leftDiscardEl.addEventListener('click', () => handleDrawDiscard());
+  if (leftDiscardEl) {
+    leftDiscardEl.addEventListener('click', () => {
+      window.lastActionWasManualDrag = false;
+      handleDrawDiscard();
+    });
+  }
 
   const bottomDiscardEl = document.getElementById('discard-pile-bottom');
   if (bottomDiscardEl) {
-    bottomDiscardEl.addEventListener('click', () => handleDiscardTile());
+    bottomDiscardEl.addEventListener('click', () => {
+      window.lastActionWasManualDrag = false;
+      handleDiscardTile();
+    });
 
     // Drag and drop a tile to discard slot to discard
     bottomDiscardEl.addEventListener('dragover', (e) => {
@@ -1247,6 +1268,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bottomDiscardEl.classList.remove('drag-over');
       const tileId = e.dataTransfer.getData('text/plain') || window.draggedTileId;
       if (tileId && !tileId.startsWith('ACTION:')) {
+        window.lastActionWasManualDrag = true;
         handleQuickDiscard({ id: tileId });
       }
     });

@@ -425,7 +425,7 @@ class RoomManager {
     }
 
     game.startRound();
-    room.lastBotActionTime = Date.now() - 400;
+    room.lastBotActionTime = Date.now() - 1000;
     this.startBotAutomation(room);
     return { success: true, room };
   }
@@ -456,8 +456,8 @@ class RoomManager {
         const now = Date.now();
 
         if (player && player.isBot) {
-          // Bot action delay (~650ms)
-          if (now - room.lastBotActionTime >= 650) {
+          // Bot action delay (5 seconds for human-like relaxed thinking pace)
+          if (now - room.lastBotActionTime >= 4500) {
             room.lastBotActionTime = now;
             try {
               game.executeBotTurn();

@@ -525,11 +525,13 @@ class IstakaManager {
 
       const action = e.dataTransfer.getData('text/plain') || window.draggedTileId;
       if (action === 'ACTION:DRAW_DECK') {
+        window.lastActionWasManualDrag = true;
         this.pendingDropTarget = { row, col };
         if (this.onDrawDeck) this.onDrawDeck();
         return;
       }
       if (action === 'ACTION:DRAW_DISCARD') {
+        window.lastActionWasManualDrag = true;
         this.pendingDropTarget = { row, col };
         if (this.onDrawDiscard) this.onDrawDiscard();
         return;
@@ -555,6 +557,7 @@ class IstakaManager {
 
       if (isDouble) {
         this.lastClickTileId = null;
+        window.lastActionWasManualDrag = false;
         if (this.onTileDoubleClicked) {
           this.onTileDoubleClicked(tile);
         }
