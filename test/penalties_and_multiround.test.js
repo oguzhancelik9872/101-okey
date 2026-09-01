@@ -143,5 +143,27 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(game.players[0].hand.length, 21); // Others get 21
 
   console.log('   Single Match & Rematch Rotation: PASSED');
+
+  // 6. Test Timeout Auto-Discard logic (Never discard Real Okey, pick lowest tile including low Sahte Okey)
+  console.log('6. Testing Timeout Emergency Auto-Discard...');
+  game.indicator = new Tile('ind_red_13', 'red', 13); // Real Okey = Red 1, Sahte Okey = Red 1
+  const realOkeyTile = new Tile('okey_red_1', 'red', 1, false);
+  const sahteOkeyTile = new Tile('sahte_okey', 'fake', 0, true); // Value 1
+  const normalTile7 = new Tile('yellow_7', 'yellow', 7, false);
+  const normalTile10 = new Tile('black_10', 'black', 10, false);
+
+  game.currentTurn = 1;
+  game.turnState = 'DISCARD';
+  game.players[1].hand = [realOkeyTile, sahteOkeyTile, normalTile7, normalTile10];
+
+  game.executeEmergencyTurn(1);
+
+  // The discarded tile into discard pile should be sahteOkeyTile (value 1, lowest non-real-okey)
+  const lastDiscarded = game.discards[1][game.discards[1].length - 1];
+  assert.strictEqual(lastDiscarded.id, 'sahte_okey');
+  // Real Okey must STILL be in hand
+  assert.strictEqual(game.players[1].hand.some(t => t.id === 'okey_red_1'), true);
+
+  console.log('   Timeout Emergency Auto-Discard: PASSED');
   console.log('🎉 ALL PENALTY & REMATCH TESTS PASSED SUCCESSFULLY!');
 });
