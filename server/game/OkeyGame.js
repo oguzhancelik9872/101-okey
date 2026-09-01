@@ -1,4 +1,5 @@
 const Deck = require('./Deck');
+const Tile = require('./Tile');
 const Validator = require('./Validator');
 const BotAI = require('./BotAI');
 const { GAME_STATES, GAME_MODES, PENALTIES } = require('./Constants');
@@ -191,6 +192,7 @@ class OkeyGame {
     this.turnState = 'DISCARD';
     this.turnStartTime = Date.now();
     this.turnDuration = 30000;
+    this._saveTurnSnapshot(this.firstPlayerIndex);
     this.addLog(`El ${this.currentRound} başladı! Gösterge: ${this.indicator.color.toUpperCase()} ${this.indicator.number}. Başlayan: ${this.players[this.firstPlayerIndex].name}`);
 
     // Check Gösterge bonus for players holding it
@@ -239,6 +241,7 @@ class OkeyGame {
       player.hand.push(tile);
       this.drawnFromDiscard = { playerIndex, tile };
       this.turnState = 'DISCARD';
+      this._saveTurnSnapshot(playerIndex);
 
       this.addLog(`${player.name} solundaki ${this.players[leftPlayerSeat].name}'in attığı taşı aldı.`);
       return { success: true, tile, source: 'discard' };
@@ -258,6 +261,7 @@ class OkeyGame {
       player.hand.push(tile);
       this.drawnFromDiscard = null;
       this.turnState = 'DISCARD';
+      this._saveTurnSnapshot(playerIndex);
 
       this.addLog(`${player.name} desteden taş çekti.`);
       return { success: true, tile, source: 'deck' };
@@ -293,8 +297,91 @@ class OkeyGame {
     // Revert turn state back to DRAW so player can draw from deck
     this.drawnFromDiscard = null;
     this.turnState = 'DRAW';
+    this.turnSnapshot = null;
 
     this.addLog(`${player.name} yandan aldığı taşı geri bıraktı.`);
+    return { success: true };
+  }
+
+  /**
+   * Save a snapshot of the current player's turn state before any modifications (open melds / process tiles)
+   */
+  _saveTurnSnapshot(playerIndex) {
+    const player = this.players[playerIndex];
+    if (!player) return;
+
+    this.turnSnapshot = {
+      playerIndex,
+      hand: player.hand.map(t => new Tile(t.id, t.color, t.number, t.isFake)),
+      opened: player.opened,
+      openType: player.openType,
+      openedMelds: player.openedMelds ? [...player.openedMelds] : [],
+      openedInThisTurn: player.openedInThisTurn || false,
+      initialOpenScore: player.initialOpenScore || 0,
+      initialOpenPairs: player.initialOpenPairs || 0,
+      tableMelds: this.tableMelds.map(m => ({
+        id: m.id,
+        playerIndex: m.playerIndex,
+        type: m.type,
+        tiles: m.tiles.map(t => new Tile(t.id, t.color, t.number, t.isFake)),
+        score: m.score
+      })),
+      tableMeldCounter: this.tableMeldCounter,
+      penalties: this.players.map(p => ({
+        penaltyPoints: p.penaltyPoints || 0,
+        penalties: p.penalties ? [...p.penalties] : []
+      })),
+      drawnFromDiscard: this.drawnFromDiscard ? { ...this.drawnFromDiscard } : null,
+      modified: false
+    };
+  }
+
+  /**
+   * Undo all open and processing actions done in the current turn before discarding
+   */
+  undoTurn(playerIndex) {
+    if (this.state !== GAME_STATES.PLAYING) return { success: false, reason: 'Oyun devam etmiyor.' };
+    if (this.currentTurn !== playerIndex) return { success: false, reason: 'Sıra sizde değil.' };
+    if (this.turnState !== 'DISCARD') return { success: false, reason: 'Geri alınacak bir hamle yok.' };
+    if (!this.turnSnapshot || !this.turnSnapshot.modified || this.turnSnapshot.playerIndex !== playerIndex) {
+      return { success: false, reason: 'Geri alınacak bir hamle bulunamadı.' };
+    }
+
+    const player = this.players[playerIndex];
+    const snap = this.turnSnapshot;
+
+    // Restore player hand & opened state
+    player.hand = snap.hand.map(t => new Tile(t.id, t.color, t.number, t.isFake));
+    player.opened = snap.opened;
+    player.openType = snap.openType;
+    player.openedMelds = snap.openedMelds ? [...snap.openedMelds] : [];
+    player.openedInThisTurn = snap.openedInThisTurn;
+    player.initialOpenScore = snap.initialOpenScore;
+    player.initialOpenPairs = snap.initialOpenPairs;
+
+    // Restore table melds
+    this.tableMelds = snap.tableMelds.map(m => ({
+      id: m.id,
+      playerIndex: m.playerIndex,
+      type: m.type,
+      tiles: m.tiles.map(t => new Tile(t.id, t.color, t.number, t.isFake)),
+      score: m.score
+    }));
+    this.tableMeldCounter = snap.tableMeldCounter;
+
+    // Restore penalties
+    for (let i = 0; i < 4; i++) {
+      if (this.players[i] && snap.penalties[i]) {
+        this.players[i].penaltyPoints = snap.penalties[i].penaltyPoints;
+        this.players[i].penalties = [...snap.penalties[i].penalties];
+      }
+    }
+
+    // Restore drawnFromDiscard
+    this.drawnFromDiscard = snap.drawnFromDiscard ? { ...snap.drawnFromDiscard } : null;
+
+    snap.modified = false;
+    this.addLog(`↩️ ${player.name} yaptığı açma/işleme hamlelerinden vazgeçti ve elini geri aldı.`);
     return { success: true };
   }
 
@@ -440,6 +527,10 @@ class OkeyGame {
 
     this.drawnFromDiscard = null; // Successfully used
 
+    // Reset turn timer from beginning on open
+    this.turnStartTime = Date.now();
+    if (this.turnSnapshot) this.turnSnapshot.modified = true;
+
     this.addLog(`${player.name} ${validation.score} puan ile el açtı!`);
     return { success: true, score: validation.score, remainingTilesCount: player.hand.length };
   }
@@ -559,6 +650,10 @@ class OkeyGame {
 
     this.drawnFromDiscard = null;
 
+    // Reset turn timer from beginning on open
+    this.turnStartTime = Date.now();
+    if (this.turnSnapshot) this.turnSnapshot.modified = true;
+
     this.addLog(`${player.name} ${pairs.length} çift açtı!`);
     return { success: true, count: pairs.length, remainingTilesCount: player.hand.length };
   }
@@ -594,6 +689,10 @@ class OkeyGame {
     if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex && this.drawnFromDiscard.tile.id === tileId) {
       this.drawnFromDiscard = null;
     }
+
+    // Reset turn timer from beginning on successful tile processing
+    this.turnStartTime = Date.now();
+    if (this.turnSnapshot) this.turnSnapshot.modified = true;
 
     // If an Okey was replaced and retrieved from the table meld!
     if (processCheck.isOkeySteal && processCheck.stolenOkeyTile) {
@@ -668,6 +767,13 @@ class OkeyGame {
       if (this.players[i]) this.players[i].openedInThisTurn = false;
     }
 
+    // Check "Okey Atma" penalty (player discarded an Okey without finishing the hand)
+    if (tile.isOkey(this.indicator)) {
+      player.penaltyPoints = (player.penaltyPoints || 0) + 101;
+      player.penalties.push({ type: 'DISCARDED_OKEY', points: 101, desc: 'Okey atma cezası (+101)' });
+      this.addLog(`⚠️ ${player.name} elinde taş varken OKEY attığı için +101 ceza puanı aldı!`);
+    }
+
     // Check "İşlek Taş Atma" penalty
     const isPlayable = Validator.isPlayableToTable(tile, this.tableMelds, this.indicator);
     if (isPlayable) {
@@ -675,6 +781,9 @@ class OkeyGame {
       player.penalties.push({ type: 'DISCARDED_PLAYABLE', points: 101, desc: 'İşlek taş atma cezası (+101)' });
       this.addLog(`⚠️ ${player.name} masaya işlenebilecek işlek bir taş attığı için +101 ceza puanı aldı!`);
     }
+
+    // Conclude turn and clear snapshot
+    this.turnSnapshot = null;
 
     // Check if the deck was exhausted (Son taş çekilmişti ve o son taşı çeken oyuncu artık taşını attı -> Oyun Bitti!)
     if (this.deck && this.deck.remainingCount() === 0) {
@@ -1236,6 +1345,7 @@ class OkeyGame {
         })) : null
       }) : null),
       roundResults: this.roundResults,
+      canUndo: Boolean(this.turnSnapshot && this.turnSnapshot.modified && this.turnSnapshot.playerIndex === viewerSeatIndex && this.currentTurn === viewerSeatIndex && this.turnState === 'DISCARD'),
       drawnFromDiscard: this.drawnFromDiscard ? {
         playerIndex: this.drawnFromDiscard.playerIndex,
         tileId: this.drawnFromDiscard.tile.id

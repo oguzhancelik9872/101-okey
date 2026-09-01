@@ -106,7 +106,7 @@ class Database {
     });
   }
 
-  selectPlayerName(name, socketId) {
+  selectPlayerName(name, socketId, isSocketActive = null) {
     const clean = (name || '').trim().toLowerCase();
     const matched = ALLOWED_PLAYERS.find(p => p.toLowerCase() === clean);
 
@@ -117,6 +117,10 @@ class Database {
     const uname = matched.toLowerCase();
     const existingSocket = this.activeUsers.get(uname);
     if (existingSocket && existingSocket !== socketId) {
+      // If the other player is still actively connected, block duplicate selection
+      if (typeof isSocketActive === 'function' && isSocketActive(existingSocket)) {
+        return { success: false, reason: 'Bu karakter şu anda başka bir oyuncu tarafından kullanılıyor.' };
+      }
       // Release ghost or previous session socket
       this.releaseSocket(existingSocket);
     }

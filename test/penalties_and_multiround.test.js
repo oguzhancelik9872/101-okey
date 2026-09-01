@@ -259,5 +259,62 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(eScores[eGame.players[3].id].points, 404);  // Opponent 2
 
   console.log('   Elden Bitme: PASSED (Finisher: -606, Partner: 0, Opponents: +404)');
+
+  // 9. Test Discarding Okey without finishing (+101 penalty)
+  console.log('9. Testing Okey Discard Penalty (+101 when not finishing)...');
+  const okeyGame = new OkeyGame('test_okey_discard');
+  for (let i = 0; i < 4; i++) {
+    okeyGame.addPlayer(`op_${i}`, `Oyuncu ${i + 1}`, false, 'female', null, i);
+  }
+  okeyGame.startRound(0); // Player 0 starts with 22 tiles
+  okeyGame.indicator = new Tile('ind_black_5', 'black', 5); // Okey = Black 6
+  const okeyToThrow = new Tile('okey_black_6', 'black', 6);
+  okeyGame.players[0].hand.push(okeyToThrow);
+  const discardOkeyRes = okeyGame.discardTile(0, 'okey_black_6');
+  assert.strictEqual(discardOkeyRes.success, true);
+  assert.strictEqual(discardOkeyRes.finished, false);
+  // Player 0 must receive +101 penalty!
+  assert.strictEqual(okeyGame.players[0].penaltyPoints, 101);
+  assert.strictEqual(okeyGame.players[0].penalties.some(p => p.type === 'DISCARDED_OKEY'), true);
+  console.log('   Okey Discard Penalty: PASSED (Player 0 got +101 for discarding Okey without finishing)');
+
+  // 10. Test Turn Timer Reset and Undo Turn (Vazgeç)
+  console.log('10. Testing Turn Timer Reset & Undo Turn (Vazgeç)...');
+  const uGame = new OkeyGame('test_undo_turn');
+  for (let i = 0; i < 4; i++) {
+    uGame.addPlayer(`up_${i}`, `Oyuncu ${i + 1}`, false, 'female', null, i);
+  }
+  uGame.startRound(0); // Player 0 starts in DISCARD state
+  const uMeld1 = [new Tile('ur1', 'red', 10), new Tile('ur2', 'red', 11), new Tile('ur3', 'red', 12)];
+  const uMeld2 = [new Tile('ub1', 'blue', 10), new Tile('ub2', 'blue', 11), new Tile('ub3', 'blue', 12)];
+  const uMeld3 = [new Tile('uy1', 'yellow', 10), new Tile('uy2', 'yellow', 11), new Tile('uy3', 'yellow', 12)];
+  const uMeld4 = [new Tile('uk1', 'black', 10), new Tile('uk2', 'black', 11), new Tile('uk3', 'black', 12)];
+  const extraTiles = [new Tile('ux1', 'red', 1), new Tile('ux2', 'red', 2)];
+
+  uGame.players[0].hand = [...uMeld1, ...uMeld2, ...uMeld3, ...uMeld4, ...extraTiles];
+  uGame._saveTurnSnapshot(0);
+  const originalHandCount = uGame.players[0].hand.length;
+
+  // Open hand
+  const uOpenRes = uGame.openHand(0, [
+    uMeld1.map(t => t.id),
+    uMeld2.map(t => t.id),
+    uMeld3.map(t => t.id),
+    uMeld4.map(t => t.id)
+  ]);
+  assert.strictEqual(uOpenRes.success, true);
+  assert.strictEqual(uGame.players[0].opened, true);
+  assert.strictEqual(uGame.tableMelds.length, 4);
+  assert.strictEqual(uGame.players[0].hand.length, 2);
+
+  // Undo turn before discard!
+  const undoRes = uGame.undoTurn(0);
+  assert.strictEqual(undoRes.success, true);
+  assert.strictEqual(uGame.players[0].opened, false);
+  assert.strictEqual(uGame.players[0].openType, null);
+  assert.strictEqual(uGame.tableMelds.length, 0);
+  assert.strictEqual(uGame.players[0].hand.length, originalHandCount);
+  console.log('   Undo Turn (Vazgeç): PASSED (Hand and table completely restored!)');
+
   console.log('🎉 ALL PENALTY & REMATCH TESTS PASSED SUCCESSFULLY!');
 });

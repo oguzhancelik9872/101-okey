@@ -114,6 +114,15 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   let selectedCharName = null;
+  let availableProfilesMap = new Map();
+
+  socket.on('auth:namesUpdate', (names) => {
+    if (Array.isArray(names)) {
+      availableProfilesMap.clear();
+      names.forEach(n => availableProfilesMap.set(n.name.toLowerCase(), n));
+      updateNamePickerUI();
+    }
+  });
 
   function updateNamePickerUI() {
     const grid = document.getElementById('name-picker-grid');
@@ -121,12 +130,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const cards = grid.querySelectorAll('.name-card');
     cards.forEach(card => {
       const name = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
-      const isSelected = selectedCharName && selectedCharName.toLowerCase() === (name || '').toLowerCase();
-      card.classList.toggle('selected', Boolean(isSelected));
+      const info = availableProfilesMap.get((name || '').toLowerCase());
+      const isOccupied = Boolean(info && info.isOnline && info.activeSocketId && info.activeSocketId !== socket.id);
+      const isSelected = Boolean(selectedCharName && selectedCharName.toLowerCase() === (name || '').toLowerCase() && !isOccupied);
+
+      card.classList.toggle('occupied', isOccupied);
+      card.classList.toggle('available', !isOccupied);
+      card.classList.toggle('selected', isSelected);
+
       const statusEl = card.querySelector('.name-card-status');
       if (statusEl) {
-        statusEl.className = 'name-card-status ' + (isSelected ? 'status-selected' : 'status-available');
-        statusEl.textContent = isSelected ? '✨ Seçildi' : '🟢 Seç';
+        if (isOccupied) {
+          statusEl.className = 'name-card-status status-busy';
+          statusEl.textContent = '🔴 Dolu';
+        } else if (isSelected) {
+          statusEl.className = 'name-card-status status-selected';
+          statusEl.textContent = '✨ Seçildi';
+        } else {
+          statusEl.className = 'name-card-status status-available';
+          statusEl.textContent = '🟢 Seç';
+        }
       }
     });
     updateEnterGameButton();
@@ -136,7 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnEnter = document.getElementById('btn-enter-game');
     if (!btnEnter) return;
 
-    if (selectedCharName) {
+    const info = selectedCharName ? availableProfilesMap.get(selectedCharName.toLowerCase()) : null;
+    const isOccupied = Boolean(info && info.isOnline && info.activeSocketId && info.activeSocketId !== socket.id);
+
+    if (selectedCharName && !isOccupied) {
       btnEnter.classList.remove('disabled');
       btnEnter.removeAttribute('disabled');
     } else {
@@ -152,6 +178,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const clean = nameToSelect.trim();
+    const info = availableProfilesMap.get(clean.toLowerCase());
+    if (info && info.isOnline && info.activeSocketId && info.activeSocketId !== socket.id) {
+      ui.showToast('Bu karakter şu anda başka bir oyuncu tarafından kullanılıyor!', 'warning');
+      return;
+    }
+
     const fallbackUser = {
       id: `usr_${clean.toLowerCase()}`,
       username: clean.toLowerCase(),
@@ -160,24 +192,21 @@ document.addEventListener('DOMContentLoaded', () => {
       avatarIndex: 0
     };
 
-    currentUser = fallbackUser;
-    currentActivePlayerName = clean;
-    localStorage.setItem('okey101_user', JSON.stringify(fallbackUser));
-
-    // Instantly reveal lobby with ZERO waiting
-    showLobby();
-    updateLobbyProfileUI();
-    ui.showToast(`Hoş geldin, ${clean}!`, 'success');
-
     // Notify server to bind socket session
     socket.emit('auth:selectName', { name: clean }, (res) => {
       if (res && res.success && res.user) {
         currentUser = res.user;
+        currentActivePlayerName = clean;
         if (res.token) {
           localStorage.setItem('okey101_auth_token', res.token);
         }
         localStorage.setItem('okey101_user', JSON.stringify(res.user));
+        showLobby();
         updateLobbyProfileUI();
+        ui.showToast(`Hoş geldin, ${clean}!`, 'success');
+      } else {
+        ui.showToast((res && res.reason) || 'Karakter seçilemedi.', 'error');
+        updateNamePickerUI();
       }
     });
   }
@@ -202,6 +231,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = e.target.closest('.name-card');
       if (card) {
         const charName = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
+        const info = availableProfilesMap.get((charName || '').toLowerCase());
+        if (info && info.isOnline && info.activeSocketId && info.activeSocketId !== socket.id) {
+          ui.showToast('Bu karakter şu anda başka bir oyuncu tarafından kullanılıyor!', 'warning');
+          return;
+        }
         if (charName) {
           selectedCharName = charName;
           updateNamePickerUI();
@@ -213,6 +247,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = e.target.closest('.name-card');
       if (card) {
         const charName = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
+        const info = availableProfilesMap.get((charName || '').toLowerCase());
+        if (info && info.isOnline && info.activeSocketId && info.activeSocketId !== socket.id) {
+          ui.showToast('Bu karakter şu anda başka bir oyuncu tarafından kullanılıyor!', 'warning');
+          return;
+        }
         if (charName) {
           selectedCharName = charName;
           updateNamePickerUI();
@@ -1033,6 +1072,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Undo Turn Actions Button (Vazgeç)
+  const btnUndoTurn = document.getElementById('btn-undo-turn');
+  if (btnUndoTurn) {
+    btnUndoTurn.addEventListener('click', () => {
+      if (!roomId) return;
+      socket.emit('undoTurn', { roomId }, (res) => {
+        if (res.success) {
+          ui.showToast('↩️ Açılan perler ve işlenen taşlar geri alındı.', 'info', 2500);
+          window.soundEngine.playTilePlace();
+        } else {
+          ui.showToast((res && res.reason) || 'Hamle geri alınamadı.', 'error', 2500);
+        }
+      });
+    });
+  }
+
   if (btnSortRuns) {
     btnSortRuns.addEventListener('click', () => {
       const isMyTurn = currentGameState && currentGameState.currentTurn === viewerSeatIndex;
@@ -1079,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Smart Open Hand Button
+  // Smart Open Hand Button (Oyuncunun ıstakaya kendi dizdiği perleri açar)
   if (btnOpenHand) {
     btnOpenHand.addEventListener('click', () => {
       if (!currentGameState || btnOpenHand.disabled) return;
@@ -1105,42 +1160,29 @@ document.addEventListener('DOMContentLoaded', () => {
       const minRequired = isFirstOpen ? (currentGameState.minOpenScore || 101) : 0;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
 
-      let meldIdArrays = [];
-
-      // 1. Auto-detect valid melds from rack layout
+      // 1. Detect valid melds from the player's own rack layout
       const rackAnalysis = istaka.analyzeRackMelds();
-      const containsRequired = !requiredId || !isFirstOpen || rackAnalysis.validTileIds.has(requiredId);
 
-      if (rackAnalysis.validMelds.length > 0 && rackAnalysis.totalScore >= minRequired && containsRequired) {
-        meldIdArrays = rackAnalysis.validMelds.map(m => m.tiles.map(t => t.id));
-      } else {
-        // 2. Check best melds from entire hand
-        const best = istaka.getBestHandMelds(isFirstOpen ? requiredId : null);
-        if (best.melds && best.melds.length > 0 && (best.score >= minRequired || !isFirstOpen)) {
-          istaka.autoSortRuns(isFirstOpen ? requiredId : null);
-          meldIdArrays = best.melds.map(m => m.map(t => t.id));
-        } else {
-          if (requiredId && isFirstOpen && !containsRequired) {
-            ui.showToast('Yandan çektiğiniz taşı açtığınız perlerde kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
-          } else if (isFirstOpen) {
-            const formattedScore = (window.formatOkeyScore && typeof window.formatOkeyScore === 'function')
-              ? window.formatOkeyScore(minRequired)
-              : `${minRequired}`;
-            ui.showToast(`Seri açmak için elinizde en az ${formattedScore} (${minRequired} puan) olmalıdır.`, 'error', 3000);
-          } else {
-            ui.showToast('Geçerli bir per oluşturulamadı.', 'error', 3000);
-          }
-          return;
-        }
+      if (rackAnalysis.validMelds.length === 0) {
+        ui.showToast('Istakanızda açılacak geçerli bir per bulunamadı.', 'error', 3000);
+        return;
       }
 
-      if (meldIdArrays.length === 0) {
+      const containsRequired = !requiredId || !isFirstOpen || rackAnalysis.validTileIds.has(requiredId);
+      if (requiredId && isFirstOpen && !containsRequired) {
+        ui.showToast('Yandan çektiğiniz taşı açtığınız perlerde kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
+        return;
+      }
+
+      if (isFirstOpen && rackAnalysis.totalScore < minRequired) {
         const formattedScore = (window.formatOkeyScore && typeof window.formatOkeyScore === 'function')
           ? window.formatOkeyScore(minRequired)
           : `${minRequired}`;
-        ui.showToast(isFirstOpen ? `Seri açmak için elinizde en az ${formattedScore} (${minRequired} puan) olmalıdır.` : 'Geçerli bir per oluşturulamadı.', 'error', 3000);
+        ui.showToast(`Dizdiğiniz perlerin toplamı ${rackAnalysis.totalScore} puan. Seri açmak için en az ${formattedScore} (${minRequired} puan) olmalıdır.`, 'error', 3500);
         return;
       }
+
+      const meldIdArrays = rackAnalysis.validMelds.map(m => m.tiles.map(t => t.id));
 
       socket.emit('openHand', { roomId, melds: meldIdArrays }, (res) => {
         if (res.success) {
@@ -1153,7 +1195,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Smart Open Pairs Button
+  // Smart Open Pairs Button (Oyuncunun ıstakaya kendi dizdiği çiftleri açar)
   if (btnOpenPairs) {
     btnOpenPairs.addEventListener('click', () => {
       if (!currentGameState || btnOpenPairs.disabled) return;
@@ -1171,27 +1213,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const requiredId = (isMyTurn && isFirstOpen && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
 
       // 1. Analyze 2-tile pair groups currently arranged on the istaka rack
-      let rackPairs = istaka.analyzeRackPairs();
-      let containsRequired = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
-
-      if (rackPairs.validPairs.length < minPairs || !containsRequired) {
-        const allPairsInHand = ClientValidator.findAllPairs(istaka.getAllTiles(), currentGameState.indicator, isFirstOpen ? requiredId : null);
-        const containsRequiredInHand = !requiredId || !isFirstOpen || allPairsInHand.some(p => p[0].id === requiredId || p[1].id === requiredId);
-
-        if (allPairsInHand.length >= minPairs && containsRequiredInHand) {
-          istaka.autoSortPairs(isFirstOpen ? requiredId : null);
-          rackPairs = istaka.analyzeRackPairs();
-        } else if (requiredId && isFirstOpen && !containsRequired) {
-          ui.showToast('Yandan çektiğiniz taşı açtığınız çiftlerde kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
-          return;
-        } else {
-          ui.showToast(`Çift açmak için en az ${minPairs} çiftiniz olmalıdır.`, 'error', 3000);
-          return;
-        }
-      }
+      const rackPairs = istaka.analyzeRackPairs();
 
       if (rackPairs.validPairs.length < minPairs) {
-        ui.showToast(`Çift açmak için en az ${minPairs} çiftiniz olmalıdır.`, 'error', 3000);
+        ui.showToast(`Çift açmak için ıstakanızda en az ${minPairs} çift dizili olmalıdır (Şu an: ${rackPairs.validPairs.length} çift).`, 'error', 3000);
+        return;
+      }
+
+      const containsRequired = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
+      if (requiredId && isFirstOpen && !containsRequired) {
+        ui.showToast('Yandan çektiğiniz taşı açtığınız çiftlerde kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
         return;
       }
 
@@ -1370,6 +1401,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnReturnDiscard = document.getElementById('btn-return-discard');
     if (btnReturnDiscard) {
       btnReturnDiscard.classList.toggle('hidden', !hasDrawnFromDiscard);
+    }
+
+    // Show "Vazgeç" button only if viewer has modified hand in this turn and can undo
+    const btnUndoTurn = document.getElementById('btn-undo-turn');
+    if (btnUndoTurn) {
+      const canUndo = Boolean(currentGameState.canUndo && isMyTurn && turnState === 'DISCARD');
+      btnUndoTurn.classList.toggle('hidden', !canUndo);
     }
   }
 

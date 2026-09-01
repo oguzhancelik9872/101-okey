@@ -2448,6 +2448,14 @@ body.plus-theme {
   animation: pulse 1.3s infinite;
 }
 
+.btn-pill-danger {
+  background: linear-gradient(180deg, #e74c3c 0%, #c0392b 60%, #962d22 100%);
+  color: #fff;
+  border-color: #ff7675;
+  box-shadow: 0 4px 14px rgba(231, 76, 60, 0.6);
+  animation: pulse 1.5s infinite;
+}
+
 .btn-pill-green {
   background: linear-gradient(180deg, #2ecc71 0%, #27ae60 60%, #1e8449 100%);
   color: #fff;

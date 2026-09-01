@@ -6,7 +6,7 @@ function formatOkeyScore(score) {
   const quotient = Math.floor(score / 3);
   const remainder = score % 3;
   if (remainder === 0) return `${quotient}`;
-  return `${quotient} yan ${remainder}`;
+  return `${quotient}-${remainder}`;
 }
 window.formatOkeyScore = formatOkeyScore;
 
