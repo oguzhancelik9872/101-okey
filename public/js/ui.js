@@ -87,7 +87,9 @@ class UIManager {
 
       let statusText = '';
       if (isFinisher) {
-        if (results.isOkeyDiscard) {
+        if (results.isEldenBitme) {
+          statusText = results.isOkeyDiscard ? '🚀🔥 Okey + Elden Bitti (-1212)' : '🚀 Elden Bitti (-606)';
+        } else if (results.isOkeyDiscard) {
           statusText = '🔥 Okey ile Bitti (-202)';
         } else {
           statusText = '🏆 Bitti (-101)';
@@ -101,7 +103,7 @@ class UIManager {
           statusText = `Açtı (Kalan: ${basePoints})`;
         }
       } else {
-        statusText = `Açmadı (+202)`;
+        statusText = results.isEldenBitme ? `Açmadı (+${basePoints} Elden Bitme)` : `Açmadı (+202)`;
       }
 
       const pointStyle = points <= 0 ? 'color: #2ecc71; font-weight: 900;' : 'color: #f1c40f; font-weight: 800;';
@@ -123,9 +125,10 @@ class UIManager {
     let html = `
       <div class="round-result-header" style="text-align: center; margin-bottom: 16px;">
         <h2 style="font-family: 'Cinzel', serif; font-size: 24px; font-weight: 900; color: #f1c40f; letter-spacing: 2px; margin: 0 0 6px 0;">OYUN BİTTİ</h2>
-        ${results.finisher ? `<div style="font-size: 13px; font-weight: 700; color: #a8d5ba;">🎉 <strong>${results.finisher}</strong> oyunu bitirdi!</div>` : `<div style="font-size: 13px; font-weight: 700; color: #bdc3c7;">${results.reason || 'Oyun Tamamlandı'}</div>`}
+        ${results.finisher ? `<div style="font-size: 13px; font-weight: 700; color: #a8d5ba;">${results.isEldenBitme ? '🚀' : '🎉'} <strong>${results.finisher}</strong> ${results.isEldenBitme ? 'elden bitirdi (-606 puan)!' : 'oyunu bitirdi!'}</div>` : `<div style="font-size: 13px; font-weight: 700; color: #bdc3c7;">${results.reason || 'Oyun Tamamlandı'}</div>`}
+        ${results.isEldenBitme ? '<span class="badge-okey-discard" style="display:inline-block; margin-top: 4px; background: linear-gradient(135deg, #e67e22, #d35400);">🚀 ELDEN BİTME (-606)</span>' : ''}
         ${results.isOkeyDiscard ? '<span class="badge-okey-discard" style="display:inline-block; margin-top: 4px;">🔥 OKEY ATTI (2x CEZA)</span>' : ''}
-        ${results.isPairsFinish ? '<span class="badge-pairs-finish" style="display:inline-block; margin-top: 4px;">✨ ÇİFT BİTTİ (2x CEZA)</span>' : ''}
+        ${results.isPairsFinish ? '<span class="badge-pairs-finish" style="display:inline-block; margin-top: 4px;">✨ ÇİFT BİTTİ</span>' : ''}
       </div>
 
       <!-- 2 Side-by-Side Team Clusters -->

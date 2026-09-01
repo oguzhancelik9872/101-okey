@@ -163,6 +163,7 @@ class OkeyGame {
     this.minOpenPairs = 5;
     this.drawnFromDiscard = null;
     this.roundResults = null;
+    this.otherPlayersEverOpened = false;
 
     if (starterIndex !== null && starterIndex !== undefined) {
       this.firstPlayerIndex = starterIndex % 4;
@@ -178,6 +179,7 @@ class OkeyGame {
       this.players[i].opened = false;
       this.players[i].openType = null;
       this.players[i].openedMelds = [];
+      this.players[i].openedInThisTurn = false;
       this.players[i].initialOpenScore = 0;
       this.players[i].initialOpenPairs = 0;
       this.players[i].roundScore = 0;
@@ -394,9 +396,32 @@ class OkeyGame {
     }
 
     const firstTime = !player.opened;
+    if (this.players.some((p, idx) => idx !== playerIndex && p.opened)) {
+      this.otherPlayersEverOpened = true;
+    }
+
     if (firstTime) {
       player.initialOpenScore = validation.score;
       player.initialOpenPairs = 0;
+      player.openedInThisTurn = true;
+
+      // Penalty Rule: If opened using drawn discard tile for the first time -> Discarder gets 10x tile value
+      if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
+        const discardTile = this.drawnFromDiscard.tile;
+        const leftPlayerSeat = (playerIndex + 3) % 4;
+        const discarder = this.players[leftPlayerSeat];
+        if (discarder && discardTile) {
+          const tileVal = discardTile.getValue(this.indicator);
+          const penalty = tileVal * 10;
+          discarder.penaltyPoints = (discarder.penaltyPoints || 0) + penalty;
+          discarder.penalties.push({
+            type: 'DISCARDED_TILE_OPENED_SERI',
+            points: penalty,
+            desc: `Yandan taş vererek seri açtırma cezası (+${penalty})`
+          });
+          this.addLog(`⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} seri açtığı için +${penalty} ceza puanı aldı!`);
+        }
+      }
     }
     player.opened = true;
     player.openType = 'seri';
@@ -486,11 +511,34 @@ class OkeyGame {
     }
 
     const firstTime = !player.opened;
+    if (this.players.some((p, idx) => idx !== playerIndex && p.opened)) {
+      this.otherPlayersEverOpened = true;
+    }
+
     if (firstTime) {
       player.initialOpenScore = 0;
       player.initialOpenPairs = pairs.length;
+      player.openedInThisTurn = true;
       player.opened = true;
       player.openType = 'pairs';
+
+      // Penalty Rule: If opened pairs using drawn discard tile for the first time -> Discarder gets 20x tile value
+      if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
+        const discardTile = this.drawnFromDiscard.tile;
+        const leftPlayerSeat = (playerIndex + 3) % 4;
+        const discarder = this.players[leftPlayerSeat];
+        if (discarder && discardTile) {
+          const tileVal = discardTile.getValue(this.indicator);
+          const penalty = tileVal * 20;
+          discarder.penaltyPoints = (discarder.penaltyPoints || 0) + penalty;
+          discarder.penalties.push({
+            type: 'DISCARDED_TILE_OPENED_PAIRS',
+            points: penalty,
+            desc: `Yandan taş vererek çift açtırma cezası (+${penalty})`
+          });
+          this.addLog(`⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} çift açtığı için +${penalty} ceza puanı aldı!`);
+        }
+      }
 
       if (pairs.length >= 7) {
         const oppSeats = [(playerIndex + 1) % 4, (playerIndex + 3) % 4];
@@ -613,6 +661,11 @@ class OkeyGame {
       return { success: true, finished: true, isOkeyDiscard };
     }
 
+    // Turn is ending without finish: reset openedInThisTurn for all players
+    for (let i = 0; i < 4; i++) {
+      if (this.players[i]) this.players[i].openedInThisTurn = false;
+    }
+
     // Check "İşlek Taş Atma" penalty
     const isPlayable = Validator.isPlayableToTable(tile, this.tableMelds, this.indicator);
     if (isPlayable) {
@@ -652,8 +705,17 @@ class OkeyGame {
     const finisher = this.players[finishingPlayerIndex];
     if (!finisher) return;
 
+    // Elden Bitme: No other player has ever opened at the table and finisher opened & finished in this single turn!
+    const isEldenBitme = Boolean(finisher.openedInThisTurn && !this.otherPlayersEverOpened);
     const isPairsFinish = finisher.openType === 'pairs';
-    const finisherPoints = isOkeyDiscard ? -202 : -101;
+    
+    let finisherPoints = -101;
+    if (isEldenBitme) {
+      finisherPoints = isOkeyDiscard ? -1212 : -606;
+    } else if (isOkeyDiscard) {
+      finisherPoints = -202;
+    }
+
     finisher.roundScore = finisherPoints + (finisher.penaltyPoints || 0);
     finisher.score += finisher.roundScore;
 
@@ -673,7 +735,8 @@ class OkeyGame {
           opened: true,
           openType: p.openType,
           handSum: 0,
-          isFinisher: true
+          isFinisher: true,
+          isEldenBitme
         };
         continue;
       }
@@ -699,8 +762,14 @@ class OkeyGame {
       let handSum = 0;
 
       if (!p.opened) {
-        // Player never opened: standard 202 penalty points
-        pPoints = 202;
+        // Player never opened:
+        // Elden bitme: 404 (with Okey: 808)
+        // Standard: 202
+        if (isEldenBitme) {
+          pPoints = isOkeyDiscard ? 808 : 404;
+        } else {
+          pPoints = 202;
+        }
       } else {
         // Player opened: sum of leftover tiles. If opened as pairs, only their own penalty is 2x
         handSum = p.hand ? p.hand.reduce((sum, t) => sum + (t ? t.getValue(this.indicator) : 0), 0) : 0;
@@ -738,6 +807,7 @@ class OkeyGame {
       finisher: finisher.name,
       isOkeyDiscard,
       isPairsFinish,
+      isEldenBitme,
       multiplier: isOkeyDiscard ? 2 : 1,
       roundScores,
       teamResults: {
@@ -757,9 +827,11 @@ class OkeyGame {
       totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
 
-    let finishMsg = `🎉 ${finisher.name} oyunu bitirdi (${finisherPoints} puan).`;
-    if (isOkeyDiscard) finishMsg += ' 🔥 OKEY ATTI (Cezalar 2 katı)!';
-    if (isPairsFinish) finishMsg += ' ✨ ÇİFT BİTTİ (Cezalar 2 katı)!';
+    let finishMsg = isEldenBitme
+      ? `🚀 ${finisher.name} ELDEN BİTTİ (${finisherPoints} puan)!`
+      : `🎉 ${finisher.name} oyunu bitirdi (${finisherPoints} puan).`;
+    if (isOkeyDiscard) finishMsg += ' 🔥 OKEY ATTI (2x CEZA)!';
+    if (isPairsFinish) finishMsg += ' ✨ ÇİFT BİTTİ!';
     this.addLog(finishMsg);
     this.addLog(`🏆 Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
   }
