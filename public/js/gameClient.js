@@ -1007,7 +1007,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 3. Draw & Discard Orchestration
       if (anim) {
-        if (discardedByPlayer !== null && discardedByPlayer !== viewerSeatIndex) {
+        const isReturnDiscardByViewer = Boolean(
+          lastGameState.drawnFromDiscard &&
+          lastGameState.drawnFromDiscard.playerIndex === viewerSeatIndex &&
+          !state.drawnFromDiscard &&
+          state.currentTurn === viewerSeatIndex &&
+          discardedByPlayer === ((viewerSeatIndex + 3) % 4)
+        );
+
+        if (isReturnDiscardByViewer) {
+          // Viewer returns the drawn discard tile back to the left player's corner box
+          const leftPos = table.getRelativePosition(discardedByPlayer); // 'left'
+          anim.animateReturnDiscard(leftPos, discardedTile);
+        } else if (discardedByPlayer !== null && discardedByPlayer !== viewerSeatIndex) {
           // Other player / Bot discards a tile: Direct flight from player's profile avatar to corner box
           const seatPos = table.getRelativePosition(discardedByPlayer);
           anim.animateDiscard(seatPos, discardedTile, false);

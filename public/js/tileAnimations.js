@@ -281,9 +281,53 @@ class TileAnimationEngine {
         return;
       }
 
-      const destTile = discardEl.querySelector('.okey-tile:not(.underlying-discard-tile)') || discardEl.querySelector('.okey-tile');
-      if (destTile) {
-        destTile.style.opacity = '0';
+      this.flyTile({
+        fromCoords: startCoords,
+        toCoords: endCoords,
+        tile,
+        isClosed: false,
+        duration: 380,
+        onComplete: () => {
+          discardEl.innerHTML = '';
+          const landedTileEl = this.createTileDOM(tile, false);
+          landedTileEl.style.opacity = '1';
+          discardEl.appendChild(landedTileEl);
+
+          if (typeof onDone === 'function') onDone();
+          done();
+        }
+      });
+    });
+  }
+
+  /**
+   * Return drawn discard tile back to the left player's corner pile (From viewer's hand)
+   */
+  animateReturnDiscard(toPos, tile, onDone = null) {
+    this.enqueue((done) => {
+      let startCoords = null;
+      let rackTileEl = null;
+
+      if (tile && tile.id) {
+        rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
+        if (rackTileEl) {
+          startCoords = this.getElCenter(rackTileEl);
+          rackTileEl.style.opacity = '0';
+        }
+      }
+
+      if (!startCoords) {
+        const fromEl = document.getElementById('player-istaka-container') || document.getElementById('seat-bottom');
+        startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords('bottom');
+      }
+
+      const discardEl = document.getElementById('discard-pile-' + toPos);
+      const endCoords = this.getElCenter(discardEl);
+
+      if (!endCoords) {
+        if (typeof onDone === 'function') onDone();
+        done();
+        return;
       }
 
       this.flyTile({
@@ -293,13 +337,11 @@ class TileAnimationEngine {
         isClosed: false,
         duration: 380,
         onComplete: () => {
-          if (destTile) {
-            destTile.style.opacity = '1';
-          }
-          const underTile = discardEl.querySelector('.underlying-discard-tile');
-          if (underTile && underTile.parentNode) {
-            underTile.parentNode.removeChild(underTile);
-          }
+          discardEl.innerHTML = '';
+          const landedTileEl = this.createTileDOM(tile, false);
+          landedTileEl.style.opacity = '1';
+          discardEl.appendChild(landedTileEl);
+
           if (typeof onDone === 'function') onDone();
           done();
         }
