@@ -3468,3 +3468,62 @@ body.plus-theme {
   font-weight: 900;
   white-space: nowrap;
 }
+
+/* =========================================================
+   FLYING TILE ANIMATION OVERLAY & 3D CASINO TILE CLONES
+   ========================================================= */
+
+.animation-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+  overflow: hidden !important;
+}
+
+.flying-tile-clone {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1.5px solid #d5c8b5;
+  background: var(--tile-bg, linear-gradient(135deg, #fffcf5 0%, #f7ecd7 50%, #ebd4b0 100%));
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85), 0 3px 8px rgba(0, 0, 0, 0.6);
+  user-select: none;
+  pointer-events: none;
+  will-change: transform, opacity;
+  box-sizing: border-box;
+}
+
+.flying-tile-clone.tile-face-down {
+  background: linear-gradient(135deg, #1c0903 0%, #301407 50%, #150602 100%);
+  border: 1.5px solid #8b4513;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9), inset 0 0 8px rgba(241, 196, 15, 0.4);
+}
+
+.flying-tile-clone.tile-face-down .tile-back-pattern {
+  width: 70%;
+  height: 70%;
+  border: 1px dashed rgba(241, 196, 15, 0.5);
+  border-radius: 2px;
+}
+
+.flying-tile-clone .tile-number {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  margin-top: -2px;
+}
+
+.flying-tile-clone .tile-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+

@@ -891,36 +891,80 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Audio events for table actions
+    // Audio and Visual Flying Tile Animations for Table Actions
     if (lastGameState && lastGameState.state === 'PLAYING' && state.state === 'PLAYING') {
-      // 1. Someone opened hand (tableMelds count increased)
+      const anim = window.tileAnimations;
+
+      // 1. Draw Tile Animation (Deck or Discard)
+      const wasDraw = lastGameState.turnState === 'DRAW';
+      const isDiscardNow = state.turnState === 'DISCARD';
+      const sameTurnPlayer = lastGameState.currentTurn === state.currentTurn;
+
+      if (wasDraw && isDiscardNow && sameTurnPlayer && anim) {
+        const turnPlayer = state.currentTurn;
+        const seatPos = table.getRelativePosition(turnPlayer);
+        const isViewer = (turnPlayer === viewerSeatIndex);
+
+        if (state.drawnFromDiscard && state.drawnFromDiscard.playerIndex === turnPlayer) {
+          const fromSeat = (turnPlayer + 3) % 4;
+          const fromPos = table.getRelativePosition(fromSeat);
+          const drawnTile = state.drawnFromDiscard.tile || { id: state.drawnFromDiscard.tileId };
+          anim.animateDrawFromDiscard(seatPos, fromPos, drawnTile, isViewer);
+        } else {
+          anim.animateDrawFromDeck(seatPos, isViewer);
+        }
+      }
+
+      // 2. Open Melds Animation (Seri or Pairs)
       const lastMeldsCount = lastGameState.tableMelds ? lastGameState.tableMelds.length : 0;
       const currentMeldsCount = state.tableMelds ? state.tableMelds.length : 0;
       if (currentMeldsCount > lastMeldsCount) {
         window.soundEngine.playOpenHand();
+
+        if (anim) {
+          // Find newly opened players or new melds added
+          for (let p = 0; p < 4; p++) {
+            const lastP = lastGameState.players ? lastGameState.players[p] : null;
+            const newP = state.players ? state.players[p] : null;
+            const justOpened = newP && newP.opened && (!lastP || !lastP.opened);
+            if (justOpened) {
+              const seatPos = table.getRelativePosition(p);
+              const isViewer = (p === viewerSeatIndex);
+              const playerMelds = state.tableMelds.filter(m => m.playerIndex === p);
+              anim.animateOpenMelds(seatPos, playerMelds, newP.openType, isViewer);
+            }
+          }
+        }
       }
 
-      // 2. Someone discarded a tile (discards pile total count increased)
+      // 3. Tile Discard Animation & Sound
       const countDiscards = (s) => (s && s.discards) ? s.discards.reduce((acc, p) => acc + (p ? p.length : 0), 0) : 0;
       const lastDiscardCount = countDiscards(lastGameState);
       const currentDiscardCount = countDiscards(state);
       if (currentDiscardCount > lastDiscardCount) {
-        // Check if the discarded tile is playable to the table (işlek taş)
         let islekDiscarded = false;
         let discardedByPlayer = null;
+        let discardedTile = null;
+
         if (state.discards && lastGameState.discards) {
           for (let p = 0; p < 4; p++) {
             const curPile = state.discards[p] || [];
             const lastPile = lastGameState.discards[p] || [];
             if (curPile.length > lastPile.length) {
               discardedByPlayer = p;
-              const newTile = curPile[curPile.length - 1];
-              if (newTile && window.ClientValidator && window.ClientValidator.isPlayableToTable(newTile, state.tableMelds || [], state.indicator)) {
+              discardedTile = curPile[curPile.length - 1];
+              if (discardedTile && window.ClientValidator && window.ClientValidator.isPlayableToTable(discardedTile, state.tableMelds || [], state.indicator)) {
                 islekDiscarded = true;
               }
               break;
             }
           }
+        }
+
+        if (discardedByPlayer !== null && discardedTile && anim) {
+          const seatPos = table.getRelativePosition(discardedByPlayer);
+          const isViewer = (discardedByPlayer === viewerSeatIndex);
+          anim.animateDiscard(seatPos, discardedTile, isViewer);
         }
 
         if (islekDiscarded) {
