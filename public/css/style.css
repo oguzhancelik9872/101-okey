@@ -1649,6 +1649,12 @@ body.plus-theme {
   transform: translateY(-50%) translateX(30px) scale(0.8) !important;
 }
 
+.my-turn-focus .table-top-actions {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-20px) scale(0.8) !important;
+}
+
 .my-turn-focus .table-felt-mat {
   top: 8px !important;
   bottom: 54px !important;
@@ -1666,6 +1672,10 @@ body.plus-theme {
 
 .my-turn-focus .grid-cell-slot .okey-tile .tile-number {
   font-size: 15px !important;
+}
+
+.table-top-actions {
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .bar-player-info {
@@ -1940,17 +1950,15 @@ body.plus-theme {
   align-items: center;
   justify-content: center;
   height: 100%;
-  aspect-ratio: 1 / 1.37;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
   border-radius: 3px;
   background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   min-width: 0;
   box-sizing: border-box;
   transition: all 0.15s;
   padding: 0;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .grid-cell-slot.has-tile {
@@ -1962,14 +1970,13 @@ body.plus-theme {
 .grid-cell-slot .okey-tile.tile-small {
   width: 100% !important;
   height: 100% !important;
-  aspect-ratio: 1 / 1.37 !important;
   max-width: 100% !important;
   max-height: 100% !important;
   min-width: 0 !important;
   min-height: 0 !important;
   padding: 0 !important;
   margin: 0 !important;
-  border-radius: 4px !important;
+  border-radius: 3px !important;
   border: 1px solid #d5c8b5 !important;
   box-shadow: var(--tile-shadow) !important;
   background: var(--tile-bg) !important;
@@ -2704,6 +2711,16 @@ body.plus-theme {
   transition: background 0.15s, border-color 0.15s;
   margin: 0;
   padding: 0;
+  overflow: visible;
+}
+
+.istaka-slot .okey-tile {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border-radius: 4px !important;
+  margin: 0 !important;
 }
 
 
