@@ -1311,6 +1311,8 @@ class OkeyGame {
       } : null,
       minOpenScore: viewerReqs.minScore,
       minOpenPairs: viewerReqs.minPairs,
+      tableMinOpenScore: this.minOpenScore || 101,
+      tableMinOpenPairs: this.minOpenPairs || 5,
       tableMelds: this.tableMelds.map(m => ({
         id: m.id,
         playerIndex: m.playerIndex,

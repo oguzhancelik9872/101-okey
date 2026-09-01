@@ -1,12 +1,18 @@
 /**
  * TileAnimationEngine - High-performance 2D GPU-accelerated Flying Tile Animations
- * Handles physical tile movements: drawing from deck/discard, discarding to corner piles,
- * opening melds tile-by-tile into exact grid slots, and processing tiles with 100% synchrony.
+ * Features:
+ * - Sequential execution queue (prevents bot actions from overlapping or clashing)
+ * - Exact rack-slot targeting for drawn tiles
+ * - Seamless opacity synchrony on landing
+ * - Calm, minimal, linear-smooth movement (zero wobbling or secondary bouncing)
  */
 
 class TileAnimationEngine {
   constructor() {
     this.overlay = null;
+    this.queue = [];
+    this.isProcessingQueue = false;
+    this.isAnimating = false;
     this.ensureOverlay();
   }
 
@@ -21,6 +27,28 @@ class TileAnimationEngine {
       }
     }
     return this.overlay;
+  }
+
+  enqueue(animFn) {
+    this.queue.push(animFn);
+    this.processQueue();
+  }
+
+  processQueue() {
+    if (this.isProcessingQueue || this.queue.length === 0) return;
+    this.isProcessingQueue = true;
+    this.isAnimating = true;
+
+    const nextFn = this.queue.shift();
+    nextFn(() => {
+      this.isProcessingQueue = false;
+      if (this.queue.length > 0) {
+        // Small 30ms pause between sequential actions for natural physical cadence
+        setTimeout(() => this.processQueue(), 30);
+      } else {
+        this.isAnimating = false;
+      }
+    });
   }
 
   getElCenter(el) {
@@ -84,55 +112,46 @@ class TileAnimationEngine {
 
   flyTile(options = {}) {
     const {
-      fromEl,
-      toEl,
       fromCoords,
       toCoords,
       tile = null,
       isClosed = false,
-      duration = 280,
-      scaleStart = 1.0,
-      scaleEnd = 0.85,
-      rotateStart = 0,
-      rotateEnd = 0,
+      duration = 340,
       onComplete = null
     } = options;
 
     const overlay = this.ensureOverlay();
-    const start = fromCoords || this.getElCenter(fromEl);
-    const end = toCoords || this.getElCenter(toEl);
-
-    if (!start || !end) {
+    if (!fromCoords || !toCoords) {
       if (typeof onComplete === 'function') onComplete();
       return;
     }
 
     const tileEl = this.createTileDOM(tile, isClosed);
-    const tileW = 32;
-    const tileH = 44;
+    const tileW = 34;
+    const tileH = 46;
 
     tileEl.style.width = `${tileW}px`;
     tileEl.style.height = `${tileH}px`;
     tileEl.style.position = 'fixed';
-    tileEl.style.left = `${start.x - tileW / 2}px`;
-    tileEl.style.top = `${start.y - tileH / 2}px`;
-    tileEl.style.transform = `translate3d(0, 0, 0) scale(${scaleStart}) rotate(${rotateStart}deg)`;
+    tileEl.style.left = `${fromCoords.x - tileW / 2}px`;
+    tileEl.style.top = `${fromCoords.y - tileH / 2}px`;
+    tileEl.style.transform = `translate3d(0, 0, 0)`;
     tileEl.style.opacity = '1';
-    tileEl.style.transition = `transform ${duration}ms cubic-bezier(0.22, 1, 0.36, 1), opacity ${duration}ms ease`;
+    tileEl.style.transition = `transform ${duration}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${duration}ms ease`;
     tileEl.style.zIndex = '9999';
     tileEl.style.pointerEvents = 'none';
 
     overlay.appendChild(tileEl);
 
-    const deltaX = end.x - start.x;
-    const deltaY = end.y - start.y;
+    const deltaX = toCoords.x - fromCoords.x;
+    const deltaY = toCoords.y - fromCoords.y;
 
     // Force reflow
     void tileEl.offsetWidth;
 
     // Trigger transform
     requestAnimationFrame(() => {
-      tileEl.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${scaleEnd}) rotate(${rotateEnd}deg)`;
+      tileEl.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
     });
 
     const cleanup = () => {
@@ -144,235 +163,272 @@ class TileAnimationEngine {
       }
     };
 
-    setTimeout(cleanup, duration + 30);
+    setTimeout(cleanup, duration + 20);
   }
 
   /**
-   * Draw tile from center deck to player profile or rack
+   * Draw tile from center deck
    */
-  animateDrawFromDeck(seatPos, isViewer = false, onComplete = null) {
-    const deckEl = document.getElementById('center-deck-pile');
-    const startCoords = this.getElCenter(deckEl) || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  animateDrawFromDeck(seatPos, isViewer = false, onDone = null) {
+    this.enqueue((done) => {
+      const deckEl = document.getElementById('center-deck-pile');
+      const startCoords = this.getElCenter(deckEl) || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
-    const targetEl = isViewer
-      ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
-      : document.getElementById('seat-' + seatPos);
+      let targetEl = null;
+      let drawnRackTile = null;
 
-    const endCoords = this.getElCenter(targetEl) || this.getSeatFallbackCoords(seatPos);
+      if (isViewer) {
+        drawnRackTile = document.querySelector('.istaka-slot .okey-tile.tile-just-drawn') ||
+          document.querySelector('#istaka-rack .okey-tile:last-child');
+        targetEl = drawnRackTile || document.getElementById('player-istaka-container') || document.getElementById('seat-bottom');
+      } else {
+        targetEl = document.getElementById('seat-' + seatPos);
+      }
 
-    this.flyTile({
-      fromCoords: startCoords,
-      toCoords: endCoords,
-      isClosed: true,
-      duration: 280,
-      scaleStart: 1.0,
-      scaleEnd: 0.9,
-      rotateStart: 0,
-      rotateEnd: 0,
-      onComplete
+      const endCoords = this.getElCenter(targetEl) || this.getSeatFallbackCoords(seatPos);
+
+      if (drawnRackTile) {
+        drawnRackTile.style.opacity = '0';
+      }
+
+      this.flyTile({
+        fromCoords: startCoords,
+        toCoords: endCoords,
+        isClosed: true,
+        duration: 320,
+        onComplete: () => {
+          if (drawnRackTile) {
+            drawnRackTile.style.opacity = '1';
+          }
+          if (typeof onDone === 'function') onDone();
+          done();
+        }
+      });
     });
   }
 
   /**
    * Draw tile from discard pile
    */
-  animateDrawFromDiscard(seatPos, fromPos, tile, isViewer = false, onComplete = null) {
-    const discardEl = document.getElementById('discard-pile-' + fromPos);
-    const startCoords = this.getElCenter(discardEl) || this.getSeatFallbackCoords(fromPos);
+  animateDrawFromDiscard(seatPos, fromPos, tile, isViewer = false, onDone = null) {
+    this.enqueue((done) => {
+      const discardEl = document.getElementById('discard-pile-' + fromPos);
+      const startCoords = this.getElCenter(discardEl) || this.getSeatFallbackCoords(fromPos);
 
-    const targetEl = isViewer
-      ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
-      : document.getElementById('seat-' + seatPos);
+      let targetEl = null;
+      let drawnRackTile = null;
 
-    const endCoords = this.getElCenter(targetEl) || this.getSeatFallbackCoords(seatPos);
+      if (isViewer) {
+        drawnRackTile = document.querySelector('.istaka-slot .okey-tile.tile-just-drawn') ||
+          document.querySelector('#istaka-rack .okey-tile:last-child');
+        targetEl = drawnRackTile || document.getElementById('player-istaka-container') || document.getElementById('seat-bottom');
+      } else {
+        targetEl = document.getElementById('seat-' + seatPos);
+      }
 
-    this.flyTile({
-      fromCoords: startCoords,
-      toCoords: endCoords,
-      tile,
-      isClosed: false,
-      duration: 290,
-      scaleStart: 1.0,
-      scaleEnd: 0.95,
-      onComplete
+      const endCoords = this.getElCenter(targetEl) || this.getSeatFallbackCoords(seatPos);
+
+      if (drawnRackTile) {
+        drawnRackTile.style.opacity = '0';
+      }
+
+      this.flyTile({
+        fromCoords: startCoords,
+        toCoords: endCoords,
+        tile,
+        isClosed: false,
+        duration: 330,
+        onComplete: () => {
+          if (drawnRackTile) {
+            drawnRackTile.style.opacity = '1';
+          }
+          if (typeof onDone === 'function') onDone();
+          done();
+        }
+      });
     });
   }
 
   /**
    * Discard a tile to player's corner pile with 100% landing synchrony
    */
-  animateDiscard(seatPos, tile, isViewer = false, onComplete = null) {
-    const fromEl = isViewer
-      ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
-      : document.getElementById('seat-' + seatPos);
+  animateDiscard(seatPos, tile, isViewer = false, onDone = null) {
+    this.enqueue((done) => {
+      const fromEl = isViewer
+        ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
+        : document.getElementById('seat-' + seatPos);
 
-    const startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
-    const discardEl = document.getElementById('discard-pile-' + seatPos);
-    const endCoords = this.getElCenter(discardEl);
+      const startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
+      const discardEl = document.getElementById('discard-pile-' + seatPos);
+      const endCoords = this.getElCenter(discardEl);
 
-    if (!endCoords) {
-      if (typeof onComplete === 'function') onComplete();
-      return;
-    }
-
-    // Hide top tile in discard pile until flying clone arrives so it doesn't appear prematurely
-    const destTile = discardEl.querySelector('.okey-tile');
-    if (destTile) {
-      destTile.style.opacity = '0';
-    }
-
-    this.flyTile({
-      fromCoords: startCoords,
-      toCoords: endCoords,
-      tile,
-      isClosed: false,
-      duration: 280,
-      scaleStart: 1.0,
-      scaleEnd: 0.88,
-      rotateEnd: 0,
-      onComplete: () => {
-        if (destTile) {
-          destTile.style.opacity = '1';
-        }
-        if (typeof onComplete === 'function') {
-          onComplete();
-        }
+      if (!endCoords) {
+        if (typeof onDone === 'function') onDone();
+        done();
+        return;
       }
+
+      const destTile = discardEl.querySelector('.okey-tile');
+      if (destTile) {
+        destTile.style.opacity = '0';
+      }
+
+      this.flyTile({
+        fromCoords: startCoords,
+        toCoords: endCoords,
+        tile,
+        isClosed: false,
+        duration: 320,
+        onComplete: () => {
+          if (destTile) {
+            destTile.style.opacity = '1';
+          }
+          if (typeof onDone === 'function') onDone();
+          done();
+        }
+      });
     });
   }
 
   /**
-   * Open melds (Seri or Pairs) - Tile by tile directly to their exact slots on the table!
-   * Keeps table cell backgrounds and borders completely solid until the flying tile actually lands!
+   * Open melds (Seri or Pairs) - Tile by tile directly to their exact slots on the table
    */
-  animateOpenMelds(seatPos, melds, openType = 'seri', isViewer = false, onComplete = null) {
-    const fromEl = isViewer
-      ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
-      : document.getElementById('seat-' + seatPos);
+  animateOpenMelds(seatPos, melds, openType = 'seri', isViewer = false, onDone = null) {
+    this.enqueue((done) => {
+      const fromEl = isViewer
+        ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
+        : document.getElementById('seat-' + seatPos);
 
-    const startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
+      const startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
 
-    const tileEntries = [];
-    if (Array.isArray(melds)) {
-      melds.forEach(m => {
-        const tiles = Array.isArray(m) ? m : (m && Array.isArray(m.tiles) ? m.tiles : []);
-        tiles.forEach(t => {
-          if (t && t.id) {
-            tileEntries.push(t);
-          }
+      const tileEntries = [];
+      if (Array.isArray(melds)) {
+        melds.forEach(m => {
+          const tiles = Array.isArray(m) ? m : (m && Array.isArray(m.tiles) ? m.tiles : []);
+          tiles.forEach(t => {
+            if (t && t.id) {
+              tileEntries.push(t);
+            }
+          });
         });
-      });
-    }
+      }
 
-    if (tileEntries.length === 0) {
-      if (typeof onComplete === 'function') onComplete();
-      return;
-    }
+      if (tileEntries.length === 0) {
+        if (typeof onDone === 'function') onDone();
+        done();
+        return;
+      }
 
-    // Hide all newly placed tiles and keep slot borders intact until landed
-    tileEntries.forEach((tile) => {
-      const destEl = document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`);
-      if (destEl) {
-        destEl.style.opacity = '0';
-        const parentSlot = destEl.closest('.grid-cell-slot');
-        if (parentSlot) {
-          parentSlot.classList.remove('has-tile');
+      tileEntries.forEach((tile) => {
+        const destEl = document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`);
+        if (destEl) {
+          destEl.style.opacity = '0';
+          const parentSlot = destEl.closest('.grid-cell-slot');
+          if (parentSlot) {
+            parentSlot.classList.remove('has-tile');
+          }
         }
-      }
-    });
+      });
 
-    let completedCount = 0;
-    tileEntries.forEach((tile, index) => {
-      const destEl = document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`);
-      let endCoords = null;
+      let completedCount = 0;
+      tileEntries.forEach((tile, index) => {
+        const destEl = document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`);
+        let endCoords = null;
 
-      if (destEl) {
-        endCoords = this.getElCenter(destEl);
-      } else {
-        const fallbackPanel = document.querySelector('.center-table-zone');
-        endCoords = this.getElCenter(fallbackPanel);
-      }
+        if (destEl) {
+          endCoords = this.getElCenter(destEl);
+        } else {
+          const fallbackPanel = document.querySelector('.center-table-zone');
+          endCoords = this.getElCenter(fallbackPanel);
+        }
 
-      if (!endCoords) return;
-
-      setTimeout(() => {
-        this.flyTile({
-          fromCoords: startCoords,
-          toCoords: endCoords,
-          tile,
-          isClosed: false,
-          duration: 270,
-          scaleStart: 1.0,
-          scaleEnd: 0.85,
-          onComplete: () => {
-            if (destEl) {
-              destEl.style.opacity = '1';
-              const parentSlot = destEl.closest('.grid-cell-slot');
-              if (parentSlot) {
-                parentSlot.classList.add('has-tile');
-              }
-              if (window.soundEngine && typeof window.soundEngine.playTilePlace === 'function') {
-                window.soundEngine.playTilePlace();
-              }
-            }
-            completedCount++;
-            if (completedCount >= tileEntries.length && typeof onComplete === 'function') {
-              onComplete();
-            }
+        if (!endCoords) {
+          completedCount++;
+          if (completedCount >= tileEntries.length) {
+            if (typeof onDone === 'function') onDone();
+            done();
           }
-        });
-      }, index * 45); // Rhythmic 45ms interval per tile
+          return;
+        }
+
+        setTimeout(() => {
+          this.flyTile({
+            fromCoords: startCoords,
+            toCoords: endCoords,
+            tile,
+            isClosed: false,
+            duration: 290,
+            onComplete: () => {
+              if (destEl) {
+                destEl.style.opacity = '1';
+                const parentSlot = destEl.closest('.grid-cell-slot');
+                if (parentSlot) {
+                  parentSlot.classList.add('has-tile');
+                }
+                if (window.soundEngine && typeof window.soundEngine.playTilePlace === 'function') {
+                  window.soundEngine.playTilePlace();
+                }
+              }
+              completedCount++;
+              if (completedCount >= tileEntries.length) {
+                if (typeof onDone === 'function') onDone();
+                done();
+              }
+            }
+          });
+        }, index * 50);
+      });
     });
   }
 
   /**
    * Process a tile to existing meld on table
    */
-  animateProcessTile(seatPos, tile, isViewer = false, onComplete = null) {
-    const fromEl = isViewer
-      ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
-      : document.getElementById('seat-' + seatPos);
+  animateProcessTile(seatPos, tile, isViewer = false, onDone = null) {
+    this.enqueue((done) => {
+      const fromEl = isViewer
+        ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
+        : document.getElementById('seat-' + seatPos);
 
-    const startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
-    const destEl = tile && tile.id ? document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`) : null;
-    let endCoords = null;
+      const startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
+      const destEl = tile && tile.id ? document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`) : null;
+      let endCoords = null;
 
-    if (destEl) {
-      endCoords = this.getElCenter(destEl);
-      destEl.style.opacity = '0';
-      const parentSlot = destEl.closest('.grid-cell-slot');
-      if (parentSlot) parentSlot.classList.remove('has-tile');
-    } else {
-      const fallbackPanel = document.querySelector('.center-table-zone');
-      endCoords = this.getElCenter(fallbackPanel);
-    }
-
-    if (!endCoords) {
-      if (typeof onComplete === 'function') onComplete();
-      return;
-    }
-
-    this.flyTile({
-      fromCoords: startCoords,
-      toCoords: endCoords,
-      tile,
-      isClosed: false,
-      duration: 270,
-      scaleStart: 1.0,
-      scaleEnd: 0.85,
-      onComplete: () => {
-        if (destEl) {
-          destEl.style.opacity = '1';
-          const parentSlot = destEl.closest('.grid-cell-slot');
-          if (parentSlot) parentSlot.classList.add('has-tile');
-          if (window.soundEngine && typeof window.soundEngine.playTilePlace === 'function') {
-            window.soundEngine.playTilePlace();
-          }
-        }
-        if (typeof onComplete === 'function') {
-          onComplete();
-        }
+      if (destEl) {
+        endCoords = this.getElCenter(destEl);
+        destEl.style.opacity = '0';
+        const parentSlot = destEl.closest('.grid-cell-slot');
+        if (parentSlot) parentSlot.classList.remove('has-tile');
+      } else {
+        const fallbackPanel = document.querySelector('.center-table-zone');
+        endCoords = this.getElCenter(fallbackPanel);
       }
+
+      if (!endCoords) {
+        if (typeof onDone === 'function') onDone();
+        done();
+        return;
+      }
+
+      this.flyTile({
+        fromCoords: startCoords,
+        toCoords: endCoords,
+        tile,
+        isClosed: false,
+        duration: 300,
+        onComplete: () => {
+          if (destEl) {
+            destEl.style.opacity = '1';
+            const parentSlot = destEl.closest('.grid-cell-slot');
+            if (parentSlot) parentSlot.classList.add('has-tile');
+            if (window.soundEngine && typeof window.soundEngine.playTilePlace === 'function') {
+              window.soundEngine.playTilePlace();
+            }
+          }
+          if (typeof onDone === 'function') onDone();
+          done();
+        }
+      });
     });
   }
 }

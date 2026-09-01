@@ -1518,10 +1518,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewerPlayer = currentGameState.players[viewerSeatIndex];
     const isPlayingGame = currentGameState.state === 'PLAYING';
 
-    // Dynamic Turn Focus Mode: When it's viewer's turn in a live match, expand the oval table felt!
+    // Dynamic Turn Focus Mode: When it's viewer's turn in a live match, expand the oval table felt smoothly after discard lands!
     const tableCanvas = document.querySelector('.plus-table-canvas');
     if (tableCanvas) {
-      tableCanvas.classList.toggle('my-turn-focus', Boolean(isMyTurn && isPlayingGame));
+      const shouldFocus = Boolean(isMyTurn && isPlayingGame);
+      if (shouldFocus) {
+        const delay = (window.tileAnimations && window.tileAnimations.isAnimating) ? 340 : 0;
+        setTimeout(() => {
+          if (currentGameState && currentGameState.currentTurn === viewerSeatIndex && currentGameState.state === 'PLAYING') {
+            tableCanvas.classList.add('my-turn-focus');
+          }
+        }, delay);
+      } else {
+        tableCanvas.classList.remove('my-turn-focus');
+      }
     }
 
     const topTimerBar = document.getElementById('top-turn-timer-bar');
@@ -1529,10 +1539,10 @@ document.addEventListener('DOMContentLoaded', () => {
       topTimerBar.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
     }
 
-    // Update Opening Target Requirements Badge at the top of the center deck strip (Stacked Alt Alta)
+    // Update Opening Target Requirements Badge at the top of the center deck strip (Global Table Score - Stacked Alt Alta)
     const centerTargetBadge = document.getElementById('center-target-badge');
-    const minOpenScore = currentGameState.minOpenScore || 101;
-    const minOpenPairs = currentGameState.minOpenPairs || 5;
+    const minOpenScore = currentGameState.tableMinOpenScore || currentGameState.minOpenScore || 101;
+    const minOpenPairs = currentGameState.tableMinOpenPairs || currentGameState.minOpenPairs || 5;
     const formattedScore = (window.formatOkeyScore && typeof window.formatOkeyScore === 'function')
       ? window.formatOkeyScore(minOpenScore)
       : `${minOpenScore}`;

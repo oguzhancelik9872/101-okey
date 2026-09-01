@@ -223,8 +223,8 @@ class TableManager {
 
     const centerTargetBadge = document.getElementById('center-target-badge');
     if (centerTargetBadge) {
-      const minOpenScore = this.gameState.minOpenScore || 101;
-      const minOpenPairs = this.gameState.minOpenPairs || 5;
+      const minOpenScore = this.gameState.tableMinOpenScore || this.gameState.minOpenScore || 101;
+      const minOpenPairs = this.gameState.tableMinOpenPairs || this.gameState.minOpenPairs || 5;
       const formattedScore = (typeof formatOkeyScore === 'function')
         ? formatOkeyScore(minOpenScore)
         : `${minOpenScore}`;
