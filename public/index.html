@@ -2,9 +2,9 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=66">
+  <link rel="stylesheet" href="css/style.css?v=76">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -480,17 +480,27 @@
       </div>
     </div>
 
+    <!-- Mobile Portrait Orientation Helper -->
+    <div id="mobile-orientation-overlay" class="orientation-overlay hidden">
+      <div class="orientation-box">
+        <div class="phone-rotate-icon">📱🔄</div>
+        <h2>Telefonu Yan Çevirin</h2>
+        <p>101 Okey'i en iyi deneyimle oynamak için cihazınızı yatay konuma getirin.</p>
+        <button id="btn-dismiss-orientation" class="btn-dismiss-orientation">Dikeyde Devam Et</button>
+      </div>
+    </div>
+
     <!-- Toast Notifications Container -->
     <div id="toast-container"></div>
   </div>
 
   <!-- Socket.IO & Application Scripts (Cache Busted) -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/audio.js?v=75"></script>
-  <script src="js/validator.js?v=75"></script>
-  <script src="js/istaka.js?v=75"></script>
-  <script src="js/table.js?v=75"></script>
-  <script src="js/ui.js?v=75"></script>
-  <script src="js/gameClient.js?v=75"></script>
+  <script src="js/audio.js?v=76"></script>
+  <script src="js/validator.js?v=76"></script>
+  <script src="js/istaka.js?v=76"></script>
+  <script src="js/table.js?v=76"></script>
+  <script src="js/ui.js?v=76"></script>
+  <script src="js/gameClient.js?v=76"></script>
 </body>
 </html>

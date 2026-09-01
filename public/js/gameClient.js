@@ -1613,6 +1613,21 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.triggerReaction(pos, data.reaction, data.label);
   });
 
+  // Global Touch handler for dragging tile to table melds
+  window.onProcessTileTouch = (tileId, meldId) => {
+    handleProcessTileById(tileId, meldId);
+  };
+
+  // Orientation Overlay Dismiss for Mobile
+  const btnDismissOrientation = document.getElementById('btn-dismiss-orientation');
+  const mobileOrientationOverlay = document.getElementById('mobile-orientation-overlay');
+  if (btnDismissOrientation && mobileOrientationOverlay) {
+    btnDismissOrientation.addEventListener('click', () => {
+      mobileOrientationOverlay.classList.add('dismissed');
+      mobileOrientationOverlay.classList.add('hidden');
+    });
+  }
+
   // Initialize Sound UI on load
   syncSettingsDrawer();
 });
