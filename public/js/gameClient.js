@@ -1023,6 +1023,8 @@ document.addEventListener('DOMContentLoaded', () => {
     lastTickedSecond = null;
     turnTimerLoop = setInterval(() => {
       if (!currentGameState || currentGameState.state !== 'PLAYING') {
+        const topTimerBar = document.getElementById('top-turn-timer-bar');
+        if (topTimerBar) topTimerBar.classList.add('hidden');
         return;
       }
 
@@ -1034,6 +1036,27 @@ document.addEventListener('DOMContentLoaded', () => {
       const remainingSeconds = Math.ceil((turnDuration - elapsed) / 1000);
 
       const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
+
+      // Full-Width Top Screen Turn Timer Progress Bar (Active on Viewer Turn)
+      const topTimerBar = document.getElementById('top-turn-timer-bar');
+      const topTimerFill = document.getElementById('top-turn-timer-fill');
+      const topTimerText = document.getElementById('top-turn-timer-text');
+      if (topTimerBar && topTimerFill) {
+        if (isMyTurn) {
+          topTimerBar.classList.remove('hidden');
+          topTimerFill.style.width = (remainingRatio * 100) + '%';
+          if (topTimerText) {
+            topTimerText.textContent = `SIRA SİZDE: ${remainingSeconds}s`;
+          }
+          if (remainingSeconds <= 5) {
+            topTimerFill.classList.add('urgent-pulse');
+          } else {
+            topTimerFill.classList.remove('urgent-pulse');
+          }
+        } else {
+          topTimerBar.classList.add('hidden');
+        }
+      }
 
       // Son 5 saniye nazik uyarı tınısı (Yalnızca sıra bendeyken ve son 5 saniyede)
       if (isMyTurn && remainingSeconds <= 5 && remainingSeconds > 0) {
@@ -1059,6 +1082,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }, 100);
+  }
+
+  function stopTurnTimerLoop() {
+    if (turnTimerLoop) {
+      clearInterval(turnTimerLoop);
+      turnTimerLoop = null;
+    }
+    const topTimerBar = document.getElementById('top-turn-timer-bar');
+    if (topTimerBar) topTimerBar.classList.add('hidden');
   }
 
   // --- Action Bar & In-Game Controls ---

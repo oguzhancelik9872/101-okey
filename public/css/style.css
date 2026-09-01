@@ -1628,6 +1628,62 @@ body.plus-theme {
 }
 
 /* =========================================================
+   FULL-SCREEN TOP TURN TIMER PROGRESS BAR (ACTIVE PLAYER)
+   ========================================================= */
+
+.top-turn-timer-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  border-bottom: 1.5px solid rgba(241, 196, 15, 0.5);
+  z-index: 1000;
+  overflow: visible;
+  pointer-events: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+  transition: opacity 0.25s ease;
+}
+
+.top-turn-timer-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #2ecc71 0%, #f1c40f 65%, #e74c3c 100%);
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.9);
+  transition: width 0.1s linear;
+}
+
+.top-turn-timer-fill.urgent-pulse {
+  background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%) !important;
+  box-shadow: 0 0 20px #e74c3c, 0 0 35px rgba(231, 76, 60, 0.9) !important;
+  animation: timerBarFlash 0.5s infinite alternate;
+}
+
+@keyframes timerBarFlash {
+  0% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.top-turn-timer-text {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid #f1c40f;
+  color: #f1c40f;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 2px 14px;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.8);
+  pointer-events: none;
+  z-index: 1001;
+}
+
+/* =========================================================
    DYNAMIC ACTIVE TURN FOCUS MODE (OVAL TABLE EXPANSION)
    ========================================================= */
 
@@ -1649,6 +1705,12 @@ body.plus-theme {
   transform: translateY(-50%) translateX(30px) scale(0.8) !important;
 }
 
+.my-turn-focus .bar-bottom {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(20px) scale(0.8) !important;
+}
+
 .my-turn-focus .table-top-actions {
   opacity: 0 !important;
   pointer-events: none !important;
@@ -1656,8 +1718,8 @@ body.plus-theme {
 }
 
 .my-turn-focus .table-felt-mat {
-  top: 8px !important;
-  bottom: 54px !important;
+  top: 10px !important;
+  bottom: 40px !important;
   left: 68px !important;
   right: 68px !important;
   border-radius: 36px !important;
@@ -1665,7 +1727,7 @@ body.plus-theme {
 }
 
 .my-turn-focus .canvas-bottom-strip {
-  bottom: 5px !important;
+  bottom: 4px !important;
   left: 68px !important;
   right: 68px !important;
 }
@@ -2663,14 +2725,16 @@ body.plus-theme {
 
 /* 3D 2-Shelf Wooden Istaka Board */
 .plus-istaka-board {
-  flex: 1;
-  max-width: 1120px;
+  width: auto;
+  max-width: fit-content;
+  margin: 0 auto;
   background: linear-gradient(180deg, #441e0d 0%, #291005 50%, #150601 100%);
   border: 4px solid #140501;
   border-radius: 12px;
   padding: 6px 10px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 3px;
   box-shadow: inset 0 4px 10px rgba(0,0,0,0.9), 0 8px 24px rgba(0,0,0,0.8);
   position: relative;
@@ -2691,10 +2755,13 @@ body.plus-theme {
 .corner-br { bottom: 3px; right: 3px; }
 
 .istaka-row {
-  display: grid;
-  grid-template-columns: repeat(16, 1fr);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
   gap: 0px;
-  min-height: 58px;
+  width: fit-content;
+  margin: 0 auto;
+  min-height: 60px;
   background: rgba(0, 0, 0, 0.4);
   border-radius: 6px;
   padding: 2px 4px;
@@ -2702,16 +2769,21 @@ body.plus-theme {
 }
 
 .istaka-slot {
+  width: 44px;
+  height: 60px;
+  min-width: 44px;
+  max-width: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
   transition: background 0.15s, border-color 0.15s;
   margin: 0;
   padding: 0;
   overflow: visible;
+  box-sizing: border-box;
 }
 
 .istaka-slot .okey-tile {
@@ -2721,6 +2793,25 @@ body.plus-theme {
   max-height: 100% !important;
   border-radius: 4px !important;
   margin: 0 !important;
+  border: 1px solid #d5c8b5 !important;
+  box-shadow: var(--tile-shadow) !important;
+  background: var(--tile-bg) !important;
+  box-sizing: border-box !important;
+}
+
+.istaka-slot .okey-tile .tile-number {
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 26px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  margin-top: -2px !important;
+}
+
+.istaka-slot .okey-tile .tile-dot {
+  width: 5px !important;
+  height: 5px !important;
+  border-radius: 50% !important;
+  margin-top: 2px !important;
 }
 
 
