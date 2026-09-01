@@ -1935,6 +1935,32 @@ body.plus-theme {
   background-color: transparent;
 }
 
+/* Opening Target Requirements Badges (Seri & Pairs on Table Felt) */
+.table-target-badge {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  z-index: 10;
+  background: rgba(3, 15, 9, 0.92);
+  border: 1px solid rgba(241, 196, 15, 0.5);
+  color: #f1c40f;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+.pairs-target-badge {
+  color: #d7bde2;
+  border-color: rgba(155, 89, 182, 0.6);
+}
+
 .seri-divider-line {
   width: 2px;
   background: rgba(255, 255, 255, 0.18);

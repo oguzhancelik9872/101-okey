@@ -304,6 +304,22 @@ class TableManager {
     pairs1RowsEl.innerHTML = '';
     if (pairs2RowsEl) pairs2RowsEl.innerHTML = '';
 
+    // Update Opening Target Requirements Badges
+    const seriTargetBadge = document.getElementById('table-seri-target-badge');
+    const pairsTargetBadge = document.getElementById('table-pairs-target-badge');
+    const minOpenScore = this.gameState.minOpenScore || 101;
+    const minOpenPairs = this.gameState.minOpenPairs || 5;
+    const formattedScore = (typeof formatOkeyScore === 'function') ? formatOkeyScore(minOpenScore) : `${minOpenScore}`;
+
+    if (seriTargetBadge) {
+      seriTargetBadge.textContent = minOpenScore > 101
+        ? `SERİ HEDEF: ${formattedScore} (${minOpenScore})`
+        : `SERİ HEDEF: 101 (${formattedScore})`;
+    }
+    if (pairsTargetBadge) {
+      pairsTargetBadge.textContent = `ÇİFT HEDEF: ${minOpenPairs} Çift`;
+    }
+
     const melds = this.gameState.tableMelds || [];
     const seriMelds = melds.filter(m => m.type === 'run' || m.type === 'group');
     const pairMelds = melds.filter(m => m.type === 'pairs');

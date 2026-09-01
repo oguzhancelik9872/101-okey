@@ -196,6 +196,7 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
     dGame.addPlayer(`dp_${i}`, `Oyuncu ${i + 1}`, false, 'female', null, i);
   }
   dGame.startRound(0);
+  dGame.indicator = new Tile('ind_blue_1', 'blue', 1);
   // Player 0 discards Red 5
   const red5 = new Tile('test_red_5', 'red', 5);
   dGame.players[0].hand.push(red5);

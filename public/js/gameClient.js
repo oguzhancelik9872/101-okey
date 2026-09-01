@@ -1452,6 +1452,25 @@ document.addEventListener('DOMContentLoaded', () => {
       topTimerBar.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
     }
 
+    // Update Opening Target Requirements Badges on Table Felt
+    const seriTargetBadge = document.getElementById('table-seri-target-badge');
+    const pairsTargetBadge = document.getElementById('table-pairs-target-badge');
+    const minOpenScore = currentGameState.minOpenScore || 101;
+    const minOpenPairs = currentGameState.minOpenPairs || 5;
+    const formattedScore = (window.formatOkeyScore && typeof window.formatOkeyScore === 'function')
+      ? window.formatOkeyScore(minOpenScore)
+      : `${minOpenScore}`;
+
+    if (seriTargetBadge) {
+      seriTargetBadge.textContent = minOpenScore > 101
+        ? `SERİ HEDEF: ${formattedScore} (${minOpenScore})`
+        : `SERİ HEDEF: 101 (${formattedScore})`;
+    }
+    if (pairsTargetBadge) {
+      pairsTargetBadge.textContent = `ÇİFT HEDEF: ${minOpenPairs} Çift`;
+    }
+
+    const isFirstOpen = viewerPlayer ? !viewerPlayer.opened : true;
     const cannotOpenSeri = viewerPlayer && viewerPlayer.opened && viewerPlayer.openType === 'pairs';
     const hasPairsOnTable = currentGameState.tableMelds.some(m => m.type === 'pairs') || currentGameState.players.some(p => p.opened && p.openType === 'pairs');
     const cannotOpenPairs = viewerPlayer && viewerPlayer.opened && viewerPlayer.openType === 'seri' && !hasPairsOnTable;
@@ -1459,17 +1478,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasDrawnFromDiscard = isMyTurn && turnState === 'DISCARD' && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;
     const canAttemptOpen = isMyTurn && turnState === 'DISCARD';
 
+    // Anti-Cheat / Anti-Probe: Only enable Open buttons if player's arranged hand ACTUALLY qualifies to open
+    let canActuallyOpenSeri = false;
+    let canActuallyOpenPairs = false;
+
+    if (canAttemptOpen && !cannotOpenSeri && typeof istaka !== 'undefined') {
+      const rackAnalysis = istaka.analyzeRackMelds();
+      const requiredId = hasDrawnFromDiscard ? currentGameState.drawnFromDiscard.tileId : null;
+      const containsRequired = !requiredId || !isFirstOpen || rackAnalysis.validTileIds.has(requiredId);
+
+      if (isFirstOpen) {
+        canActuallyOpenSeri = Boolean(rackAnalysis.validMelds.length > 0 && rackAnalysis.totalScore >= minOpenScore && containsRequired);
+      } else {
+        canActuallyOpenSeri = Boolean(rackAnalysis.validMelds.length > 0);
+      }
+    }
+
+    if (canAttemptOpen && !cannotOpenPairs && typeof istaka !== 'undefined') {
+      const rackPairs = istaka.analyzeRackPairs();
+      const requiredId = hasDrawnFromDiscard ? currentGameState.drawnFromDiscard.tileId : null;
+      const containsRequired = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
+
+      if (isFirstOpen) {
+        canActuallyOpenPairs = Boolean(rackPairs.validPairs.length >= minOpenPairs && containsRequired);
+      } else {
+        canActuallyOpenPairs = Boolean(rackPairs.validPairs.length >= 1);
+      }
+    }
+
     if (btnOpenHand) {
-      btnOpenHand.disabled = !canAttemptOpen || cannotOpenSeri;
+      btnOpenHand.disabled = !canActuallyOpenSeri;
       btnOpenHand.title = cannotOpenSeri
         ? 'Çift açtığınız için seri açamazsınız'
-        : (canAttemptOpen ? 'Perlerinizi masaya açın (En az 101 puan)' : 'Taş çektikten sonra el açabilirsiniz');
+        : (canActuallyOpenSeri
+            ? 'Dizdiğiniz perleri masaya açın'
+            : (canAttemptOpen ? `Seri açmak için ıstakanıza en az ${minOpenScore} puanlık geçerli per dizmelisiniz` : 'Taş çektikten sonra el açabilirsiniz'));
     }
     if (btnOpenPairs) {
-      btnOpenPairs.disabled = !canAttemptOpen || cannotOpenPairs;
+      btnOpenPairs.disabled = !canActuallyOpenPairs;
       btnOpenPairs.title = cannotOpenPairs
         ? 'Masada çift açmış bir oyuncu olmadığı için çift açamazsınız'
-        : (canAttemptOpen ? 'Dizili çiftlerinizi açın (En az 5 çift)' : 'Taş çektikten sonra çift açabilirsiniz');
+        : (canActuallyOpenPairs
+            ? 'Dizdiğiniz çiftleri masaya açın'
+            : (canAttemptOpen ? `Çift açmak için ıstakanıza en az ${minOpenPairs} çift dizmelisiniz` : 'Taş çektikten sonra çift açabilirsiniz'));
     }
 
     // Show "Taşı Geri Bırak" only if viewer has drawn from discard and hasn't opened/discarded yet
