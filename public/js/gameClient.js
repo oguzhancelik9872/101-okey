@@ -992,20 +992,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // 3. Draw & Discard Orchestration
       if (anim) {
         if (discardedByPlayer !== null && discardedByPlayer !== viewerSeatIndex) {
-          // Other player / Bot completed a turn: Animate Draw -> (Open) -> Discard in clean sequence!
+          // Other player / Bot discards a tile: Direct flight from player's profile avatar to corner box
           const seatPos = table.getRelativePosition(discardedByPlayer);
-          if (state.drawnFromDiscard && state.drawnFromDiscard.playerIndex === discardedByPlayer) {
-            const fromSeat = (discardedByPlayer + 3) % 4;
-            const fromPos = table.getRelativePosition(fromSeat);
-            const drawnTile = state.drawnFromDiscard.tile || { id: state.drawnFromDiscard.tileId };
-            anim.animateDrawFromDiscard(seatPos, fromPos, drawnTile, false, () => {
-              anim.animateDiscard(seatPos, discardedTile, false);
-            });
-          } else {
-            anim.animateDrawFromDeck(seatPos, false, () => {
-              anim.animateDiscard(seatPos, discardedTile, false);
-            });
-          }
+          anim.animateDiscard(seatPos, discardedTile, false);
         } else if (discardedByPlayer === viewerSeatIndex && discardedTile) {
           // Viewer discarded a tile
           const seatPos = table.getRelativePosition(viewerSeatIndex);

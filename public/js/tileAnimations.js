@@ -254,11 +254,24 @@ class TileAnimationEngine {
    */
   animateDiscard(seatPos, tile, isViewer = false, onDone = null) {
     this.enqueue((done) => {
-      const fromEl = isViewer
-        ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
-        : document.getElementById('seat-' + seatPos);
+      let startCoords = null;
+      let rackTileEl = null;
 
-      const startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
+      if (isViewer && tile && tile.id) {
+        rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
+        if (rackTileEl) {
+          startCoords = this.getElCenter(rackTileEl);
+          rackTileEl.style.opacity = '0';
+        }
+      }
+
+      if (!startCoords) {
+        const fromEl = isViewer
+          ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
+          : document.getElementById('seat-' + seatPos);
+        startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
+      }
+
       const discardEl = document.getElementById('discard-pile-' + seatPos);
       const endCoords = this.getElCenter(discardEl);
 
@@ -291,7 +304,7 @@ class TileAnimationEngine {
   }
 
   /**
-   * Open melds (Seri or Pairs) - Tile by tile directly to their exact slots on the table
+   * Open melds (Seri or Pairs) - Tile by tile directly from exact rack slots to table slots
    */
   animateOpenMelds(seatPos, melds, openType = 'seri', isViewer = false, onDone = null) {
     this.enqueue((done) => {
@@ -299,7 +312,7 @@ class TileAnimationEngine {
         ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
         : document.getElementById('seat-' + seatPos);
 
-      const startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
+      const defaultStartCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
 
       const tileEntries = [];
       if (Array.isArray(melds)) {
@@ -320,6 +333,15 @@ class TileAnimationEngine {
       }
 
       tileEntries.forEach((tile) => {
+        // Find exact rack origin coordinates for viewer
+        if (isViewer) {
+          const rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
+          if (rackTileEl) {
+            tile._rackCoords = this.getElCenter(rackTileEl);
+            rackTileEl.style.opacity = '0';
+          }
+        }
+
         const destEl = document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`);
         if (destEl) {
           destEl.style.opacity = '0';
@@ -342,6 +364,8 @@ class TileAnimationEngine {
           endCoords = this.getElCenter(fallbackPanel);
         }
 
+        const tileStartCoords = (isViewer && tile._rackCoords) ? tile._rackCoords : defaultStartCoords;
+
         if (!endCoords) {
           completedCount++;
           if (completedCount >= tileEntries.length) {
@@ -353,7 +377,7 @@ class TileAnimationEngine {
 
         setTimeout(() => {
           this.flyTile({
-            fromCoords: startCoords,
+            fromCoords: tileStartCoords,
             toCoords: endCoords,
             tile,
             isClosed: false,
@@ -386,11 +410,24 @@ class TileAnimationEngine {
    */
   animateProcessTile(seatPos, tile, isViewer = false, onDone = null) {
     this.enqueue((done) => {
-      const fromEl = isViewer
-        ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
-        : document.getElementById('seat-' + seatPos);
+      let startCoords = null;
+      let rackTileEl = null;
 
-      const startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
+      if (isViewer && tile && tile.id) {
+        rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
+        if (rackTileEl) {
+          startCoords = this.getElCenter(rackTileEl);
+          rackTileEl.style.opacity = '0';
+        }
+      }
+
+      if (!startCoords) {
+        const fromEl = isViewer
+          ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
+          : document.getElementById('seat-' + seatPos);
+        startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
+      }
+
       const destEl = tile && tile.id ? document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`) : null;
       let endCoords = null;
 
@@ -415,7 +452,7 @@ class TileAnimationEngine {
         toCoords: endCoords,
         tile,
         isClosed: false,
-        duration: 300,
+        duration: 350,
         onComplete: () => {
           if (destEl) {
             destEl.style.opacity = '1';
