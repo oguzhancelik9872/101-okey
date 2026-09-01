@@ -1665,25 +1665,6 @@ body.plus-theme {
   100% { opacity: 0.6; }
 }
 
-.top-turn-timer-text {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(4, 15, 8, 0.95);
-  border: 1.5px solid #f1c40f;
-  color: #f1c40f;
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 1.5px;
-  padding: 4px 18px;
-  border-radius: 20px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.9), 0 0 12px rgba(241, 196, 15, 0.5);
-  pointer-events: none;
-  z-index: 1000000;
-  white-space: nowrap;
-}
-
 /* =========================================================
    DYNAMIC ACTIVE TURN FOCUS MODE (OVAL TABLE EXPANSION)
    ========================================================= */
@@ -1720,7 +1701,7 @@ body.plus-theme {
 
 .my-turn-focus .table-felt-mat {
   top: 10px !important;
-  bottom: 40px !important;
+  bottom: 58px !important;
   left: 68px !important;
   right: 68px !important;
   border-radius: 36px !important;
@@ -1728,7 +1709,7 @@ body.plus-theme {
 }
 
 .my-turn-focus .canvas-bottom-strip {
-  bottom: 4px !important;
+  bottom: 6px !important;
   left: 68px !important;
   right: 68px !important;
 }
@@ -1911,22 +1892,22 @@ body.plus-theme {
    ========================================================= */
 
 .center-table-zone {
-  width: 100%;
+  width: auto;
+  max-width: fit-content;
   height: 100%;
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   position: relative;
   z-index: 10;
   padding: 4px 6px;
   box-sizing: border-box;
-  margin: 0;
+  margin: 0 auto;
 }
 
 /* Sol ve Orta: 2 Tane Yan Yana 13x13 Seri Açma Bölmesi */
 .seri-section-wrapper {
-  flex: 1;
   display: flex;
   align-items: stretch;
   background-color: #071d13;
@@ -1937,15 +1918,17 @@ body.plus-theme {
   position: relative;
   height: 100%;
   min-height: 0;
+  width: fit-content;
+  flex: 0 0 auto;
 }
 
 .seri-panel {
-  flex: 1;
   display: flex;
   flex-direction: column;
   padding: 3px 4px;
   position: relative;
-  min-width: 0;
+  width: fit-content;
+  flex: 0 0 auto;
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
@@ -2202,15 +2185,17 @@ body.plus-theme {
   box-shadow: inset 0 2px 10px rgba(0,0,0,0.75), 0 8px 24px rgba(0,0,0,0.5);
   position: relative;
   height: 100%;
+  width: fit-content;
+  flex: 0 0 auto;
 }
 
 .pairs-panel {
-  flex: 1;
   display: flex;
   flex-direction: column;
   padding: 3px 4px;
   position: relative;
-  min-width: 0;
+  width: fit-content;
+  flex: 0 0 auto;
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
@@ -2672,16 +2657,17 @@ body.plus-theme {
 /* Istaka Wing Wrapper (Istaka + Left Seri Diz + Right Çift Diz) */
 .istaka-wing-wrapper {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   width: fit-content;
   margin: 0 auto;
   max-width: none;
 }
 
 .btn-side-sort {
-  width: 54px;
+  width: 52px;
+  align-self: stretch;
   border-radius: 12px;
   border: 1.5px solid rgba(255, 255, 255, 0.25);
   color: #fff;
@@ -2690,7 +2676,7 @@ body.plus-theme {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
   transition: all 0.15s;
   padding: 8px 3px;

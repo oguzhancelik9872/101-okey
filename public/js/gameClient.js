@@ -1040,14 +1040,10 @@ document.addEventListener('DOMContentLoaded', () => {
       // Full-Width Top Screen Turn Timer Progress Bar (Active on Viewer Turn)
       const topTimerBar = document.getElementById('top-turn-timer-bar');
       const topTimerFill = document.getElementById('top-turn-timer-fill');
-      const topTimerText = document.getElementById('top-turn-timer-text');
       if (topTimerBar && topTimerFill) {
         if (isMyTurn) {
           topTimerBar.classList.remove('hidden');
           topTimerFill.style.width = (remainingRatio * 100) + '%';
-          if (topTimerText) {
-            topTimerText.textContent = `SIRA SİZDE: ${remainingSeconds}s`;
-          }
           if (remainingSeconds <= 5) {
             topTimerFill.classList.add('urgent-pulse');
           } else {
@@ -1058,8 +1054,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Son 5 saniye nazik uyarı tınısı (Yalnızca sıra bendeyken ve son 5 saniyede)
-      if (isMyTurn && remainingSeconds <= 5 && remainingSeconds > 0) {
+      // Süre azalırken farkındalık artıran nazik tik-tak ve son saniyelerde hızlanan uyarı tınısı
+      if (isMyTurn && remainingSeconds <= 8 && remainingSeconds > 0) {
         if (lastTickedSecond !== remainingSeconds) {
           lastTickedSecond = remainingSeconds;
           window.soundEngine.playTimerTick(remainingSeconds);

@@ -385,11 +385,11 @@ class OkeyAudio {
   }
 
   /**
-   * Son 5 Saniye Nazik Uyarı Tınısı (Sadece hamlenin son 5 saniyesinde çalar)
+   * Süre Azalırken Çalan Nazik Tik-Tak ve Son Saniyeler Hızlanan Uyarı Tınısı
    */
   playTimerTick(secondsLeft = 5) {
-    if (!this.settings.timerAlertEnabled) return;
-    this._playMP3OrFallback('tick', 'sfx', () => this._synthTimerTick(secondsLeft));
+    if (this.settings.muted) return;
+    this._synthTimerTick(secondsLeft);
   }
 
   _synthTimerTick(secondsLeft = 5) {
@@ -402,18 +402,23 @@ class OkeyAudio {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(440, t);
-    osc.frequency.exponentialRampToValueAtTime(180, t + 0.03);
+    // Saniye azaldıkça frekans yükselir (gerilim ve farkındalık artışı)
+    const baseFreq = secondsLeft <= 3 ? 880 : (secondsLeft <= 5 ? 680 : 520);
+    const duration = secondsLeft <= 3 ? 0.055 : 0.04;
 
-    gain.gain.setValueAtTime(vol * 0.25, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.035);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(baseFreq, t);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.65, t + duration);
+
+    const gainVal = secondsLeft <= 3 ? vol * 0.5 : vol * 0.35;
+    gain.gain.setValueAtTime(gainVal, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(t);
-    osc.stop(t + 0.04);
+    osc.stop(t + duration + 0.005);
   }
 
   /**
