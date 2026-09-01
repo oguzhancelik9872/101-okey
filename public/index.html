@@ -168,183 +168,31 @@
 
     <!-- ================= 101 OKEY GAME TABLE VIEW ================= -->
     <div id="game-view" class="hidden">
-      <!-- Main Green Casino Felt Table Area (Full Screen Table) -->
-      <main class="plus-table-canvas">
-        <!-- Floating Top-Right Actions Wrapper -->
-        <div class="table-top-actions">
-          <button id="btn-table-chat" class="btn-menu-trigger btn-chat-trigger" title="Masa Sohbeti">
-            <span>💬 Sohbet</span>
-            <span id="table-chat-badge" class="chat-unread-dot hidden"></span>
-          </button>
-
-          <button id="btn-table-settings" class="btn-menu-trigger" title="Ayarlar">
-            <span>⚙️ Ayarlar</span>
-          </button>
-        </div>
-        
-        <!-- ================= OUTER PLAYER INFO BARS ================= -->
-        <!-- 1. Top Player Outer Bar -->
-        <div id="seat-top" class="player-outer-bar bar-top">
-          <div class="avatar-ring-container">
-            <div class="avatar-timer-ring"></div>
-            <div class="pod-avatar">👤</div>
-          </div>
-          <div class="bar-player-info">
-            <span class="player-name">Bekleniyor...</span>
-            <span class="player-open-status not-opened">AÇMADI</span>
-            <div class="player-turn-progress-track">
-              <div class="player-turn-progress-fill"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. Left Player Outer Bar -->
-        <div id="seat-left" class="player-outer-bar bar-left">
-          <div class="avatar-ring-container">
-            <div class="avatar-timer-ring"></div>
-            <div class="pod-avatar">👤</div>
-          </div>
-          <div class="bar-player-info">
-            <span class="player-name">Bekleniyor...</span>
-            <span class="player-open-status not-opened">AÇMADI</span>
-            <div class="player-turn-progress-track">
-              <div class="player-turn-progress-fill"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Right Player Outer Bar -->
-        <div id="seat-right" class="player-outer-bar bar-right">
-          <div class="avatar-ring-container">
-            <div class="avatar-timer-ring"></div>
-            <div class="pod-avatar">👤</div>
-          </div>
-          <div class="bar-player-info">
-            <span class="player-name">Bekleniyor...</span>
-            <span class="player-open-status not-opened">AÇMADI</span>
-            <div class="player-turn-progress-track">
-              <div class="player-turn-progress-fill"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4 Outer Discard Slots in the 4 Absolute Corners of the Canvas (Outside the Oval Felt) -->
-        <!-- 1. Sol Üst Köşe (Top Discard) -->
-        <div class="table-corner-discard corner-top-left" title="Üst Oyuncunun Attığı Taş">
-          <div id="discard-pile-top" class="plus-discard-box"></div>
-        </div>
-
-        <!-- 2. Sağ Üst Köşe (Right Discard) -->
-        <div class="table-corner-discard corner-top-right" title="Sağ Oyuncunun Attığı Taş">
-          <div id="discard-pile-right" class="plus-discard-box"></div>
-        </div>
-
-        <!-- 3. Sol Alt Köşe (Left Discard - Yandan Al) -->
-        <div class="table-corner-discard corner-bottom-left" title="Sol Oyuncunun Attığı Taş (Yandan Al)">
-          <div id="discard-pile-left" class="plus-discard-box"></div>
-        </div>
-
-        <!-- 4. Sağ Alt Köşe (Bottom Discard - Taş At) -->
-        <div class="table-corner-discard corner-bottom-right" title="Sizin Attığınız Taş">
-          <div id="discard-pile-bottom" class="plus-discard-box"></div>
-        </div>
-
-        <!-- Classic 101 Okey Casino Felt Mat (Only Melds and Center Deck/Indicator) -->
-        <div class="table-felt-mat">
-          <div class="felt-watermark">101 OKEY</div>
-
-          <!-- Waiting Lobby Center Card (Shown when game state is WAITING) -->
-          <div id="waiting-lobby-overlay" class="waiting-lobby-overlay hidden">
-            <div class="lobby-center-card">
-              <h3 class="lobby-card-title">🎲 OYUNCULAR BEKLENİYOR</h3>
-              <div class="lobby-code-box">
-                <span>Oda Kodu:</span>
-                <strong id="lobby-card-room-code">------</strong>
-                <button id="btn-lobby-copy" class="btn-copy-pill" title="Kodu Kopyala">📋</button>
-              </div>
-              <p class="lobby-card-desc">Arkadaşlarını davet et veya hemen botlarla başlat!</p>
-              <button id="btn-center-start-game" class="btn-plus-gold btn-center-start">
-                <span>▶️ OYUNU BAŞLAT</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Center Board (Table Melds & Center Deck/Indicator) -->
-          <div class="center-table-zone">
-            <!-- Sol ve Orta: 2 Tane Yan Yana 13x13 Seri Açma Bölmesi -->
-            <div class="seri-section-wrapper">
-              <!-- 1. 13x13 Seri Bölmesi (Sol) -->
-              <div class="table-grid-panel seri-panel" id="panel-seri-1">
-                <div class="panel-rows-container" id="seri-1-rows"></div>
-              </div>
-
-              <!-- İki Seri Bölmesi Arasındaki Dikey Ayırıcı Çizgi -->
-              <div class="seri-divider-line"></div>
-
-              <!-- 2. 13x13 Seri Bölmesi (Sağ) -->
-              <div class="table-grid-panel seri-panel" id="panel-seri-2">
-                <div class="panel-rows-container" id="seri-2-rows"></div>
-              </div>
-            </div>
-
-            <!-- Orta/Bölme: Ahşap Gösterge ve Deste Şeridi -->
-            <div class="center-deck-strip">
-              <!-- 1. Open Indicator Tile (Gösterge - Üstte) -->
-              <div class="indicator-zone" title="Gösterge Taşı">
-                <div class="indicator-clean-box">
-                  <div id="indicator-tile-slot"></div>
-                </div>
-                <span class="indicator-subtext">GÖSTERGE</span>
-              </div>
-
-              <!-- 2. Plain Face-Down Bone Tile (Deste - Altta) -->
-              <div class="deck-zone" title="Desteden Taş Çek">
-                <div id="center-deck-pile" class="plus-3d-deck">
-                  <div class="deck-layer layer-3"></div>
-                  <div class="deck-layer layer-2"></div>
-                  <div class="deck-layer layer-1"></div>
-                </div>
-                <span id="deck-count" class="deck-count-subtext">28 Taş</span>
-              </div>
-            </div>
-
-            <!-- Sağ Taraf: 2 Tane Yan Yana 2x13 Çift Açma Bölmesi -->
-            <div class="pairs-section-wrapper">
-              <!-- 1. 2x13 Çift Bölmesi (Sol) -->
-              <div class="table-grid-panel pairs-panel" id="panel-pairs-1">
-                <div class="panel-rows-container pairs-rows-container" id="pairs-1-rows"></div>
-              </div>
-
-              <!-- İki Çift Bölmesi Arasındaki Dikey Ayırıcı Çizgi -->
-              <div class="pairs-divider-line"></div>
-
-              <!-- 2. 2x13 Çift Bölmesi (Sağ) -->
-              <div class="table-grid-panel pairs-panel" id="panel-pairs-2">
-                <div class="panel-rows-container pairs-rows-container" id="pairs-2-rows"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bottom Outer Player & Action Strip (In Dark Green Canvas, Right Above the Brown Istaka Bar!) -->
-        <div class="canvas-bottom-strip">
-          <div class="canvas-bottom-left">
-            <button id="btn-return-discard" class="btn-pill-action btn-pill-warning hidden" title="Yandan aldığınız taşı geri bırakın ve desteden çekin">
-              <span>↩️ Taşı Geri Bırak</span>
+      <!-- 1200x680 Virtual Game Stage (Auto-Scales to ANY Screen / DPI with Zero Distortion) -->
+      <div id="game-stage" class="game-stage">
+        <!-- Main Green Casino Felt Table Area -->
+        <main class="plus-table-canvas">
+          <!-- Floating Top-Right Actions Wrapper -->
+          <div class="table-top-actions">
+            <button id="btn-table-chat" class="btn-menu-trigger btn-chat-trigger" title="Masa Sohbeti">
+              <span>💬 Sohbet</span>
+              <span id="table-chat-badge" class="chat-unread-dot hidden"></span>
             </button>
-            <button id="btn-undo-turn" class="btn-pill-action btn-pill-danger hidden" title="Açtığınız perleri ve işlediğiniz taşları geri alın">
-              <span>↩️ Vazgeç</span>
+
+            <button id="btn-table-settings" class="btn-menu-trigger" title="Ayarlar">
+              <span>⚙️ Ayarlar</span>
             </button>
           </div>
-
-          <!-- Center: Bottom Player Profile Card (Centered directly above istaka) -->
-          <div id="seat-bottom" class="player-outer-bar bar-bottom">
+          
+          <!-- ================= OUTER PLAYER INFO BARS ================= -->
+          <!-- 1. Top Player Outer Bar -->
+          <div id="seat-top" class="player-outer-bar bar-top">
             <div class="avatar-ring-container">
               <div class="avatar-timer-ring"></div>
               <div class="pod-avatar">👤</div>
             </div>
             <div class="bar-player-info">
-              <span class="player-name">Oyuncu (Siz)</span>
+              <span class="player-name">Bekleniyor...</span>
               <span class="player-open-status not-opened">AÇMADI</span>
               <div class="player-turn-progress-track">
                 <div class="player-turn-progress-fill"></div>
@@ -352,43 +200,197 @@
             </div>
           </div>
 
-          <!-- Right: Open Hand / Pairs Action Buttons (In Dark Green Canvas on the Right) -->
-          <div class="canvas-bottom-right">
-            <div class="play-actions">
-              <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled>
-                <span>Seri Aç</span>
-              </button>
-              <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled>
-                <span>Çift Aç</span>
-              </button>
+          <!-- 2. Left Player Outer Bar -->
+          <div id="seat-left" class="player-outer-bar bar-left">
+            <div class="avatar-ring-container">
+              <div class="avatar-timer-ring"></div>
+              <div class="pod-avatar">👤</div>
+            </div>
+            <div class="bar-player-info">
+              <span class="player-name">Bekleniyor...</span>
+              <span class="player-open-status not-opened">AÇMADI</span>
+              <div class="player-turn-progress-track">
+                <div class="player-turn-progress-fill"></div>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
 
-      <!-- Bottom Istaka (Player Rack) -->
-      <section class="plus-istaka-section">
-
-        <!-- Istaka Board with Left (ÇİFT DİZ) & Right (SERİ DİZ) Sort Buttons -->
-        <div class="istaka-wing-wrapper">
-          <button id="btn-sort-pairs" class="btn-side-sort btn-sort-left" title="Çiftleri otomatik dizer">
-            <span class="sort-text">ÇİFT DİZ</span>
-          </button>
-
-          <!-- 3D 2-Shelf Wooden Istaka -->
-          <div class="plus-istaka-board">
-            <div class="istaka-brass-corner corner-tl"></div>
-            <div class="istaka-brass-corner corner-tr"></div>
-            <div class="istaka-brass-corner corner-bl"></div>
-            <div class="istaka-brass-corner corner-br"></div>
-            <div id="player-istaka-container"></div>
+          <!-- 3. Right Player Outer Bar -->
+          <div id="seat-right" class="player-outer-bar bar-right">
+            <div class="avatar-ring-container">
+              <div class="avatar-timer-ring"></div>
+              <div class="pod-avatar">👤</div>
+            </div>
+            <div class="bar-player-info">
+              <span class="player-name">Bekleniyor...</span>
+              <span class="player-open-status not-opened">AÇMADI</span>
+              <div class="player-turn-progress-track">
+                <div class="player-turn-progress-fill"></div>
+              </div>
+            </div>
           </div>
 
-          <button id="btn-sort-runs" class="btn-side-sort btn-sort-right" title="Serileri otomatik dizer">
-            <span class="sort-text">SERİ DİZ</span>
-          </button>
-        </div>
-      </section>
+          <!-- 4 Outer Discard Slots in the 4 Absolute Corners of the Canvas (Outside the Oval Felt) -->
+          <!-- 1. Sol Üst Köşe (Top Discard) -->
+          <div class="table-corner-discard corner-top-left" title="Üst Oyuncunun Attığı Taş">
+            <div id="discard-pile-top" class="plus-discard-box"></div>
+          </div>
+
+          <!-- 2. Sağ Üst Köşe (Right Discard) -->
+          <div class="table-corner-discard corner-top-right" title="Sağ Oyuncunun Attığı Taş">
+            <div id="discard-pile-right" class="plus-discard-box"></div>
+          </div>
+
+          <!-- 3. Sol Alt Köşe (Left Discard - Yandan Al) -->
+          <div class="table-corner-discard corner-bottom-left" title="Sol Oyuncunun Attığı Taş (Yandan Al)">
+            <div id="discard-pile-left" class="plus-discard-box"></div>
+          </div>
+
+          <!-- 4. Sağ Alt Köşe (Bottom Discard - Taş At) -->
+          <div class="table-corner-discard corner-bottom-right" title="Sizin Attığınız Taş">
+            <div id="discard-pile-bottom" class="plus-discard-box"></div>
+          </div>
+
+          <!-- Classic 101 Okey Casino Felt Mat (Only Melds and Center Deck/Indicator) -->
+          <div class="table-felt-mat">
+            <div class="felt-watermark">101 OKEY</div>
+
+            <!-- Waiting Lobby Center Card (Shown when game state is WAITING) -->
+            <div id="waiting-lobby-overlay" class="waiting-lobby-overlay hidden">
+              <div class="lobby-center-card">
+                <h3 class="lobby-card-title">🎲 OYUNCULAR BEKLENİYOR</h3>
+                <div class="lobby-code-box">
+                  <span>Oda Kodu:</span>
+                  <strong id="lobby-card-room-code">------</strong>
+                  <button id="btn-lobby-copy" class="btn-copy-pill" title="Kodu Kopyala">📋</button>
+                </div>
+                <p class="lobby-card-desc">Arkadaşlarını davet et veya hemen botlarla başlat!</p>
+                <button id="btn-center-start-game" class="btn-plus-gold btn-center-start">
+                  <span>▶️ OYUNU BAŞLAT</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Center Board (Table Melds & Center Deck/Indicator) -->
+            <div class="center-table-zone">
+              <!-- Sol ve Orta: 2 Tane Yan Yana 13x13 Seri Açma Bölmesi -->
+              <div class="seri-section-wrapper">
+                <!-- 1. 13x13 Seri Bölmesi (Sol) -->
+                <div class="table-grid-panel seri-panel" id="panel-seri-1">
+                  <div class="panel-rows-container" id="seri-1-rows"></div>
+                </div>
+
+                <!-- İki Seri Bölmesi Arasındaki Dikey Ayırıcı Çizgi -->
+                <div class="seri-divider-line"></div>
+
+                <!-- 2. 13x13 Seri Bölmesi (Sağ) -->
+                <div class="table-grid-panel seri-panel" id="panel-seri-2">
+                  <div class="panel-rows-container" id="seri-2-rows"></div>
+                </div>
+              </div>
+
+              <!-- Orta/Bölme: Ahşap Gösterge ve Deste Şeridi -->
+              <div class="center-deck-strip">
+                <!-- 1. Open Indicator Tile (Gösterge - Üstte) -->
+                <div class="indicator-zone" title="Gösterge Taşı">
+                  <div class="indicator-clean-box">
+                    <div id="indicator-tile-slot"></div>
+                  </div>
+                  <span class="indicator-subtext">GÖSTERGE</span>
+                </div>
+
+                <!-- 2. Plain Face-Down Bone Tile (Deste - Altta) -->
+                <div class="deck-zone" title="Desteden Taş Çek">
+                  <div id="center-deck-pile" class="plus-3d-deck">
+                    <div class="deck-layer layer-3"></div>
+                    <div class="deck-layer layer-2"></div>
+                    <div class="deck-layer layer-1"></div>
+                  </div>
+                  <span id="deck-count" class="deck-count-subtext">28 Taş</span>
+                </div>
+              </div>
+
+              <!-- Sağ Taraf: 2 Tane Yan Yana 2x13 Çift Açma Bölmesi -->
+              <div class="pairs-section-wrapper">
+                <!-- 1. 2x13 Çift Bölmesi (Sol) -->
+                <div class="table-grid-panel pairs-panel" id="panel-pairs-1">
+                  <div class="panel-rows-container pairs-rows-container" id="pairs-1-rows"></div>
+                </div>
+
+                <!-- İki Çift Bölmesi Arasındaki Dikey Ayırıcı Çizgi -->
+                <div class="pairs-divider-line"></div>
+
+                <!-- 2. 2x13 Çift Bölmesi (Sağ) -->
+                <div class="table-grid-panel pairs-panel" id="panel-pairs-2">
+                  <div class="panel-rows-container pairs-rows-container" id="pairs-2-rows"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Outer Player & Action Strip (In Dark Green Canvas, Right Above the Brown Istaka Bar!) -->
+          <div class="canvas-bottom-strip">
+            <div class="canvas-bottom-left">
+              <button id="btn-return-discard" class="btn-pill-action btn-pill-warning hidden" title="Yandan aldığınız taşı geri bırakın ve desteden çekin">
+                <span>↩️ Taşı Geri Bırak</span>
+              </button>
+              <button id="btn-undo-turn" class="btn-pill-action btn-pill-danger hidden" title="Açtığınız perleri ve işlediğiniz taşları geri alın">
+                <span>↩️ Vazgeç</span>
+              </button>
+            </div>
+
+            <!-- Center: Bottom Player Profile Card (Centered directly above istaka) -->
+            <div id="seat-bottom" class="player-outer-bar bar-bottom">
+              <div class="avatar-ring-container">
+                <div class="avatar-timer-ring"></div>
+                <div class="pod-avatar">👤</div>
+              </div>
+              <div class="bar-player-info">
+                <span class="player-name">Oyuncu (Siz)</span>
+                <span class="player-open-status not-opened">AÇMADI</span>
+                <div class="player-turn-progress-track">
+                  <div class="player-turn-progress-fill"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Open Hand / Pairs Action Buttons (In Dark Green Canvas on the Right) -->
+            <div class="canvas-bottom-right">
+              <div class="play-actions">
+                <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled>
+                  <span>Seri Aç</span>
+                </button>
+                <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled>
+                  <span>Çift Aç</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <!-- Bottom Istaka (Player Rack) -->
+        <section class="plus-istaka-section">
+          <!-- Istaka Board with Left (ÇİFT DİZ) & Right (SERİ DİZ) Sort Buttons -->
+          <div class="istaka-wing-wrapper">
+            <button id="btn-sort-pairs" class="btn-side-sort btn-sort-left" title="Çiftleri otomatik dizer">
+              <span class="sort-text">ÇİFT DİZ</span>
+            </button>
+
+            <!-- 3D 2-Shelf Wooden Istaka -->
+            <div class="plus-istaka-board">
+              <div class="istaka-brass-corner corner-tl"></div>
+              <div class="istaka-brass-corner corner-tr"></div>
+              <div class="istaka-brass-corner corner-bl"></div>
+              <div class="istaka-brass-corner corner-br"></div>
+              <div id="player-istaka-container"></div>
+            </div>
+
+            <button id="btn-sort-runs" class="btn-side-sort btn-sort-right" title="Serileri otomatik dizer">
+              <span class="sort-text">SERİ DİZ</span>
+            </button>
+          </div>
+        </section>
+      </div>
     </div>
 
     <!-- ================= PLUS SLIDE-OVER DRAWERS & MODALS ================= -->
@@ -480,13 +482,12 @@
       </div>
     </div>
 
-    <!-- Mobile Portrait Orientation Helper -->
-    <div id="mobile-orientation-overlay" class="orientation-overlay hidden">
+    <!-- Mobile Portrait Orientation Helper (Strict - Landscape Required) -->
+    <div id="mobile-orientation-overlay" class="orientation-overlay">
       <div class="orientation-box">
         <div class="phone-rotate-icon">📱🔄</div>
         <h2>Telefonu Yan Çevirin</h2>
-        <p>101 Okey'i en iyi deneyimle oynamak için cihazınızı yatay konuma getirin.</p>
-        <button id="btn-dismiss-orientation" class="btn-dismiss-orientation">Dikeyde Devam Et</button>
+        <p>101 Okey'i oynamak için lütfen cihazınızı yatay (landscape) konuma getirin.</p>
       </div>
     </div>
 
@@ -496,11 +497,11 @@
 
   <!-- Socket.IO & Application Scripts (Cache Busted) -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/audio.js?v=76"></script>
-  <script src="js/validator.js?v=76"></script>
-  <script src="js/istaka.js?v=76"></script>
-  <script src="js/table.js?v=76"></script>
-  <script src="js/ui.js?v=76"></script>
-  <script src="js/gameClient.js?v=76"></script>
+  <script src="js/audio.js?v=77"></script>
+  <script src="js/validator.js?v=77"></script>
+  <script src="js/istaka.js?v=77"></script>
+  <script src="js/table.js?v=77"></script>
+  <script src="js/ui.js?v=77"></script>
+  <script src="js/gameClient.js?v=77"></script>
 </body>
 </html>

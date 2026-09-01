@@ -518,7 +518,7 @@ class IstakaManager {
       touchMoveActive = false;
       this.draggedSource = { row, col, tile };
       window.draggedTileId = tile.id;
-    }, { passive: true });
+    }, { passive: false });
 
     el.addEventListener('touchmove', (e) => {
       if (e.touches.length > 1) return;
@@ -529,32 +529,44 @@ class IstakaManager {
       if (!touchMoveActive && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
         touchMoveActive = true;
         ghostEl = el.cloneNode(true);
-        ghostEl.classList.remove('active-focus', 'tile-just-drawn');
+        ghostEl.classList.remove('active-focus', 'tile-just-drawn', 'dragging');
         ghostEl.style.position = 'fixed';
-        ghostEl.style.zIndex = '999999';
+        ghostEl.style.zIndex = '9999999';
         ghostEl.style.pointerEvents = 'none';
-        ghostEl.style.opacity = '0.92';
-        ghostEl.style.transform = 'translate(-50%, -50%) scale(1.08)';
-        ghostEl.style.boxShadow = '0 12px 28px rgba(0,0,0,0.85)';
+        ghostEl.style.opacity = '0.96';
+        ghostEl.style.transform = 'translate(-50%, -50%) scale(1.15)';
+        ghostEl.style.boxShadow = '0 16px 36px rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.7)';
+        ghostEl.style.left = `${touch.clientX}px`;
+        ghostEl.style.top = `${touch.clientY}px`;
         document.body.appendChild(ghostEl);
         el.classList.add('dragging');
       }
 
-      if (touchMoveActive && ghostEl) {
-        ghostEl.style.left = `${touch.clientX}px`;
-        ghostEl.style.top = `${touch.clientY}px`;
+      if (touchMoveActive) {
+        e.preventDefault(); // Prevent page scroll / pull-to-refresh
+        if (ghostEl) {
+          ghostEl.style.left = `${touch.clientX}px`;
+          ghostEl.style.top = `${touch.clientY}px`;
+        }
 
         const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
         document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
         document.querySelectorAll('.plus-discard-box').forEach(b => b.classList.remove('drag-over'));
+        document.querySelectorAll('.table-grid-row, .table-pairs-row').forEach(m => m.classList.remove('meld-drag-hover'));
+        
         if (elemBelow) {
           const slot = elemBelow.closest('.istaka-slot');
           if (slot) slot.classList.add('drag-over');
-          const discard = elemBelow.closest('#discard-pile-bottom');
-          if (discard) discard.classList.add('drag-over');
+          const discard = elemBelow.closest('#discard-pile-bottom') || elemBelow.closest('.corner-bottom-right');
+          if (discard) {
+            const box = discard.querySelector('.plus-discard-box') || discard;
+            box.classList.add('drag-over');
+          }
+          const meldRow = elemBelow.closest('.table-grid-row') || elemBelow.closest('.table-pairs-row');
+          if (meldRow) meldRow.classList.add('meld-drag-hover');
         }
       }
-    }, { passive: true });
+    }, { passive: false });
 
     el.addEventListener('touchend', (e) => {
       if (ghostEl) {
@@ -564,13 +576,14 @@ class IstakaManager {
       el.classList.remove('dragging');
       document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
       document.querySelectorAll('.plus-discard-box').forEach(b => b.classList.remove('drag-over'));
+      document.querySelectorAll('.table-grid-row, .table-pairs-row').forEach(m => m.classList.remove('meld-drag-hover'));
 
       if (touchMoveActive && e.changedTouches.length > 0) {
         const touch = e.changedTouches[0];
         const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
         if (elemBelow) {
           const targetSlot = elemBelow.closest('.istaka-slot');
-          const targetDiscard = elemBelow.closest('#discard-pile-bottom');
+          const targetDiscard = elemBelow.closest('#discard-pile-bottom') || elemBelow.closest('.corner-bottom-right');
           const targetMeldRow = elemBelow.closest('.table-grid-row') || elemBelow.closest('.table-pairs-row');
 
           if (targetDiscard) {

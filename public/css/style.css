@@ -1478,10 +1478,40 @@ body.plus-theme {
 }
 
 /* =========================================================
-   101 OKEY PLUS - CASINO TABLE CANVAS & FELT MAT
+   101 OKEY PLUS - VIRTUAL GAME STAGE (1200x680 AUTO-SCALER)
    ========================================================= */
 
+#game-view {
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #020f08;
+  position: relative;
+}
+
+.game-stage {
+  width: 1200px;
+  height: 680px;
+  min-width: 1200px;
+  min-height: 680px;
+  max-width: 1200px;
+  max-height: 680px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transform-origin: center center;
+  background: #020f08;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+}
+
 .plus-table-canvas {
+  height: 524px;
   flex: 1;
   position: relative;
   width: 100%;
@@ -1491,29 +1521,29 @@ body.plus-theme {
 
 .table-felt-mat {
   position: absolute;
-  top: var(--felt-offset-top);
-  bottom: var(--felt-offset-bottom);
-  left: var(--felt-offset-x);
-  right: var(--felt-offset-x);
+  top: 60px;
+  bottom: 58px;
+  left: 118px;
+  right: 118px;
   margin: 0;
   background: radial-gradient(ellipse at center, #10663a 0%, #0c4d2c 55%, #072e1a 100%);
-  border: clamp(3px, 0.6vw, 7px) solid #241108;
-  border-radius: clamp(20px, 3.5vw, 40px);
+  border: 6px solid #241108;
+  border-radius: 36px;
   box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.85), 0 10px 35px rgba(0, 0, 0, 0.9), 0 0 0 2px rgba(241, 196, 15, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 6px;
+  padding: 4px 8px;
   box-sizing: border-box;
 }
 
 .felt-watermark {
   position: absolute;
   font-family: 'Cinzel', serif;
-  font-size: clamp(24px, 4.5vw, 54px);
+  font-size: 48px;
   font-weight: 900;
   color: rgba(255, 255, 255, 0.03);
-  letter-spacing: clamp(3px, 0.8vw, 8px);
+  letter-spacing: 6px;
   pointer-events: none;
   z-index: 1;
 }
@@ -1604,46 +1634,46 @@ body.plus-theme {
 
 /* Top Balanced Outer Bar (In Canvas Above Oval Table) */
 .bar-top {
-  top: clamp(2px, 0.8vh, 6px);
+  top: 5px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: clamp(4px, 0.8vw, 10px);
-  padding: 3px clamp(8px, 1.2vw, 14px) 3px 5px;
+  gap: 8px;
+  padding: 3px 14px 3px 5px;
   border-radius: 28px;
   width: auto;
-  min-width: clamp(120px, 16vw, 200px);
-  max-width: 240px;
+  min-width: 170px;
+  max-width: 230px;
   justify-content: center;
 }
 
 /* Left & Right Vertical Outer Bars (In Canvas to Left/Right of Oval Table) */
 .bar-left {
-  left: clamp(4px, 0.7vw, 10px);
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: clamp(6px, 1vh, 10px) clamp(4px, 0.6vw, 8px);
+  gap: 4px;
+  padding: 8px 6px;
   border-radius: 16px;
-  width: var(--pod-w);
+  width: 98px;
   text-align: center;
 }
 
 .bar-right {
-  right: clamp(4px, 0.7vw, 10px);
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: clamp(6px, 1vh, 10px) clamp(4px, 0.6vw, 8px);
+  gap: 4px;
+  padding: 8px 6px;
   border-radius: 16px;
-  width: var(--pod-w);
+  width: 98px;
   text-align: center;
 }
 
@@ -2096,12 +2126,12 @@ body.plus-theme {
 
 /* Sağ Taraf: 2 Tane Yan Yana 2x13 Çift Açma Bölmesi */
 .pairs-section-wrapper {
-  width: clamp(105px, 14vw, 172px);
+  width: 172px;
   display: flex;
   align-items: stretch;
   background-color: #071d13;
   border: 2px solid #1a3a2a;
-  border-radius: clamp(6px, 1vw, 12px);
+  border-radius: 10px;
   overflow: hidden;
   box-shadow: inset 0 2px 10px rgba(0,0,0,0.75), 0 8px 24px rgba(0,0,0,0.5);
   position: relative;
@@ -2134,7 +2164,7 @@ body.plus-theme {
   min-height: 0;
   display: grid;
   grid-template-rows: repeat(13, 1fr);
-  gap: 2.5px;
+  gap: 2px;
   overflow: hidden !important;
   z-index: 2;
   box-sizing: border-box;
@@ -2187,27 +2217,27 @@ body.plus-theme {
 }
 
 .corner-top-left {
-  top: clamp(4px, 1vh, 12px);
-  left: clamp(4px, 0.8vw, 14px);
+  top: 10px;
+  left: 12px;
 }
 
 .corner-top-right {
-  top: clamp(4px, 1vh, 12px);
-  right: clamp(4px, 0.8vw, 14px);
+  top: 10px;
+  right: 12px;
 }
 
 .corner-bottom-left {
-  bottom: clamp(4px, 1vh, 12px);
-  left: clamp(4px, 0.8vw, 14px);
+  bottom: 8px;
+  left: 12px;
 }
 
 .corner-bottom-right {
-  bottom: clamp(4px, 1vh, 12px);
-  right: clamp(4px, 0.8vw, 14px);
+  bottom: 8px;
+  right: 12px;
 }
 
 .corner-discard-label {
-  font-size: clamp(7px, 0.8vw, 8px);
+  font-size: 8px;
   font-weight: 900;
   color: #a8d5ba;
   letter-spacing: 0.5px;
@@ -2227,18 +2257,18 @@ body.plus-theme {
 }
 
 .zone-label {
-  font-size: clamp(7.5px, 0.9vw, 9px);
+  font-size: 9px;
   font-weight: 800;
   color: #a8d5ba;
   letter-spacing: 0.5px;
 }
 
 .plus-discard-box {
-  width: clamp(28px, 3.8vw, 44px);
-  height: clamp(38px, 5.2vw, 60px);
+  width: 44px;
+  height: 58px;
   background: rgba(0, 0, 0, 0.35);
-  border: 1.5px dashed rgba(255, 255, 255, 0.25);
-  border-radius: clamp(4px, 0.6vw, 8px);
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2259,10 +2289,10 @@ body.plus-theme {
    ========================================================= */
 
 .okey-tile {
-  width: var(--tile-w);
-  height: var(--tile-h);
+  width: 38px;
+  height: 52px;
   background: var(--tile-bg);
-  border-radius: clamp(3px, 0.5vw, 6px);
+  border-radius: 5px;
   border: 1px solid #d5c8b5;
   box-shadow: var(--tile-shadow);
   display: flex;
@@ -2277,33 +2307,33 @@ body.plus-theme {
 }
 
 .tile-small {
-  width: clamp(14px, 1.8vw, 24px);
-  height: clamp(20px, 2.6vw, 34px);
+  width: 23px;
+  height: 32px;
 }
 
 .tile-number {
   font-family: 'Montserrat', sans-serif;
-  font-size: var(--tile-font);
+  font-size: 24px;
   font-weight: 900;
   line-height: 1;
   margin-top: -2px;
 }
 
 .tile-small .tile-number {
-  font-size: clamp(9px, 1.2vw, 14px);
+  font-size: 13px;
   font-weight: 900;
 }
 
 .tile-dot {
-  width: clamp(3px, 0.4vw, 5px);
-  height: clamp(3px, 0.4vw, 5px);
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   margin-top: 1px;
 }
 
 .tile-small .tile-dot {
-  width: clamp(2px, 0.3vw, 3px);
-  height: clamp(2px, 0.3vw, 3px);
+  width: 3px;
+  height: 3px;
   margin-top: 1px;
 }
 
@@ -2399,12 +2429,12 @@ body.plus-theme {
 
 /* =========================================================
    ISTAKA SECTION & WOODEN BOARD (PLUS 2-SHELF RACK)
-   ========================================================= */
- 
-.plus-istaka-section {
+   ==============================================.plus-istaka-section {
+  height: 156px;
+  flex-shrink: 0;
   background: linear-gradient(180deg, #1b0a04 0%, #100502 100%);
-  border-top: clamp(2px, 0.4vw, 4px) solid #5c2c16;
-  padding: clamp(3px, 0.6vh, 6px) clamp(6px, 1.2vw, 16px) clamp(4px, 0.8vh, 10px) clamp(6px, 1.2vw, 16px);
+  border-top: 3px solid #5c2c16;
+  padding: 6px 14px 8px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2417,12 +2447,12 @@ body.plus-theme {
 /* Bottom Outer Player & Action Strip (In Dark Green Canvas, Right Above the Brown Istaka Bar!) */
 .canvas-bottom-strip {
   position: absolute;
-  bottom: clamp(2px, 0.8vh, 6px);
-  left: var(--felt-offset-x);
-  right: var(--felt-offset-x);
+  bottom: 6px;
+  left: 118px;
+  right: 118px;
   width: auto;
   margin: 0;
-  padding: 0 clamp(4px, 0.8vw, 10px);
+  padding: 0 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2457,26 +2487,26 @@ body.plus-theme {
   transform: none !important;
   display: flex;
   align-items: center;
-  gap: clamp(4px, 0.8vw, 10px);
-  padding: 3px clamp(8px, 1.2vw, 16px) 3px 5px;
+  gap: 8px;
+  padding: 3px 14px 3px 5px;
   border-radius: 28px;
   width: auto;
-  min-width: clamp(120px, 16vw, 180px);
-  max-width: 240px;
+  min-width: 170px;
+  max-width: 230px;
   justify-content: center;
 }
 
 .play-actions {
   display: flex;
   align-items: center;
-  gap: clamp(4px, 0.6vw, 8px);
+  gap: 8px;
 }
 
 /* 3D Glossy Action Buttons */
 .btn-pill-action {
-  font-size: clamp(9px, 1.1vw, 12px);
+  font-size: 12px;
   font-weight: 800;
-  padding: clamp(4px, 0.8vh, 7px) clamp(8px, 1.2vw, 16px);
+  padding: 6px 14px;
   border-radius: 20px;
   cursor: pointer;
   display: flex;
@@ -2521,7 +2551,7 @@ body.plus-theme {
 }
 
 .btn-pill-action:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .btn-pill-action:disabled {
@@ -2585,14 +2615,15 @@ body.plus-theme {
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: clamp(4px, 0.6vw, 8px);
+  gap: 8px;
   width: 100%;
-  max-width: 1240px;
+  max-width: 1180px;
+  height: 140px;
 }
 
 .btn-side-sort {
-  width: var(--side-sort-w);
-  border-radius: clamp(6px, 1vw, 12px);
+  width: 52px;
+  border-radius: 10px;
   border: 1.5px solid rgba(255, 255, 255, 0.25);
   color: #fff;
   cursor: pointer;
@@ -2600,18 +2631,18 @@ body.plus-theme {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
   transition: all 0.15s;
-  padding: 4px 2px;
+  padding: 6px 2px;
 }
 
 .btn-side-sort .icon {
-  font-size: clamp(14px, 1.8vw, 20px);
+  font-size: 18px;
 }
 
 .btn-side-sort .sort-text {
-  font-size: clamp(7.5px, 0.9vw, 9px);
+  font-size: 8px;
   font-weight: 900;
   letter-spacing: 0.5px;
   text-align: center;
@@ -2640,23 +2671,25 @@ body.plus-theme {
 /* 3D 2-Shelf Wooden Istaka Board */
 .plus-istaka-board {
   flex: 1;
-  max-width: 1120px;
+  max-width: 1080px;
+  height: 100%;
   background: linear-gradient(180deg, #441e0d 0%, #291005 50%, #150601 100%);
-  border: clamp(2px, 0.4vw, 4px) solid #140501;
-  border-radius: clamp(6px, 1vw, 12px);
-  padding: clamp(3px, 0.6vh, 8px) clamp(4px, 0.8vw, 12px);
+  border: 3px solid #140501;
+  border-radius: 10px;
+  padding: 6px 10px;
   display: flex;
   flex-direction: column;
-  gap: clamp(3px, 0.5vh, 6px);
+  gap: 5px;
   box-shadow: inset 0 4px 10px rgba(0,0,0,0.9), 0 8px 24px rgba(0,0,0,0.8);
   position: relative;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .istaka-brass-corner {
   position: absolute;
-  width: clamp(8px, 1.2vw, 12px);
-  height: clamp(8px, 1.2vw, 12px);
+  width: 10px;
+  height: 10px;
   background: var(--gold-gradient);
   border: 1px solid #7d5c07;
   border-radius: 2px;
@@ -2670,12 +2703,13 @@ body.plus-theme {
 .istaka-row {
   display: grid;
   grid-template-columns: repeat(16, 1fr);
-  gap: var(--slot-gap);
-  min-height: calc(var(--tile-h) + 4px);
+  gap: 4px;
+  height: 58px;
   background: rgba(0, 0, 0, 0.4);
-  border-radius: clamp(4px, 0.8vw, 8px);
-  padding: 2px clamp(2px, 0.5vw, 6px);
+  border-radius: 6px;
+  padding: 2px 4px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  align-items: center;
 }
 
 .istaka-slot {
@@ -2683,11 +2717,11 @@ body.plus-theme {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.2);
-  border-radius: clamp(3px, 0.5vw, 6px);
+  border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.03);
   transition: background 0.15s, border-color 0.15s;
   min-width: 0;
-  min-height: var(--tile-h);
+  height: 54px;
 }
 
 .istaka-slot.drag-over {
@@ -3349,7 +3383,7 @@ body.plus-theme {
   position: fixed;
   inset: 0;
   background: radial-gradient(circle at center, #0d3222 0%, #03100a 100%);
-  z-index: 99999;
+  z-index: 999999;
   display: none;
   align-items: center;
   justify-content: center;
@@ -3358,8 +3392,8 @@ body.plus-theme {
 }
 
 @media screen and (orientation: portrait) and (max-width: 900px) {
-  .orientation-overlay:not(.dismissed) {
-    display: flex;
+  .orientation-overlay {
+    display: flex !important;
   }
 }
 
@@ -3367,17 +3401,17 @@ body.plus-theme {
   background: rgba(14, 40, 24, 0.95);
   border: 2px solid var(--gold-primary);
   border-radius: 24px;
-  padding: 32px 24px;
+  padding: 36px 28px;
   max-width: 340px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 30px rgba(241, 196, 15, 0.25);
 }
 
 .phone-rotate-icon {
-  font-size: 54px;
+  font-size: 58px;
   animation: phoneRotateAnim 2.2s infinite ease-in-out;
 }
 
@@ -3389,32 +3423,14 @@ body.plus-theme {
 
 .orientation-box h2 {
   font-family: 'Cinzel', serif;
-  font-size: 18px;
+  font-size: 20px;
   color: var(--gold-primary);
   margin: 0;
 }
 
 .orientation-box p {
-  font-size: 13px;
+  font-size: 14px;
   color: #a8d5ba;
-  line-height: 1.4;
+  line-height: 1.5;
   margin: 0;
-}
-
-.btn-dismiss-orientation {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ddd;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 8px 18px;
-  border-radius: 16px;
-  cursor: pointer;
-  margin-top: 6px;
-  transition: background 0.15s;
-}
-
-.btn-dismiss-orientation:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
 }
