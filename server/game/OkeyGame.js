@@ -599,13 +599,15 @@ class OkeyGame {
     if (processCheck.isOkeySteal && processCheck.stolenOkeyTile) {
       player.hand.push(processCheck.stolenOkeyTile);
 
-      // If stolen from someone else's meld, only that specific player gets +101 penalty!
-      if (targetMeld && targetMeld.playerIndex !== undefined && playerIndex !== targetMeld.playerIndex) {
+      // If stolen from an OPPONENT's meld (different team), only that specific meld owner gets +101 penalty!
+      // If taken from own team (self or partner), NO penalty!
+      const isOpponentMeld = (targetMeld && targetMeld.playerIndex !== undefined && (playerIndex % 2 !== targetMeld.playerIndex % 2));
+      if (isOpponentMeld) {
         const meldOwner = this.players[targetMeld.playerIndex];
         if (meldOwner) {
           meldOwner.penaltyPoints = (meldOwner.penaltyPoints || 0) + 101;
           meldOwner.penalties.push({ type: 'OKEY_STOLEN', points: 101, desc: 'Okey kaptırma cezası (+101)' });
-          this.addLog(`✨ ${player.name} perdeki Okey'i aldı! ${meldOwner.name} +101 ceza aldı!`);
+          this.addLog(`✨ ${player.name} rakibin perindeki Okey'i aldı! ${meldOwner.name} +101 ceza aldı!`);
         }
       } else {
         this.addLog(`✨ ${player.name} perdeki Okey'in yerine taş işleyerek OKEY'i eline aldı!`);

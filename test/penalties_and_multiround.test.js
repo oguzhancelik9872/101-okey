@@ -95,6 +95,29 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(game.players[3].penaltyPoints, initialP3Penalties);
   console.log('   Okey Steal Penalty: PASSED (Only meld owner got +101)');
 
+  // 4b. Test Partner Okey Steal (Taking Okey from own teammate gives NO PENALTY!)
+  console.log('3b. Testing Partner Okey Steal (No penalty to teammate)...');
+  const partnerMeld = {
+    id: 'meld_partner_2',
+    playerIndex: 2, // Team 1 (Player 0 & 2)
+    type: 'run',
+    tiles: [new Tile('red_1', 'red', 1), okeyTile, new Tile('red_3', 'red', 3)],
+    score: 6
+  };
+  game.tableMelds.push(partnerMeld);
+  game.currentTurn = 0; // Player 0 (Team 1)
+  game.turnState = 'DISCARD';
+  game.players[0].opened = true;
+  game.players[0].hand.push(new Tile('red_2', 'red', 2));
+
+  const p2PenaltiesBefore = game.players[2].penaltyPoints;
+  const partnerProcessRes = game.processTile(0, 'red_2', 'meld_partner_2');
+  assert.strictEqual(partnerProcessRes.success, true);
+  assert.strictEqual(partnerProcessRes.okeyStolen, true);
+  // Player 2 (Partner) must NOT receive any penalty!
+  assert.strictEqual(game.players[2].penaltyPoints, p2PenaltiesBefore);
+  console.log('   Partner Okey Steal: PASSED (Teammate got 0 penalty)');
+
   // 5. Test Team Folding Rules (Katlamalı Sistem)
   console.log('4. Testing Team Folding Rules (Katlamalı)...');
   // Team 1 Player 0 opened with 171 points.
