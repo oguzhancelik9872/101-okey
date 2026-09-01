@@ -895,25 +895,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lastGameState && lastGameState.state === 'PLAYING' && state.state === 'PLAYING') {
       const anim = window.tileAnimations;
 
-      // 1. Draw Tile Animation (Deck or Discard) - Detects both human & instantaneous bot draws!
-      const wasDraw = lastGameState.turnState === 'DRAW';
-      const isDiscardNow = state.turnState === 'DISCARD';
-      const sameTurnPlayer = lastGameState.currentTurn === state.currentTurn;
-      const turnChanged = lastGameState.currentTurn !== state.currentTurn;
-      const newPlayerAlreadyDrawn = isDiscardNow && turnChanged;
+      // 1. Detect if someone discarded a tile
+      const countDiscards = (s) => (s && s.discards) ? s.discards.reduce((acc, p) => acc + (p ? p.length : 0), 0) : 0;
+      const lastDiscardCount = countDiscards(lastGameState);
+      const currentDiscardCount = countDiscards(state);
 
-      if (((wasDraw && isDiscardNow && sameTurnPlayer) || newPlayerAlreadyDrawn) && anim) {
-        const turnPlayer = state.currentTurn;
-        const seatPos = table.getRelativePosition(turnPlayer);
-        const isViewer = (turnPlayer === viewerSeatIndex);
+      let islekDiscarded = false;
+      let discardedByPlayer = null;
+      let discardedTile = null;
 
-        if (state.drawnFromDiscard && state.drawnFromDiscard.playerIndex === turnPlayer) {
-          const fromSeat = (turnPlayer + 3) % 4;
-          const fromPos = table.getRelativePosition(fromSeat);
-          const drawnTile = state.drawnFromDiscard.tile || { id: state.drawnFromDiscard.tileId };
-          anim.animateDrawFromDiscard(seatPos, fromPos, drawnTile, isViewer);
-        } else {
-          anim.animateDrawFromDeck(seatPos, isViewer);
+      if (currentDiscardCount > lastDiscardCount && state.discards && lastGameState.discards) {
+        for (let p = 0; p < 4; p++) {
+          const curPile = state.discards[p] || [];
+          const lastPile = lastGameState.discards[p] || [];
+          if (curPile.length > lastPile.length) {
+            discardedByPlayer = p;
+            discardedTile = curPile[curPile.length - 1];
+            if (discardedTile && window.ClientValidator && window.ClientValidator.isPlayableToTable(discardedTile, state.tableMelds || [], state.indicator)) {
+              islekDiscarded = true;
+            }
+            break;
+          }
         }
       }
 
@@ -924,7 +926,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.soundEngine.playOpenHand();
 
         if (anim) {
-          // Find newly opened players or new melds added
           for (let p = 0; p < 4; p++) {
             const lastP = lastGameState.players ? lastGameState.players[p] : null;
             const newP = state.players ? state.players[p] : null;
@@ -944,7 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const curM = state.tableMelds[mIdx];
           if (lastM && curM && curM.tiles && lastM.tiles && curM.tiles.length > lastM.tiles.length) {
             const addedTile = curM.tiles[curM.tiles.length - 1];
-            const turnPlayer = state.currentTurn;
+            const turnPlayer = (discardedByPlayer !== null) ? discardedByPlayer : state.currentTurn;
             const seatPos = table.getRelativePosition(turnPlayer);
             const isViewer = (turnPlayer === viewerSeatIndex);
             anim.animateProcessTile(seatPos, addedTile, isViewer);
@@ -953,36 +954,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // 3. Tile Discard Animation & Sound
-      const countDiscards = (s) => (s && s.discards) ? s.discards.reduce((acc, p) => acc + (p ? p.length : 0), 0) : 0;
-      const lastDiscardCount = countDiscards(lastGameState);
-      const currentDiscardCount = countDiscards(state);
-      if (currentDiscardCount > lastDiscardCount) {
-        let islekDiscarded = false;
-        let discardedByPlayer = null;
-        let discardedTile = null;
+      // 3. Draw & Discard Orchestration
+      if (anim) {
+        if (discardedByPlayer !== null && discardedByPlayer !== viewerSeatIndex) {
+          // Other player / Bot completed a turn: Animate Draw -> (Open) -> Discard in clean sequence!
+          const seatPos = table.getRelativePosition(discardedByPlayer);
+          if (state.drawnFromDiscard && state.drawnFromDiscard.playerIndex === discardedByPlayer) {
+            const fromSeat = (discardedByPlayer + 3) % 4;
+            const fromPos = table.getRelativePosition(fromSeat);
+            const drawnTile = state.drawnFromDiscard.tile || { id: state.drawnFromDiscard.tileId };
+            anim.animateDrawFromDiscard(seatPos, fromPos, drawnTile, false, () => {
+              anim.animateDiscard(seatPos, discardedTile, false);
+            });
+          } else {
+            anim.animateDrawFromDeck(seatPos, false, () => {
+              anim.animateDiscard(seatPos, discardedTile, false);
+            });
+          }
+        } else if (discardedByPlayer === viewerSeatIndex && discardedTile) {
+          // Viewer discarded a tile
+          const seatPos = table.getRelativePosition(viewerSeatIndex);
+          anim.animateDiscard(seatPos, discardedTile, true);
+        } else {
+          // Human or live player drawing during their turn
+          const wasDraw = lastGameState.turnState === 'DRAW';
+          const isDiscardNow = state.turnState === 'DISCARD';
+          const sameTurnPlayer = lastGameState.currentTurn === state.currentTurn;
 
-        if (state.discards && lastGameState.discards) {
-          for (let p = 0; p < 4; p++) {
-            const curPile = state.discards[p] || [];
-            const lastPile = lastGameState.discards[p] || [];
-            if (curPile.length > lastPile.length) {
-              discardedByPlayer = p;
-              discardedTile = curPile[curPile.length - 1];
-              if (discardedTile && window.ClientValidator && window.ClientValidator.isPlayableToTable(discardedTile, state.tableMelds || [], state.indicator)) {
-                islekDiscarded = true;
-              }
-              break;
+          if (wasDraw && isDiscardNow && sameTurnPlayer) {
+            const turnPlayer = state.currentTurn;
+            const seatPos = table.getRelativePosition(turnPlayer);
+            const isViewer = (turnPlayer === viewerSeatIndex);
+
+            if (state.drawnFromDiscard && state.drawnFromDiscard.playerIndex === turnPlayer) {
+              const fromSeat = (turnPlayer + 3) % 4;
+              const fromPos = table.getRelativePosition(fromSeat);
+              const drawnTile = state.drawnFromDiscard.tile || { id: state.drawnFromDiscard.tileId };
+              anim.animateDrawFromDiscard(seatPos, fromPos, drawnTile, isViewer);
+            } else {
+              anim.animateDrawFromDeck(seatPos, isViewer);
             }
           }
         }
+      }
 
-        if (discardedByPlayer !== null && discardedTile && anim) {
-          const seatPos = table.getRelativePosition(discardedByPlayer);
-          const isViewer = (discardedByPlayer === viewerSeatIndex);
-          anim.animateDiscard(seatPos, discardedTile, isViewer);
-        }
-
+      // 4. Audio Feedback for Discards
+      if (discardedByPlayer !== null) {
         if (islekDiscarded) {
           window.soundEngine.playDiscard();
           if (discardedByPlayer === viewerSeatIndex) {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=90">
+  <link rel="stylesheet" href="css/style.css?v=92">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -300,22 +300,25 @@
                 <span class="target-pairs-line">5 Çift</span>
               </div>
 
-              <!-- 1. Open Indicator Tile (Gösterge - Üstte) -->
-              <div class="indicator-zone" title="Gösterge Taşı">
-                <div class="indicator-clean-box">
-                  <div id="indicator-tile-slot"></div>
+              <!-- Altta Yan Yana: Gösterge ve Deste -->
+              <div class="center-deck-side-by-side">
+                <!-- 1. Open Indicator Tile (Gösterge) -->
+                <div class="indicator-zone" title="Gösterge Taşı">
+                  <div class="indicator-clean-box">
+                    <div id="indicator-tile-slot"></div>
+                  </div>
+                  <span class="indicator-subtext">GÖSTERGE</span>
                 </div>
-                <span class="indicator-subtext">GÖSTERGE</span>
-              </div>
 
-              <!-- 2. Plain Face-Down Bone Tile (Deste - Altta) -->
-              <div class="deck-zone" title="Desteden Taş Çek">
-                <div id="center-deck-pile" class="plus-3d-deck">
-                  <div class="deck-layer layer-3"></div>
-                  <div class="deck-layer layer-2"></div>
-                  <div class="deck-layer layer-1"></div>
+                <!-- 2. Plain Face-Down Bone Tile (Deste) -->
+                <div class="deck-zone" title="Desteden Taş Çek">
+                  <div id="center-deck-pile" class="plus-3d-deck">
+                    <div class="deck-layer layer-3"></div>
+                    <div class="deck-layer layer-2"></div>
+                    <div class="deck-layer layer-1"></div>
+                  </div>
+                  <span id="deck-count" class="deck-count-subtext">28 Taş</span>
                 </div>
-                <span id="deck-count" class="deck-count-subtext">28 Taş</span>
               </div>
             </div>
 
@@ -500,12 +503,12 @@
 
   <!-- Socket.IO & Application Scripts (Cache Busted) -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/audio.js?v=90"></script>
-  <script src="js/validator.js?v=90"></script>
-  <script src="js/tileAnimations.js?v=90"></script>
-  <script src="js/istaka.js?v=90"></script>
-  <script src="js/table.js?v=90"></script>
-  <script src="js/ui.js?v=90"></script>
-  <script src="js/gameClient.js?v=90"></script>
+  <script src="js/audio.js?v=92"></script>
+  <script src="js/validator.js?v=92"></script>
+  <script src="js/tileAnimations.js?v=92"></script>
+  <script src="js/istaka.js?v=92"></script>
+  <script src="js/table.js?v=92"></script>
+  <script src="js/ui.js?v=92"></script>
+  <script src="js/gameClient.js?v=92"></script>
 </body>
 </html>

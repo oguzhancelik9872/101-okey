@@ -231,6 +231,8 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
     eGame.addPlayer(`ep_${i}`, `Oyuncu ${i + 1}`, false, 'female', null, i);
   }
   eGame.startRound(0); // Player 0 starts
+  eGame.indicator = new Tile('ind_test', 'yellow', 5);
+  eGame.okeyTile = { color: 'yellow', number: 6 };
   // Give Player 0 all melds to open and 1 tile to discard
   const eMeld1 = [new Tile('er1', 'red', 10), new Tile('er2', 'red', 11), new Tile('er3', 'red', 12)];
   const eMeld2 = [new Tile('eb1', 'blue', 10), new Tile('eb2', 'blue', 11), new Tile('eb3', 'blue', 12)];

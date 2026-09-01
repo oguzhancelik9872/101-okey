@@ -2105,7 +2105,8 @@ body.plus-theme {
 
 /* Orta/Ayırıcı: Deste ve Gösterge Ahşap Şeridi */
 .center-deck-strip {
-  width: 58px;
+  width: fit-content;
+  min-width: 106px;
   background: linear-gradient(180deg, #1b3829 0%, #0d2117 100%);
   border: 2px solid #284c39;
   border-radius: 10px;
@@ -2113,10 +2114,18 @@ body.plus-theme {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 8px 2px;
+  gap: 6px;
+  padding: 4px 6px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.6);
   z-index: 15;
+}
+
+.center-deck-side-by-side {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
 }
 
 /* 1. 3D Plain Face-Down Bone Deck Tile */
