@@ -195,7 +195,7 @@ class TileAnimationEngine {
         fromCoords: startCoords,
         toCoords: endCoords,
         isClosed: true,
-        duration: 320,
+        duration: 380,
         onComplete: () => {
           if (drawnRackTile) {
             drawnRackTile.style.opacity = '1';
@@ -237,7 +237,7 @@ class TileAnimationEngine {
         toCoords: endCoords,
         tile,
         isClosed: false,
-        duration: 330,
+        duration: 380,
         onComplete: () => {
           if (drawnRackTile) {
             drawnRackTile.style.opacity = '1';
@@ -278,7 +278,7 @@ class TileAnimationEngine {
         toCoords: endCoords,
         tile,
         isClosed: false,
-        duration: 320,
+        duration: 380,
         onComplete: () => {
           if (destTile) {
             destTile.style.opacity = '1';
@@ -357,7 +357,7 @@ class TileAnimationEngine {
             toCoords: endCoords,
             tile,
             isClosed: false,
-            duration: 290,
+            duration: 350,
             onComplete: () => {
               if (destEl) {
                 destEl.style.opacity = '1';
@@ -376,7 +376,7 @@ class TileAnimationEngine {
               }
             }
           });
-        }, index * 50);
+        }, index * 70);
       });
     });
   }

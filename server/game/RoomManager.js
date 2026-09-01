@@ -451,18 +451,46 @@ class RoomManager {
           room.lastObservedTurn = currentIdx;
           room.turnStartTime = Date.now();
           room.lastBotActionTime = Date.now();
+          room.botPhase = 0;
         }
 
         const now = Date.now();
 
         if (player && player.isBot) {
-          // Bot action delay (5 seconds for human-like relaxed thinking pace)
-          if (now - room.lastBotActionTime >= 4500) {
+          const elapsed = now - room.lastBotActionTime;
+          if (room.botPhase === undefined) room.botPhase = 0;
+
+          // Phase 1: Draw tile at ~1.0s
+          if (room.botPhase === 0 && elapsed >= 1000) {
+            room.botPhase = 1;
+            try {
+              game.executeBotDraw(currentIdx);
+            } catch (drawErr) {
+              console.error('[RoomManager] Bot draw error:', drawErr);
+            }
+            this.broadcastGameState(room.id);
+          }
+          // Phase 2: Open melds / process tiles at ~2.8s
+          else if (room.botPhase === 1 && elapsed >= 2800) {
+            room.botPhase = 2;
+            const hadMelds = game.tableMelds ? game.tableMelds.length : 0;
+            try {
+              game.executeBotPlay(currentIdx);
+            } catch (playErr) {
+              console.error('[RoomManager] Bot play error:', playErr);
+            }
+            if ((game.tableMelds && game.tableMelds.length > hadMelds) || game.state !== GAME_STATES.PLAYING) {
+              this.broadcastGameState(room.id);
+            }
+          }
+          // Phase 3: Discard tile at ~4.8s (completing 5s human-paced turn)
+          else if (room.botPhase === 2 && elapsed >= 4800) {
+            room.botPhase = 0;
             room.lastBotActionTime = now;
             try {
-              game.executeBotTurn();
-            } catch (e) {
-              console.error('[RoomManager] Bot execution error:', e);
+              game.executeBotDiscard(currentIdx);
+            } catch (discardErr) {
+              console.error('[RoomManager] Bot discard error:', discardErr);
             }
             this.broadcastGameState(room.id);
           }

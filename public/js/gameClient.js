@@ -861,6 +861,41 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cardCode && roomId) cardCode.textContent = roomId;
     }
 
+    // Detect pending discard and meld tiles before updating table DOM to prevent 1-frame pre-render flash
+    window.pendingDiscardTileIds = new Set();
+    window.pendingMeldTileIds = new Set();
+
+    if (lastGameState && lastGameState.state === 'PLAYING' && state.state === 'PLAYING') {
+      const countDiscards = (s) => (s && s.discards) ? s.discards.reduce((acc, p) => acc + (p ? p.length : 0), 0) : 0;
+      const lastDiscardCount = countDiscards(lastGameState);
+      const currentDiscardCount = countDiscards(state);
+
+      if (currentDiscardCount > lastDiscardCount && state.discards && lastGameState.discards) {
+        for (let p = 0; p < 4; p++) {
+          const curPile = state.discards[p] || [];
+          const lastPile = lastGameState.discards[p] || [];
+          if (curPile.length > lastPile.length) {
+            const discardedTile = curPile[curPile.length - 1];
+            if (discardedTile) {
+              window.pendingDiscardTileIds.add(discardedTile.id);
+            }
+            break;
+          }
+        }
+      }
+
+      const lastMeldsCount = lastGameState.tableMelds ? lastGameState.tableMelds.length : 0;
+      const currentMeldsCount = state.tableMelds ? state.tableMelds.length : 0;
+      if (currentMeldsCount > lastMeldsCount) {
+        const newMelds = state.tableMelds.slice(lastMeldsCount);
+        newMelds.forEach(m => {
+          if (m && m.tiles) {
+            m.tiles.forEach(t => window.pendingMeldTileIds.add(t.id));
+          }
+        });
+      }
+    }
+
     // Update table components
     table.update(state);
 
@@ -1545,7 +1580,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tableCanvas) {
       const shouldFocus = Boolean(isMyTurn && isPlayingGame);
       if (shouldFocus) {
-        const delay = (window.tileAnimations && window.tileAnimations.isAnimating) ? 340 : 0;
+        const isAnimActive = window.tileAnimations && (window.tileAnimations.isAnimating || (window.tileAnimations.queue && window.tileAnimations.queue.length > 0));
+        const delay = isAnimActive ? 500 : 0;
         setTimeout(() => {
           if (currentGameState && currentGameState.currentTurn === viewerSeatIndex && currentGameState.state === 'PLAYING') {
             tableCanvas.classList.add('my-turn-focus');

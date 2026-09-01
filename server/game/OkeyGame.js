@@ -517,6 +517,11 @@ class OkeyGame {
         }
       }
     }
+
+    if (validation.score >= (this.minOpenScore || 101)) {
+      this.minOpenScore = validation.score + 1;
+    }
+
     player.opened = true;
     player.openType = 'seri';
 
@@ -620,6 +625,10 @@ class OkeyGame {
       player.openedInThisTurn = true;
       player.opened = true;
       player.openType = 'pairs';
+
+      if (pairs.length >= (this.minOpenPairs || 5)) {
+        this.minOpenPairs = pairs.length + 1;
+      }
 
       // Penalty Rule: If opened pairs using drawn discard tile for the first time AND tile is 5+ -> Discarder gets 20x tile value
       if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
@@ -1065,99 +1074,123 @@ class OkeyGame {
    * Executes AI logic for bot whose turn it is
    */
   /**
-   * Executes AI logic for bot whose turn it is (Foolproof & Fail-safe)
+   * Phase 1 of Bot Turn: Draw from discard or deck
    */
-  executeBotTurn() {
-    if (this.state !== GAME_STATES.PLAYING) return null;
-    const botIndex = this.currentTurn;
+  executeBotDraw(botIndex) {
+    if (this.state !== GAME_STATES.PLAYING || this.currentTurn !== botIndex || this.turnState !== 'DRAW') {
+      return null;
+    }
     const bot = this.players[botIndex];
     if (!bot || !bot.isBot) return null;
 
     try {
-      // Step 1: Draw tile if in DRAW state
-      if (this.turnState === 'DRAW') {
-        let drawnFromDiscard = false;
-        const leftSeat = (botIndex + 3) % 4;
-        const leftDiscard = this.discards[leftSeat];
+      let drawnFromDiscard = false;
+      const leftSeat = (botIndex + 3) % 4;
+      const leftDiscard = this.discards[leftSeat];
 
-        if (leftDiscard && leftDiscard.length > 0) {
-          const topDiscard = leftDiscard[leftDiscard.length - 1];
-          const testHand = [...bot.hand, topDiscard];
-          const botReqs = this.getMinOpenRequirements(botIndex);
+      if (leftDiscard && leftDiscard.length > 0) {
+        const topDiscard = leftDiscard[leftDiscard.length - 1];
+        const testHand = [...bot.hand, topDiscard];
+        const botReqs = this.getMinOpenRequirements(botIndex);
 
-          if (!bot.opened) {
-            const best = BotAI.findBestMelds(testHand, this.indicator);
-            const usesDiscard = best.melds.some(m => m.some(t => t.id === topDiscard.id));
-            if (best.score >= botReqs.minScore && usesDiscard) {
-              const drawRes = this.drawTile(botIndex, 'discard');
-              if (drawRes && drawRes.success) drawnFromDiscard = true;
-            }
-          } else {
-            const isPlayable = Validator.isPlayableToTable(topDiscard, this.tableMelds, this.indicator);
-            if (isPlayable) {
-              const drawRes = this.drawTile(botIndex, 'discard');
-              if (drawRes && drawRes.success) drawnFromDiscard = true;
-            }
+        if (!bot.opened) {
+          const best = BotAI.findBestMelds(testHand, this.indicator);
+          const usesDiscard = best.melds.some(m => m.some(t => t.id === topDiscard.id));
+          if (best.score >= botReqs.minScore && usesDiscard) {
+            const drawRes = this.drawTile(botIndex, 'discard');
+            if (drawRes && drawRes.success) drawnFromDiscard = true;
           }
-        }
-
-        if (!drawnFromDiscard) {
-          this.drawTile(botIndex, 'deck');
+        } else {
+          const isPlayable = Validator.isPlayableToTable(topDiscard, this.tableMelds, this.indicator);
+          if (isPlayable) {
+            const drawRes = this.drawTile(botIndex, 'discard');
+            if (drawRes && drawRes.success) drawnFromDiscard = true;
+          }
         }
       }
 
-      // If game ended during draw (e.g. deck finished), exit
-      if (this.state !== GAME_STATES.PLAYING) return { finished: true };
+      if (!drawnFromDiscard) {
+        this.drawTile(botIndex, 'deck');
+      }
 
+      return { action: 'draw', source: drawnFromDiscard ? 'discard' : 'deck' };
+    } catch (err) {
+      console.error(`[BotAI] Error in bot ${botIndex} draw phase:`, err);
+      if (this.turnState === 'DRAW') {
+        this.drawTile(botIndex, 'deck');
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Phase 2 of Bot Turn: Open melds or process tiles onto table
+   */
+  executeBotPlay(botIndex) {
+    if (this.state !== GAME_STATES.PLAYING || this.currentTurn !== botIndex || this.turnState !== 'DISCARD') {
+      return null;
+    }
+    const bot = this.players[botIndex];
+    if (!bot || !bot.isBot) return null;
+
+    try {
       // Step 2: Open hand if possible
       if (!bot.opened && this.turnState === 'DISCARD') {
-        try {
-          const botReqs = this.getMinOpenRequirements(botIndex);
-          const best = BotAI.findBestMelds(bot.hand, this.indicator);
-          if (best.score >= botReqs.minScore) {
-            const meldIds = best.melds.map(m => m.map(t => t.id));
-            this.openHand(botIndex, meldIds);
-          } else {
-            // Try pairs
-            const pairs = BotAI.findAllPairs(bot.hand, this.indicator);
-            if (pairs.length >= botReqs.minPairs) {
-              const pairIds = pairs.map(p => [p[0].id, p[1].id]);
-              this.openPairs(botIndex, pairIds);
-            }
+        const botReqs = this.getMinOpenRequirements(botIndex);
+        const best = BotAI.findBestMelds(bot.hand, this.indicator);
+        if (best.score >= botReqs.minScore) {
+          const meldIds = best.melds.map(m => m.map(t => t.id));
+          this.openHand(botIndex, meldIds);
+        } else {
+          const pairs = BotAI.findAllPairs(bot.hand, this.indicator);
+          if (pairs.length >= botReqs.minPairs) {
+            const pairIds = pairs.map(p => [p[0].id, p[1].id]);
+            this.openPairs(botIndex, pairIds);
           }
-        } catch (openErr) {
-          console.warn('[BotAI] Error opening hand:', openErr);
         }
       }
 
       // Step 3: Process tiles onto table if bot is opened
       if (bot.opened && this.turnState === 'DISCARD') {
-        try {
-          let processedAny = true;
-          let loopCount = 0;
-          while (processedAny && bot.hand.length > 1 && loopCount < 30) {
-            loopCount++;
-            processedAny = false;
-            for (const tile of [...bot.hand]) {
-              for (const tableMeld of this.tableMelds) {
-                const check = Validator.canProcessTile(tile, tableMeld, this.indicator);
-                if (check.canProcess) {
-                  const res = this.processTile(botIndex, tile.id, tableMeld.id);
-                  if (res && res.success) {
-                    processedAny = true;
-                    if (res.finished || this.state !== GAME_STATES.PLAYING) return { finished: true };
-                    break;
-                  }
+        let processedAny = true;
+        let loopCount = 0;
+        while (processedAny && bot.hand.length > 1 && loopCount < 30) {
+          loopCount++;
+          processedAny = false;
+          for (const tile of [...bot.hand]) {
+            for (const tableMeld of this.tableMelds) {
+              const check = Validator.canProcessTile(tile, tableMeld, this.indicator);
+              if (check.canProcess) {
+                const res = this.processTile(botIndex, tile.id, tableMeld.id);
+                if (res && res.success) {
+                  processedAny = true;
+                  if (res.finished || this.state !== GAME_STATES.PLAYING) return { finished: true };
+                  break;
                 }
               }
-              if (processedAny) break;
             }
+            if (processedAny) break;
           }
-        } catch (procErr) {
-          console.warn('[BotAI] Error processing tiles:', procErr);
         }
       }
+      return { action: 'play' };
+    } catch (err) {
+      console.warn(`[BotAI] Error in bot ${botIndex} play phase:`, err);
+      return null;
+    }
+  }
 
+  /**
+   * Phase 3 of Bot Turn: Discard tile to conclude turn
+   */
+  executeBotDiscard(botIndex) {
+    if (this.state !== GAME_STATES.PLAYING || this.currentTurn !== botIndex) {
+      return null;
+    }
+    const bot = this.players[botIndex];
+    if (!bot || !bot.isBot) return null;
+
+    try {
       // Safety check: If bot drew from discard but could not use it, return it and draw from deck
       if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === botIndex) {
         this.returnDiscardTile(botIndex);
@@ -1166,7 +1199,7 @@ class OkeyGame {
         }
       }
 
-      // Step 4: Pick discard tile and discard
+      // Pick discard tile and discard
       if (this.turnState === 'DISCARD' && this.state === GAME_STATES.PLAYING && bot.hand.length > 0) {
         let chosenTile = null;
         try {
@@ -1195,7 +1228,7 @@ class OkeyGame {
         }
       }
 
-      // GUARANTEED FAIL-SAFE: If turnState is still not finished, force advance turn
+      // GUARANTEED FAIL-SAFE
       if (this.currentTurn === botIndex && this.state === GAME_STATES.PLAYING) {
         if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === botIndex) {
           this.returnDiscardTile(botIndex);
@@ -1213,8 +1246,7 @@ class OkeyGame {
         }
       }
     } catch (err) {
-      console.error(`[BotAI] Fatal error during bot ${botIndex} turn:`, err);
-      // Emergency turn progression
+      console.error(`[BotAI] Fatal error during bot ${botIndex} discard:`, err);
       if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === botIndex) {
         this.returnDiscardTile(botIndex);
       }
@@ -1230,8 +1262,23 @@ class OkeyGame {
         this.turnState = 'DRAW';
       }
     }
-
     return null;
+  }
+
+  /**
+   * Executes full bot turn synchronously (Used for simulation tests & fallback)
+   */
+  executeBotTurn() {
+    if (this.state !== GAME_STATES.PLAYING) return null;
+    const botIndex = this.currentTurn;
+    const bot = this.players[botIndex];
+    if (!bot || !bot.isBot) return null;
+
+    this.executeBotDraw(botIndex);
+    if (this.state !== GAME_STATES.PLAYING) return { finished: true };
+    this.executeBotPlay(botIndex);
+    if (this.state !== GAME_STATES.PLAYING) return { finished: true };
+    return this.executeBotDiscard(botIndex);
   }
 
   /**

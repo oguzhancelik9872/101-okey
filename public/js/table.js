@@ -276,6 +276,9 @@ class TableManager {
       if (pile && pile.length > 0) {
         const topTile = pile[pile.length - 1];
         const tileEl = this.createTileDOM(topTile, false);
+        if (window.pendingDiscardTileIds && window.pendingDiscardTileIds.has(topTile.id)) {
+          tileEl.style.opacity = '0';
+        }
         discardSlot.appendChild(tileEl);
       }
 
@@ -427,8 +430,14 @@ class TableManager {
             runTiles.forEach((t, i) => {
               const colIndex = startCol + i;
               if (slotElements[colIndex]) {
-                slotElements[colIndex].classList.add('has-tile');
+                const isPending = window.pendingMeldTileIds && window.pendingMeldTileIds.has(t.id);
+                if (!isPending) {
+                  slotElements[colIndex].classList.add('has-tile');
+                }
                 const tileEl = this.createTileDOM(t, false, true);
+                if (isPending) {
+                  tileEl.style.opacity = '0';
+                }
                 slotElements[colIndex].appendChild(tileEl);
               }
             });
@@ -440,8 +449,14 @@ class TableManager {
             meld.tiles.forEach((t, i) => {
               const colIndex = startCol + i;
               if (slotElements[colIndex]) {
-                slotElements[colIndex].classList.add('has-tile');
+                const isPending = window.pendingMeldTileIds && window.pendingMeldTileIds.has(t.id);
+                if (!isPending) {
+                  slotElements[colIndex].classList.add('has-tile');
+                }
                 const tileEl = this.createTileDOM(t, false, true);
+                if (isPending) {
+                  tileEl.style.opacity = '0';
+                }
                 slotElements[colIndex].appendChild(tileEl);
               }
             });
@@ -469,12 +484,18 @@ class TableManager {
 
         if (meld) {
           if (meld.tiles[0]) {
-            slot1.classList.add('has-tile');
-            slot1.appendChild(this.createTileDOM(meld.tiles[0], false, true));
+            const isPending1 = window.pendingMeldTileIds && window.pendingMeldTileIds.has(meld.tiles[0].id);
+            if (!isPending1) slot1.classList.add('has-tile');
+            const tileEl1 = this.createTileDOM(meld.tiles[0], false, true);
+            if (isPending1) tileEl1.style.opacity = '0';
+            slot1.appendChild(tileEl1);
           }
           if (meld.tiles[1]) {
-            slot2.classList.add('has-tile');
-            slot2.appendChild(this.createTileDOM(meld.tiles[1], false, true));
+            const isPending2 = window.pendingMeldTileIds && window.pendingMeldTileIds.has(meld.tiles[1].id);
+            if (!isPending2) slot2.classList.add('has-tile');
+            const tileEl2 = this.createTileDOM(meld.tiles[1], false, true);
+            if (isPending2) tileEl2.style.opacity = '0';
+            slot2.appendChild(tileEl2);
           }
 
           const hasOkey = meld.tiles && meld.tiles.some(t => t.isOkey);
