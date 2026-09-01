@@ -467,8 +467,11 @@ class RoomManager {
             this.broadcastGameState(room.id);
           }
         } else {
-          // Inactive human player watchdog (30 seconds)
-          if (now - room.turnStartTime >= 30000) {
+          // Inactive human player watchdog (30 seconds based on game.turnStartTime)
+          const turnStart = game.turnStartTime || room.turnStartTime || now;
+          const turnDur = game.turnDuration || 30000;
+          if (now - turnStart >= turnDur) {
+            game.turnStartTime = now;
             room.turnStartTime = now;
             try {
               game.executeEmergencyTurn(currentIdx);
@@ -551,7 +554,12 @@ class RoomManager {
           room.hostId = null;
         }
       } else {
-        room.game.players[playerIndex].isBot = true;
+        const leavingPlayer = room.game.players[playerIndex];
+        if (leavingPlayer) {
+          const rawName = leavingPlayer.name.replace(/\s*\(Bot\)/gi, '').trim();
+          leavingPlayer.name = `${rawName} (Bot)`;
+          leavingPlayer.isBot = true;
+        }
         // If all humans left the active game, destroy room
         const remainingHumans = room.game.players.filter(p => p && !p.isBot);
         if (remainingHumans.length === 0) {
@@ -592,7 +600,12 @@ class RoomManager {
             room.hostId = null;
           }
         } else {
-          game.players[playerIndex].isBot = true;
+          const leavingPlayer = game.players[playerIndex];
+          if (leavingPlayer) {
+            const rawName = leavingPlayer.name.replace(/\s*\(Bot\)/gi, '').trim();
+            leavingPlayer.name = `${rawName} (Bot)`;
+            leavingPlayer.isBot = true;
+          }
           const remainingHumans = game.players.filter(p => p && !p.isBot);
           if (remainingHumans.length === 0) {
             if (room.botInterval) clearInterval(room.botInterval);

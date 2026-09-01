@@ -39,6 +39,13 @@ function getPlayerAvatarHTML(name, gender = null, avatarIndex = null, isBot = fa
   const isBotUser = Boolean(isBot || (typeof name === 'string' && name.includes('(Bot)')));
   const clean = (name || '').replace(/\(Bot\)/gi, '').trim().toLowerCase().split(' ')[0];
 
+  // 1. Look up custom friend PNG photo from public/profiller/ (always prioritize real player photo!)
+  if (PROFILE_IMAGES[clean]) {
+    const fileName = PROFILE_IMAGES[clean];
+    return `<img src="/profiller/${fileName}" alt="${name}" class="avatar-img-photo" loading="lazy" onerror="this.style.display='none';" />`;
+  }
+
+  // 2. If it's a real bot without a human profile image, use /botlar/
   if (isBotUser) {
     let chosenBotFile = avatarFile;
     if (!chosenBotFile) {
@@ -56,12 +63,6 @@ function getPlayerAvatarHTML(name, gender = null, avatarIndex = null, isBot = fa
       }
     }
     return `<img src="/botlar/${chosenBotFile}" alt="${name}" class="avatar-img-photo" loading="lazy" onerror="this.onerror=null; this.src='/botlar/1.png';" />`;
-  }
-
-  // Look up custom friend PNG photo from public/profiller/
-  if (PROFILE_IMAGES[clean]) {
-    const fileName = PROFILE_IMAGES[clean];
-    return `<img src="/profiller/${fileName}" alt="${name}" class="avatar-img-photo" loading="lazy" onerror="this.style.display='none';" />`;
   }
 
   return `<div class="avatar-fallback-badge"><span class="bot-glyph">👤</span></div>`;
@@ -230,8 +231,12 @@ class TableManager {
     if (centerDeckEl) {
       centerDeckEl.draggable = isViewerTurnToDraw;
       centerDeckEl.ondragstart = (e) => {
+        window.draggedTileId = 'ACTION:DRAW_DECK';
         e.dataTransfer.setData('text/plain', 'ACTION:DRAW_DECK');
         e.dataTransfer.effectAllowed = 'copyMove';
+      };
+      centerDeckEl.ondragend = () => {
+        window.draggedTileId = null;
       };
     }
 
@@ -270,14 +275,19 @@ class TableManager {
         discardSlot.title = 'Yandan Taş Al (Tıkla veya Istakaya Sürükle)';
         discardSlot.draggable = true;
         discardSlot.ondragstart = (e) => {
+          window.draggedTileId = 'ACTION:DRAW_DISCARD';
           e.dataTransfer.setData('text/plain', 'ACTION:DRAW_DISCARD');
           e.dataTransfer.effectAllowed = 'copyMove';
+        };
+        discardSlot.ondragend = () => {
+          window.draggedTileId = null;
         };
       } else {
         discardSlot.classList.remove('can-draw-pulse');
         discardSlot.title = '';
         discardSlot.draggable = false;
         discardSlot.ondragstart = null;
+        discardSlot.ondragend = null;
       }
     }
   }

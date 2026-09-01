@@ -181,6 +181,7 @@ class OkeyGame {
       this.players[i].openType = null;
       this.players[i].openedMelds = [];
       this.players[i].openedInThisTurn = false;
+      this.players[i].hasResetTurnTimerInThisTurn = false;
       this.players[i].initialOpenScore = 0;
       this.players[i].initialOpenPairs = 0;
       this.players[i].roundScore = 0;
@@ -239,6 +240,7 @@ class OkeyGame {
 
       const tile = leftDiscardPile.pop();
       player.hand.push(tile);
+      player.hasResetTurnTimerInThisTurn = false;
       this.drawnFromDiscard = { playerIndex, tile };
       this.turnState = 'DISCARD';
       this._saveTurnSnapshot(playerIndex);
@@ -259,6 +261,7 @@ class OkeyGame {
       }
 
       player.hand.push(tile);
+      player.hasResetTurnTimerInThisTurn = false;
       this.drawnFromDiscard = null;
       this.turnState = 'DISCARD';
       this._saveTurnSnapshot(playerIndex);
@@ -317,6 +320,7 @@ class OkeyGame {
       openType: player.openType,
       openedMelds: player.openedMelds ? [...player.openedMelds] : [],
       openedInThisTurn: player.openedInThisTurn || false,
+      hasResetTurnTimerInThisTurn: player.hasResetTurnTimerInThisTurn || false,
       initialOpenScore: player.initialOpenScore || 0,
       initialOpenPairs: player.initialOpenPairs || 0,
       tableMelds: this.tableMelds.map(m => ({
@@ -356,6 +360,7 @@ class OkeyGame {
     player.openType = snap.openType;
     player.openedMelds = snap.openedMelds ? [...snap.openedMelds] : [];
     player.openedInThisTurn = snap.openedInThisTurn;
+    player.hasResetTurnTimerInThisTurn = true; // Prevent timer reset abuse within the same turn
     player.initialOpenScore = snap.initialOpenScore;
     player.initialOpenPairs = snap.initialOpenPairs;
 
@@ -492,21 +497,23 @@ class OkeyGame {
       player.initialOpenPairs = 0;
       player.openedInThisTurn = true;
 
-      // Penalty Rule: If opened using drawn discard tile for the first time -> Discarder gets 10x tile value
+      // Penalty Rule: If opened using drawn discard tile for the first time AND tile is 5+ -> Discarder gets 10x tile value
       if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
         const discardTile = this.drawnFromDiscard.tile;
         const leftPlayerSeat = (playerIndex + 3) % 4;
         const discarder = this.players[leftPlayerSeat];
         if (discarder && discardTile) {
           const tileVal = discardTile.getValue(this.indicator);
-          const penalty = tileVal * 10;
-          discarder.penaltyPoints = (discarder.penaltyPoints || 0) + penalty;
-          discarder.penalties.push({
-            type: 'DISCARDED_TILE_OPENED_SERI',
-            points: penalty,
-            desc: `Yandan taş vererek seri açtırma cezası (+${penalty})`
-          });
-          this.addLog(`⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} seri açtığı için +${penalty} ceza puanı aldı!`);
+          if (tileVal >= 5) {
+            const penalty = tileVal * 10;
+            discarder.penaltyPoints = (discarder.penaltyPoints || 0) + penalty;
+            discarder.penalties.push({
+              type: 'DISCARDED_TILE_OPENED_SERI',
+              points: penalty,
+              desc: `Yandan 5+ taş vererek seri açtırma cezası (+${penalty})`
+            });
+            this.addLog(`⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} seri açtığı için +${penalty} ceza puanı aldı!`);
+          }
         }
       }
     }
@@ -514,21 +521,22 @@ class OkeyGame {
     player.openType = 'seri';
 
     if (firstTime && validation.score >= 153) {
-      const oppSeats = [(playerIndex + 1) % 4, (playerIndex + 3) % 4];
-      oppSeats.forEach(s => {
-        const oppP = this.players[s];
-        if (oppP) {
-          oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
-          oppP.penalties.push({ type: 'OPPONENT_HIGH_OPEN', points: 101, desc: '153+ açılış cezası (+101)' });
-        }
-      });
-      this.addLog(`🔥 ${player.name} ${validation.score} (153+) puanla açtı! Rakip takım +101 ceza aldı!`);
+      const nextOppSeat = (playerIndex + 1) % 4;
+      const oppP = this.players[nextOppSeat];
+      if (oppP) {
+        oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
+        oppP.penalties.push({ type: 'OPPONENT_HIGH_OPEN', points: 101, desc: '153+ açılış cezası (+101)' });
+        this.addLog(`🔥 ${player.name} ${validation.score} (153+) puanla açtı! Rakip (${oppP.name}) +101 ceza aldı!`);
+      }
     }
 
     this.drawnFromDiscard = null; // Successfully used
 
-    // Reset turn timer from beginning on open
-    this.turnStartTime = Date.now();
+    // Reset turn timer from beginning on open ONLY ONCE per turn
+    if (!player.hasResetTurnTimerInThisTurn) {
+      player.hasResetTurnTimerInThisTurn = true;
+      this.turnStartTime = Date.now();
+    }
     if (this.turnSnapshot) this.turnSnapshot.modified = true;
 
     this.addLog(`${player.name} ${validation.score} puan ile el açtı!`);
@@ -613,34 +621,34 @@ class OkeyGame {
       player.opened = true;
       player.openType = 'pairs';
 
-      // Penalty Rule: If opened pairs using drawn discard tile for the first time -> Discarder gets 20x tile value
+      // Penalty Rule: If opened pairs using drawn discard tile for the first time AND tile is 5+ -> Discarder gets 20x tile value
       if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
         const discardTile = this.drawnFromDiscard.tile;
         const leftPlayerSeat = (playerIndex + 3) % 4;
         const discarder = this.players[leftPlayerSeat];
         if (discarder && discardTile) {
           const tileVal = discardTile.getValue(this.indicator);
-          const penalty = tileVal * 20;
-          discarder.penaltyPoints = (discarder.penaltyPoints || 0) + penalty;
-          discarder.penalties.push({
-            type: 'DISCARDED_TILE_OPENED_PAIRS',
-            points: penalty,
-            desc: `Yandan taş vererek çift açtırma cezası (+${penalty})`
-          });
-          this.addLog(`⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} çift açtığı için +${penalty} ceza puanı aldı!`);
+          if (tileVal >= 5) {
+            const penalty = tileVal * 20;
+            discarder.penaltyPoints = (discarder.penaltyPoints || 0) + penalty;
+            discarder.penalties.push({
+              type: 'DISCARDED_TILE_OPENED_PAIRS',
+              points: penalty,
+              desc: `Yandan 5+ taş vererek çift açtırma cezası (+${penalty})`
+            });
+            this.addLog(`⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} çift açtığı için +${penalty} ceza puanı aldı!`);
+          }
         }
       }
 
       if (pairs.length >= 7) {
-        const oppSeats = [(playerIndex + 1) % 4, (playerIndex + 3) % 4];
-        oppSeats.forEach(s => {
-          const oppP = this.players[s];
-          if (oppP) {
-            oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
-            oppP.penalties.push({ type: 'OPPONENT_SEVEN_PAIRS', points: 101, desc: '7+ çift açılış cezası (+101)' });
-          }
-        });
-        this.addLog(`💎 ${player.name} ${pairs.length} (7+) çift açtı! Rakip takım +101 ceza aldı!`);
+        const nextOppSeat = (playerIndex + 1) % 4;
+        const oppP = this.players[nextOppSeat];
+        if (oppP) {
+          oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
+          oppP.penalties.push({ type: 'OPPONENT_SEVEN_PAIRS', points: 101, desc: '7+ çift açılış cezası (+101)' });
+          this.addLog(`💎 ${player.name} ${pairs.length} (7+) çift açtı! Rakip (${oppP.name}) +101 ceza aldı!`);
+        }
       }
     }
 
@@ -650,8 +658,11 @@ class OkeyGame {
 
     this.drawnFromDiscard = null;
 
-    // Reset turn timer from beginning on open
-    this.turnStartTime = Date.now();
+    // Reset turn timer from beginning on open ONLY ONCE per turn
+    if (!player.hasResetTurnTimerInThisTurn) {
+      player.hasResetTurnTimerInThisTurn = true;
+      this.turnStartTime = Date.now();
+    }
     if (this.turnSnapshot) this.turnSnapshot.modified = true;
 
     this.addLog(`${player.name} ${pairs.length} çift açtı!`);
@@ -690,8 +701,6 @@ class OkeyGame {
       this.drawnFromDiscard = null;
     }
 
-    // Reset turn timer from beginning on successful tile processing
-    this.turnStartTime = Date.now();
     if (this.turnSnapshot) this.turnSnapshot.modified = true;
 
     // If an Okey was replaced and retrieved from the table meld!
@@ -783,6 +792,7 @@ class OkeyGame {
     }
 
     // Conclude turn and clear snapshot
+    player.hasResetTurnTimerInThisTurn = false;
     this.turnSnapshot = null;
 
     // Check if the deck was exhausted (Son taş çekilmişti ve o son taşı çeken oyuncu artık taşını attı -> Oyun Bitti!)

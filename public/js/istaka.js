@@ -25,8 +25,17 @@ class IstakaManager {
     this.activeTile = null;
     this.tableMelds = [];
     this.viewerOpened = false;
+    this.lastDrawnTileId = null;
+    this.drawnDiscardTileId = null;
 
     this.initDOM();
+  }
+
+  setDrawnTileId(id) {
+    if (this.lastDrawnTileId !== id) {
+      this.lastDrawnTileId = id;
+      this.render();
+    }
   }
 
   initDOM() {
@@ -57,7 +66,7 @@ class IstakaManager {
           e.preventDefault();
           slotEl.classList.remove('drag-over');
 
-          const action = e.dataTransfer.getData('text/plain');
+          const action = e.dataTransfer.getData('text/plain') || window.draggedTileId;
           if (action === 'ACTION:DRAW_DECK') {
             this.pendingDropTarget = { row: r, col: c };
             if (this.onDrawDeck) this.onDrawDeck();
@@ -377,6 +386,11 @@ class IstakaManager {
     if (tile.isFake) el.classList.add('is-fake-okey');
     if (this.activeTile && this.activeTile.id === tile.id) el.classList.add('active-focus');
 
+    const isJustDrawn = (this.lastDrawnTileId && this.lastDrawnTileId === tile.id) || (this.drawnDiscardTileId && this.drawnDiscardTileId === tile.id);
+    if (isJustDrawn) {
+      el.classList.add('tile-just-drawn');
+    }
+
     // Number & Symbol display
     if (tile.isOkey) {
       // Okey taşı ters çevrili düz beyaz kemik taş olarak durur (herhangi bir sayı veya simge basılmaz)
@@ -467,7 +481,7 @@ class IstakaManager {
       const slot = el.closest('.istaka-slot');
       if (slot) slot.classList.remove('drag-over');
 
-      const action = e.dataTransfer.getData('text/plain');
+      const action = e.dataTransfer.getData('text/plain') || window.draggedTileId;
       if (action === 'ACTION:DRAW_DECK') {
         this.pendingDropTarget = { row, col };
         if (this.onDrawDeck) this.onDrawDeck();

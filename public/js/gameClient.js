@@ -929,6 +929,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Turn change sound alert & dynamic title
     const isMyTurn = state.currentTurn === viewerSeatIndex && state.state === 'PLAYING';
+    if (!isMyTurn || state.turnState !== 'DISCARD') {
+      istaka.setDrawnTileId(null);
+    }
     updateDocumentTitle(isMyTurn);
 
     if (isMyTurn && lastTurn !== viewerSeatIndex) {
@@ -1127,8 +1130,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bottomDiscardEl.addEventListener('drop', (e) => {
       e.preventDefault();
       bottomDiscardEl.classList.remove('drag-over');
-      const tileId = e.dataTransfer.getData('text/plain');
-      if (tileId) {
+      const tileId = e.dataTransfer.getData('text/plain') || window.draggedTileId;
+      if (tileId && !tileId.startsWith('ACTION:')) {
         handleQuickDiscard({ id: tileId });
       }
     });
@@ -1249,6 +1252,9 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.emit('drawTile', { roomId, source: 'deck' }, (res) => {
       if (res.success) {
         window.soundEngine.playDrawDeck();
+        if (res.tile && res.tile.id) {
+          istaka.setDrawnTileId(res.tile.id);
+        }
       } else {
         ui.showToast(res.reason, 'error');
       }
@@ -1265,6 +1271,9 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.emit('drawTile', { roomId, source: 'discard' }, (res) => {
       if (res.success) {
         window.soundEngine.playDrawDiscard();
+        if (res.tile && res.tile.id) {
+          istaka.setDrawnTileId(res.tile.id);
+        }
       } else {
         ui.showToast(res.reason, 'error');
       }
@@ -1294,6 +1303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    istaka.setDrawnTileId(null);
     socket.emit('discardTile', { roomId, tileId: activeTile.id }, (res) => {
       if (res.success) {
         istaka.clearSelection();
@@ -1321,6 +1331,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    istaka.setDrawnTileId(null);
     socket.emit('discardTile', { roomId, tileId: tile.id }, (res) => {
       if (res.success) {
         istaka.clearSelection();

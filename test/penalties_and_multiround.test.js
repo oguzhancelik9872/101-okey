@@ -47,12 +47,12 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(openRes.success, true);
   assert.ok(openRes.score >= 153);
 
-  // Check opponent players 1 and 3 received +101 penalty
+  // Check opponent player 1 received +101 penalty (only 1 opponent)
   assert.strictEqual(game.players[1].penaltyPoints, 101);
-  assert.strictEqual(game.players[3].penaltyPoints, 101);
+  assert.strictEqual(game.players[3].penaltyPoints, 0);
   assert.strictEqual(game.players[0].penaltyPoints, 0);
   assert.strictEqual(game.players[2].penaltyPoints, 0);
-  console.log('   153+ Open Penalty: PASSED (Opponents got +101)');
+  console.log('   153+ Open Penalty: PASSED (Opponent 1 got +101)');
 
   // 3. Test Playable Discard Penalty (+101)
   console.log('2. Testing Playable Discard Penalty (+101)...');
