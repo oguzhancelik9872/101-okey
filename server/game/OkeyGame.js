@@ -74,6 +74,8 @@ class OkeyGame {
       opened: false,
       openType: null, // 'seri' | 'pairs'
       openedMelds: [],
+      initialOpenScore: 0,
+      initialOpenPairs: 0,
       score: 0,           // Total penalty score across rounds (lower is better)
       roundScore: 0,      // Score in current round
       penaltyPoints: 0,   // Accumulated penalty points in current round (+101, +202 etc)
@@ -176,6 +178,8 @@ class OkeyGame {
       this.players[i].opened = false;
       this.players[i].openType = null;
       this.players[i].openedMelds = [];
+      this.players[i].initialOpenScore = 0;
+      this.players[i].initialOpenPairs = 0;
       this.players[i].roundScore = 0;
       this.players[i].penaltyPoints = 0;
       this.players[i].penalties = [];
@@ -309,10 +313,10 @@ class OkeyGame {
       const opp = this.players[oppIdx];
       if (opp && opp.opened) {
         if (opp.openType === 'seri') {
-          const oppScore = opp.openedMelds ? opp.openedMelds.reduce((s, m) => s + (m.score || 0), 0) : 0;
+          const oppScore = opp.initialOpenScore || (opp.openedMelds ? opp.openedMelds.reduce((s, m) => s + (m.score || 0), 0) : 0);
           if (oppScore > maxOpponentScore) maxOpponentScore = oppScore;
         } else if (opp.openType === 'pairs') {
-          const oppPairs = opp.openedMelds ? opp.openedMelds.filter(m => m.type === 'pairs').length : 0;
+          const oppPairs = opp.initialOpenPairs || (opp.openedMelds ? opp.openedMelds.filter(m => m.type === 'pairs').length : 0);
           if (oppPairs > maxOpponentPairs) maxOpponentPairs = oppPairs;
         }
       }
@@ -390,6 +394,10 @@ class OkeyGame {
     }
 
     const firstTime = !player.opened;
+    if (firstTime) {
+      player.initialOpenScore = validation.score;
+      player.initialOpenPairs = 0;
+    }
     player.opened = true;
     player.openType = 'seri';
 
@@ -479,6 +487,8 @@ class OkeyGame {
 
     const firstTime = !player.opened;
     if (firstTime) {
+      player.initialOpenScore = 0;
+      player.initialOpenPairs = pairs.length;
       player.opened = true;
       player.openType = 'pairs';
 
@@ -1132,8 +1142,8 @@ class OkeyGame {
         tileCount: p.hand ? p.hand.length : 0,
         opened: p.opened || false,
         openType: p.openType || null,
-        openedScore: p.openedMelds ? p.openedMelds.reduce((sum, m) => sum + (m.score || 0), 0) : 0,
-        openedMeldsCount: p.openedMelds ? p.openedMelds.length : 0,
+        openedScore: p.initialOpenScore || (p.openedMelds ? p.openedMelds.reduce((sum, m) => sum + (m.score || 0), 0) : 0),
+        openedMeldsCount: p.initialOpenPairs || (p.openedMelds ? p.openedMelds.length : 0),
         score: p.score || 0,
         roundScore: p.roundScore || 0,
         penaltyPoints: p.penaltyPoints || 0,
