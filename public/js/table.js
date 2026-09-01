@@ -166,7 +166,8 @@ class TableManager {
               statusEl.textContent = `Çift (${player.openedMeldsCount || 5} Çift)`;
             } else {
               statusEl.className = 'player-open-status opened';
-              statusEl.textContent = `Seri (${formatOkeyScore(player.openedScore || 101)})`;
+              const sVal = player.openedScore || 101;
+              statusEl.textContent = `Seri (${formatOkeyScore(sVal)} (${sVal}))`;
             }
           } else {
             // Açmadı yazılarını kaldır (açtığında göster)
