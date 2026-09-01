@@ -1451,6 +1451,11 @@ document.addEventListener('DOMContentLoaded', () => {
       tableCanvas.classList.toggle('my-turn-focus', Boolean(isMyTurn && isPlayingGame));
     }
 
+    const topTimerBar = document.getElementById('top-turn-timer-bar');
+    if (topTimerBar) {
+      topTimerBar.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
+    }
+
     const cannotOpenSeri = viewerPlayer && viewerPlayer.opened && viewerPlayer.openType === 'pairs';
     const hasPairsOnTable = currentGameState.tableMelds.some(m => m.type === 'pairs') || currentGameState.players.some(p => p.opened && p.openType === 'pairs');
     const cannotOpenPairs = viewerPlayer && viewerPlayer.opened && viewerPlayer.openType === 'seri' && !hasPairsOnTable;
