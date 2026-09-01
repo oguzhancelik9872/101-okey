@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=87">
+  <link rel="stylesheet" href="css/style.css?v=88">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -278,7 +278,6 @@
           <div class="center-table-zone">
             <!-- Sol ve Orta: 2 Tane Yan Yana 13x13 Seri Açma Bölmesi -->
             <div class="seri-section-wrapper">
-              <div id="table-seri-target-badge" class="table-target-badge seri-target-badge" title="Seri Açmak İçin Gereken Minimum Puan">SERİ HEDEF: 101</div>
               <!-- 1. 13x13 Seri Bölmesi (Sol) -->
               <div class="table-grid-panel seri-panel" id="panel-seri-1">
                 <div class="panel-rows-container" id="seri-1-rows"></div>
@@ -295,6 +294,9 @@
 
             <!-- Orta/Bölme: Ahşap Gösterge ve Deste Şeridi -->
             <div class="center-deck-strip">
+              <!-- Plain Target Numbers at Top of Center Strip -->
+              <div id="center-target-badge" class="center-deck-target" title="Açmak için gereken baraj (Puan / Çift)">101 / 5 Çift</div>
+
               <!-- 1. Open Indicator Tile (Gösterge - Üstte) -->
               <div class="indicator-zone" title="Gösterge Taşı">
                 <div class="indicator-clean-box">
@@ -316,7 +318,6 @@
 
             <!-- Sağ Taraf: 2 Tane Yan Yana 2x13 Çift Açma Bölmesi -->
             <div class="pairs-section-wrapper">
-              <div id="table-pairs-target-badge" class="table-target-badge pairs-target-badge" title="Çift Açmak İçin Gereken Minimum Çift Sayısı">ÇİFT HEDEF: 5 Çift</div>
               <!-- 1. 2x13 Çift Bölmesi (Sol) -->
               <div class="table-grid-panel pairs-panel" id="panel-pairs-1">
                 <div class="panel-rows-container pairs-rows-container" id="pairs-1-rows"></div>
@@ -493,11 +494,11 @@
 
   <!-- Socket.IO & Application Scripts (Cache Busted) -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/audio.js?v=87"></script>
-  <script src="js/validator.js?v=87"></script>
-  <script src="js/istaka.js?v=87"></script>
-  <script src="js/table.js?v=87"></script>
-  <script src="js/ui.js?v=87"></script>
-  <script src="js/gameClient.js?v=87"></script>
+  <script src="js/audio.js?v=88"></script>
+  <script src="js/validator.js?v=88"></script>
+  <script src="js/istaka.js?v=88"></script>
+  <script src="js/table.js?v=88"></script>
+  <script src="js/ui.js?v=88"></script>
+  <script src="js/gameClient.js?v=88"></script>
 </body>
 </html>

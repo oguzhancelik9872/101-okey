@@ -625,7 +625,10 @@ class IstakaManager {
   }
 
   setDrawnDiscardTileId(tileId) {
-    this.drawnFromDiscardTileId = tileId;
+    if (this.drawnDiscardTileId !== tileId) {
+      this.drawnDiscardTileId = tileId;
+      this.render();
+    }
   }
 
   /**

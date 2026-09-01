@@ -1452,22 +1452,16 @@ document.addEventListener('DOMContentLoaded', () => {
       topTimerBar.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
     }
 
-    // Update Opening Target Requirements Badges on Table Felt
-    const seriTargetBadge = document.getElementById('table-seri-target-badge');
-    const pairsTargetBadge = document.getElementById('table-pairs-target-badge');
+    // Update Opening Target Requirements Badge at the top of the center deck strip
+    const centerTargetBadge = document.getElementById('center-target-badge');
     const minOpenScore = currentGameState.minOpenScore || 101;
     const minOpenPairs = currentGameState.minOpenPairs || 5;
     const formattedScore = (window.formatOkeyScore && typeof window.formatOkeyScore === 'function')
       ? window.formatOkeyScore(minOpenScore)
       : `${minOpenScore}`;
 
-    if (seriTargetBadge) {
-      seriTargetBadge.textContent = minOpenScore > 101
-        ? `SERİ HEDEF: ${formattedScore} (${minOpenScore})`
-        : `SERİ HEDEF: 101 (${formattedScore})`;
-    }
-    if (pairsTargetBadge) {
-      pairsTargetBadge.textContent = `ÇİFT HEDEF: ${minOpenPairs} Çift`;
+    if (centerTargetBadge) {
+      centerTargetBadge.textContent = `${minOpenScore} (${formattedScore}) / ${minOpenPairs} Çift`;
     }
 
     const isFirstOpen = viewerPlayer ? !viewerPlayer.opened : true;

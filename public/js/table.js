@@ -221,6 +221,16 @@ class TableManager {
   renderCenterDeck() {
     if (!this.gameState) return;
 
+    const centerTargetBadge = document.getElementById('center-target-badge');
+    if (centerTargetBadge) {
+      const minOpenScore = this.gameState.minOpenScore || 101;
+      const minOpenPairs = this.gameState.minOpenPairs || 5;
+      const formattedScore = (typeof formatOkeyScore === 'function')
+        ? formatOkeyScore(minOpenScore)
+        : `${minOpenScore}`;
+      centerTargetBadge.textContent = `${minOpenScore} (${formattedScore}) / ${minOpenPairs} Çift`;
+    }
+
     const deckCountEl = document.getElementById('deck-count');
     if (deckCountEl) {
       deckCountEl.textContent = this.gameState.remainingDeckCount + ' Taş';
