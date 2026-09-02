@@ -908,6 +908,15 @@ document.addEventListener('DOMContentLoaded', () => {
       roundStartedHandSorted = false;
     }
 
+    const isNewRoundStarting = (!lastGameState || lastGameState.state !== 'PLAYING' || lastGameState.currentRound !== state.currentRound);
+    if (isNewRoundStarting && state.state === 'PLAYING') {
+      roundStartedHandSorted = false;
+    }
+
+    if (state.state !== 'PLAYING') {
+      roundStartedHandSorted = false;
+    }
+
     // Update Istaka hand if viewer hand is provided
     const me = state.players[viewerSeatIndex];
     istaka.setViewerOpened(me ? me.opened : false);
@@ -920,7 +929,8 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (isInitialDeal) {
         roundStartedHandSorted = true;
         // Yalnızca oyun ilk başladığında veya yeni maçta bir kez otomatik seri dizilir
-        istaka.setHand(me.hand, false, true);
+        istaka.setHand(me.hand, false, false);
+        istaka.autoSortRuns();
       } else {
         // Taş çekerken/atarken dizilim aynen korunur, asla otomatik dizilmez
         istaka.setHand(me.hand, true, false);
@@ -1386,6 +1396,23 @@ document.addEventListener('DOMContentLoaded', () => {
         istaka.saveTurnSnapshot();
       }
 
+      // Snapshot exact physical rack coordinates of all tiles being opened before server deletes them
+      window.lastKnownRackCoords = window.lastKnownRackCoords || {};
+      document.querySelectorAll('.istaka-slot').forEach(slot => {
+        const tile = slot.querySelector('.okey-tile');
+        if (tile && tile.dataset.id) {
+          const rect = tile.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            window.lastKnownRackCoords[tile.dataset.id] = {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2,
+              width: rect.width,
+              height: rect.height
+            };
+          }
+        }
+      });
+
       socket.emit('openHand', { roomId, melds: meldIdArrays }, (res) => {
         if (res.success) {
           window.soundEngine.playOpenHand();
@@ -1433,6 +1460,23 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!istaka.hasTurnSnapshot()) {
         istaka.saveTurnSnapshot();
       }
+
+      // Snapshot exact physical rack coordinates of all tiles being opened before server deletes them
+      window.lastKnownRackCoords = window.lastKnownRackCoords || {};
+      document.querySelectorAll('.istaka-slot').forEach(slot => {
+        const tile = slot.querySelector('.okey-tile');
+        if (tile && tile.dataset.id) {
+          const rect = tile.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            window.lastKnownRackCoords[tile.dataset.id] = {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2,
+              width: rect.width,
+              height: rect.height
+            };
+          }
+        }
+      });
 
       socket.emit('openPairs', { roomId, pairs: pairIdArrays }, (res) => {
         if (res.success) {

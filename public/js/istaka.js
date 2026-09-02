@@ -607,7 +607,7 @@ class IstakaManager {
     }
 
     // Save exact physical pixel coordinates of every tile currently sitting on the rack
-    window.lastKnownRackCoords = {};
+    window.lastKnownRackCoords = window.lastKnownRackCoords || {};
     for (let r = 0; r < this.ROWS; r++) {
       for (let c = 0; c < this.COLS; c++) {
         const t = this.grid[r][c];
