@@ -291,7 +291,6 @@ class TableManager {
       const leftPlayerSeat = (this.viewerSeatIndex + 3) % 4;
       const isLeftPlayerDiscard = (i === leftPlayerSeat);
       const isViewerTurnToDraw = (this.gameState.currentTurn === this.viewerSeatIndex && this.gameState.turnState === 'DRAW');
-      const pile = this.gameState.discards[i];
 
       if (isLeftPlayerDiscard && isViewerTurnToDraw && pile && pile.length > 0) {
         discardSlot.classList.add('can-draw-pulse');
