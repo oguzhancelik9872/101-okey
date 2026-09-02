@@ -85,7 +85,6 @@ class TableManager {
 
     this.viewerSeatIndex = 0;
     this.gameState = null;
-    this.activeDiscardTiles = {}; // Map of { [pos]: tileObject } currently visible on table
   }
 
   setViewerSeatIndex(seatIndex) {
@@ -104,20 +103,6 @@ class TableManager {
 
   update(gameState) {
     this.gameState = gameState;
-
-    // Synchronize initial state of discard piles
-    if (this.gameState && this.gameState.discards) {
-      for (let i = 0; i < 4; i++) {
-        const pos = this.getRelativePosition(i);
-        const pile = this.gameState.discards[i] || [];
-        if (pile.length === 0) {
-          this.activeDiscardTiles[pos] = null;
-        } else if (!this.activeDiscardTiles[pos]) {
-          this.activeDiscardTiles[pos] = pile[pile.length - 1];
-        }
-      }
-    }
-
     this.renderSeats();
     this.renderCenterDeck();
     this.renderDiscards();
@@ -287,12 +272,20 @@ class TableManager {
       if (!discardSlot) continue;
 
       discardSlot.innerHTML = '';
-      const displayedTile = this.activeDiscardTiles[pos];
+      const pile = this.gameState.discards[i];
 
-      if (displayedTile) {
-        const tileEl = this.createTileDOM(displayedTile, false);
-        tileEl.style.opacity = '1';
-        discardSlot.appendChild(tileEl);
+      if (pile && pile.length > 0) {
+        // If this specific discard box is awaiting an in-flight tile, show previous tile during flight
+        const isPendingFlight = (window.flyingDiscardSeatPos === pos);
+        const tileToShow = (isPendingFlight && pile.length > 1)
+          ? pile[pile.length - 2]
+          : (!isPendingFlight ? pile[pile.length - 1] : null);
+
+        if (tileToShow) {
+          const tileEl = this.createTileDOM(tileToShow, false);
+          tileEl.style.opacity = '1';
+          discardSlot.appendChild(tileEl);
+        }
       }
 
       const leftPlayerSeat = (this.viewerSeatIndex + 3) % 4;

@@ -863,8 +863,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Detect pending discard and meld tiles before updating table DOM to prevent 1-frame pre-render flash
     window.pendingMeldTileIds = new Set();
+    window.flyingDiscardSeatPos = null;
 
     if (lastGameState && lastGameState.state === 'PLAYING' && state.state === 'PLAYING') {
+      const countDiscards = (s) => (s && s.discards) ? s.discards.reduce((acc, p) => acc + (p ? p.length : 0), 0) : 0;
+      const lastDiscardCount = countDiscards(lastGameState);
+      const currentDiscardCount = countDiscards(state);
+
+      if (currentDiscardCount > lastDiscardCount && state.discards && lastGameState.discards) {
+        for (let p = 0; p < 4; p++) {
+          const curPile = state.discards[p] || [];
+          const lastPile = lastGameState.discards[p] || [];
+          if (curPile.length > lastPile.length) {
+            const isViewer = (p === viewerSeatIndex);
+            const isRecentManual = (Date.now() - (window.lastManualDragTime || 0)) < 3000;
+            if (!isViewer || !isRecentManual) {
+              window.flyingDiscardSeatPos = table.getRelativePosition(p);
+            }
+            break;
+          }
+        }
+      }
 
       const lastMeldsCount = lastGameState.tableMelds ? lastGameState.tableMelds.length : 0;
       const currentMeldsCount = state.tableMelds ? state.tableMelds.length : 0;
@@ -1012,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const seatPos = table.getRelativePosition(viewerSeatIndex);
           if (isRecentManualDrag) {
             window.lastManualDragTime = 0;
-            table.activeDiscardTiles[seatPos] = discardedTile;
+            window.flyingDiscardSeatPos = null;
             table.renderDiscards();
           } else {
             anim.animateDiscard(seatPos, discardedTile, true);

@@ -288,8 +288,8 @@ class TileAnimationEngine {
         isClosed: false,
         duration: 380,
         onComplete: () => {
+          window.flyingDiscardSeatPos = null;
           if (window.tableManager) {
-            window.tableManager.activeDiscardTiles[seatPos] = tile;
             window.tableManager.renderDiscards();
           }
           if (typeof onDone === 'function') onDone();
@@ -336,8 +336,8 @@ class TileAnimationEngine {
         isClosed: false,
         duration: 380,
         onComplete: () => {
+          window.flyingDiscardSeatPos = null;
           if (window.tableManager) {
-            window.tableManager.activeDiscardTiles[toPos] = tile;
             window.tableManager.renderDiscards();
           }
           if (typeof onDone === 'function') onDone();
