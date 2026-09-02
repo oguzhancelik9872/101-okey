@@ -35,6 +35,7 @@ class OkeyGame {
 
     this.logs = [];
     this.roundResults = null;
+    this.matchHistory = [];
   }
 
   addPlayer(id, name, isBot = false, gender = null, userId = null, preferredSeat = null, avatarIndex = null, avatarFile = null) {
@@ -323,6 +324,8 @@ class OkeyGame {
       hasResetTurnTimerInThisTurn: player.hasResetTurnTimerInThisTurn || false,
       initialOpenScore: player.initialOpenScore || 0,
       initialOpenPairs: player.initialOpenPairs || 0,
+      minOpenScore: this.minOpenScore,
+      minOpenPairs: this.minOpenPairs,
       tableMelds: this.tableMelds.map(m => ({
         id: m.id,
         playerIndex: m.playerIndex,
@@ -363,6 +366,10 @@ class OkeyGame {
     player.hasResetTurnTimerInThisTurn = true; // Prevent timer reset abuse within the same turn
     player.initialOpenScore = snap.initialOpenScore;
     player.initialOpenPairs = snap.initialOpenPairs;
+
+    // Restore table minimum open requirements
+    this.minOpenScore = snap.minOpenScore || 101;
+    this.minOpenPairs = snap.minOpenPairs || 5;
 
     // Restore table melds
     this.tableMelds = snap.tableMelds.map(m => ({
@@ -957,6 +964,18 @@ class OkeyGame {
       totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
 
+    this.matchHistory = this.matchHistory || [];
+    this.matchHistory.push({
+      roundNumber: this.matchHistory.length + 1,
+      team1Score,
+      team2Score,
+      finisher: finisher ? finisher.name : null,
+      isOkeyDiscard,
+      isPairsFinish,
+      isEldenBitme,
+      roundScores: { ...roundScores }
+    });
+
     let finishMsg = isEldenBitme
       ? `🚀 ${finisher.name} ELDEN BİTTİ (${finisherPoints} puan)!`
       : `🎉 ${finisher.name} oyunu bitirdi (${finisherPoints} puan).`;
@@ -1026,6 +1045,16 @@ class OkeyGame {
       },
       totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
+
+    this.matchHistory = this.matchHistory || [];
+    this.matchHistory.push({
+      roundNumber: this.matchHistory.length + 1,
+      team1Score,
+      team2Score,
+      finisher: null,
+      reason: 'Deste bitti',
+      roundScores: { ...roundScores }
+    });
 
     this.addLog(`Deste bitti! Kalan eller sayıldı.`);
     this.addLog(`🏆 Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
@@ -1404,6 +1433,7 @@ class OkeyGame {
         })) : null
       }) : null),
       roundResults: this.roundResults,
+      matchHistory: this.matchHistory || [],
       canUndo: Boolean(this.turnSnapshot && this.turnSnapshot.modified && this.turnSnapshot.playerIndex === viewerSeatIndex && this.currentTurn === viewerSeatIndex && this.turnState === 'DISCARD'),
       drawnFromDiscard: this.drawnFromDiscard ? {
         playerIndex: this.drawnFromDiscard.playerIndex,

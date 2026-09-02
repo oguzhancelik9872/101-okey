@@ -2094,7 +2094,8 @@ body.plus-theme {
 /* Orta/Ayırıcı: Deste ve Gösterge Ahşap Şeridi (Bölmenin En Altına Yapışık) */
 .center-deck-strip {
   width: fit-content;
-  min-width: 106px;
+  min-width: 120px;
+  max-width: 135px;
   background: linear-gradient(180deg, #1b3829 0%, #0d2117 100%);
   border: 2px solid #284c39;
   border-radius: 10px;
@@ -2102,12 +2103,133 @@ body.plus-theme {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 5px;
+  gap: 4px;
   padding: 4px 6px 5px 6px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.6);
   z-index: 15;
   align-self: flex-end;
   margin-top: auto;
+  box-sizing: border-box;
+}
+
+/* Live 101 Okey Scoreboard Card in Center Strip */
+.center-scoreboard-card {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(241, 196, 15, 0.4);
+  border-radius: 8px;
+  padding: 4px 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  font-family: 'Montserrat', sans-serif;
+  box-sizing: border-box;
+}
+
+.scoreboard-teams-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 2px;
+}
+
+.team-header-pill {
+  font-size: 8px;
+  font-weight: 800;
+  color: #f1c40f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 52px;
+  line-height: 1.1;
+}
+
+.team-header-pill.team2-header {
+  color: #5dade2;
+  text-align: right;
+}
+
+.score-vs-divider {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.scoreboard-rounds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 52px;
+  overflow-y: auto;
+}
+
+.score-round-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 8px;
+  font-weight: 700;
+  color: #d5e8dc;
+  padding: 1px 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.score-round-row .round-tag {
+  font-size: 7.5px;
+  color: #a8d5ba;
+  font-weight: 800;
+}
+
+.score-round-row .round-score-team1 {
+  color: #f1c40f;
+  font-weight: 900;
+}
+
+.score-round-row .round-score-team2 {
+  color: #5dade2;
+  font-weight: 900;
+}
+
+.score-empty-history {
+  font-size: 7.5px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 2px 0;
+}
+
+.scoreboard-totals-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(241, 196, 15, 0.35);
+  padding-top: 2px;
+  margin-top: 1px;
+}
+
+.total-score-val {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.total-score-val.team1-total {
+  color: #2ecc71;
+}
+
+.total-score-val.team2-total {
+  color: #3498db;
+}
+
+.total-label {
+  font-size: 7.5px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #f1c40f;
 }
 
 .center-deck-side-by-side {

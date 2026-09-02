@@ -105,6 +105,7 @@ class TableManager {
     this.gameState = gameState;
     this.renderSeats();
     this.renderCenterDeck();
+    this.renderScoreboard();
     this.renderDiscards();
     this.renderTableMelds();
   }
@@ -261,6 +262,58 @@ class TableManager {
       const tileEl = this.createTileDOM(indTile, true);
       indicatorSlot.appendChild(tileEl);
     }
+  }
+
+  renderScoreboard() {
+    const cardEl = document.getElementById('center-scoreboard-card');
+    if (!cardEl || !this.gameState) return;
+
+    const p0 = this.gameState.players ? this.gameState.players[0] : null;
+    const p1 = this.gameState.players ? this.gameState.players[1] : null;
+    const p2 = this.gameState.players ? this.gameState.players[2] : null;
+    const p3 = this.gameState.players ? this.gameState.players[3] : null;
+
+    const t1Name = (p0 && p2) ? `${p0.name.split(' ')[0]} & ${p2.name.split(' ')[0]}` : (p0 ? p0.name.split(' ')[0] : 'Takım 1');
+    const t2Name = (p1 && p3) ? `${p1.name.split(' ')[0]} & ${p3.name.split(' ')[0]}` : (p1 ? p1.name.split(' ')[0] : 'Takım 2');
+
+    const title1El = document.getElementById('score-team1-title');
+    const title2El = document.getElementById('score-team2-title');
+    if (title1El) title1El.textContent = t1Name;
+    if (title2El) title2El.textContent = t2Name;
+
+    const history = this.gameState.matchHistory || [];
+    const listEl = document.getElementById('scoreboard-rounds-list');
+
+    if (listEl) {
+      if (history.length === 0) {
+        listEl.innerHTML = `<div class="score-empty-history">1. El Oynanıyor</div>`;
+      } else {
+        let html = '';
+        history.forEach((round, idx) => {
+          html += `
+            <div class="score-round-row">
+              <span class="round-tag">${round.roundNumber || (idx + 1)}. El:</span>
+              <span class="round-score-team1">${round.team1Score}</span>
+              <span class="round-score-team2">${round.team2Score}</span>
+            </div>
+          `;
+        });
+        if (this.gameState.state === 'PLAYING') {
+          html += `<div class="score-empty-history">${history.length + 1}. El Oynanıyor</div>`;
+        }
+        listEl.innerHTML = html;
+        listEl.scrollTop = listEl.scrollHeight;
+      }
+    }
+
+    // Totals
+    const t1Total = (p0 ? (p0.score || 0) : 0) + (p2 ? (p2.score || 0) : 0);
+    const t2Total = (p1 ? (p1.score || 0) : 0) + (p3 ? (p3.score || 0) : 0);
+
+    const total1El = document.getElementById('score-team1-total');
+    const total2El = document.getElementById('score-team2-total');
+    if (total1El) total1El.textContent = t1Total;
+    if (total2El) total2El.textContent = t2Total;
   }
 
   renderDiscards() {
