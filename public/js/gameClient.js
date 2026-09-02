@@ -159,10 +159,15 @@ document.addEventListener('DOMContentLoaded', () => {
       btnEnter.classList.remove('disabled');
       btnEnter.removeAttribute('disabled');
       btnEnter.disabled = false;
+      btnEnter.style.opacity = '1';
+      btnEnter.style.cursor = 'pointer';
+      btnEnter.style.pointerEvents = 'auto';
     } else {
       btnEnter.classList.add('disabled');
       btnEnter.setAttribute('disabled', 'true');
       btnEnter.disabled = true;
+      btnEnter.style.opacity = '0.45';
+      btnEnter.style.cursor = 'not-allowed';
     }
   }
 
@@ -181,6 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
       avatarIndex: 0
     };
 
+    // Immediately show lobby so user never feels frozen or stuck
+    handleLoginSuccess(fallbackUser, null, false);
+    ui.showToast(`Hoş geldin, ${clean}!`, 'success');
+
     // Notify server to bind socket session
     socket.emit('auth:selectName', { name: clean }, (res) => {
       if (res && res.success && res.user) {
@@ -190,60 +199,54 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('okey101_auth_token', res.token);
         }
         localStorage.setItem('okey101_user', JSON.stringify(res.user));
-        showLobby();
         updateLobbyProfileUI();
-        ui.showToast(`Hoş geldin, ${clean}!`, 'success');
-      } else {
-        // Optimistic fallback so user is never blocked
-        currentUser = fallbackUser;
-        currentActivePlayerName = clean;
-        localStorage.setItem('okey101_user', JSON.stringify(fallbackUser));
-        showLobby();
-        updateLobbyProfileUI();
-        ui.showToast(`Hoş geldin, ${clean}!`, 'success');
       }
     });
   }
 
-  // Bind Enter Game Button Click
-  const btnEnterGame = document.getElementById('btn-enter-game');
-  if (btnEnterGame) {
-    btnEnterGame.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (selectedCharName) {
-        doSelectNameAndEnterLobby(selectedCharName);
-      } else {
-        ui.showToast('Lütfen oynamak için bir karakter seçin!', 'warning');
-      }
-    });
-  }
-
-  // Delegated click & double click on character selection grid
-  const namePickerGrid = document.getElementById('name-picker-grid');
-  if (namePickerGrid) {
-    namePickerGrid.addEventListener('click', (e) => {
-      const card = e.target.closest('.name-card');
-      if (card) {
+  function initNamePickerEvents() {
+    const grid = document.getElementById('name-picker-grid');
+    if (grid) {
+      const cards = grid.querySelectorAll('.name-card');
+      cards.forEach(card => {
         const charName = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
-        if (charName) {
-          selectedCharName = charName;
-          updateNamePickerUI();
-        }
-      }
-    });
+        card.style.cursor = 'pointer';
+        card.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (charName) {
+            selectedCharName = charName;
+            updateNamePickerUI();
+          }
+        };
+        card.ondblclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (charName) {
+            selectedCharName = charName;
+            updateNamePickerUI();
+            doSelectNameAndEnterLobby(charName);
+          }
+        };
+      });
+    }
 
-    namePickerGrid.addEventListener('dblclick', (e) => {
-      const card = e.target.closest('.name-card');
-      if (card) {
-        const charName = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
-        if (charName) {
-          selectedCharName = charName;
-          updateNamePickerUI();
-          doSelectNameAndEnterLobby(charName);
+    const btnEnterGame = document.getElementById('btn-enter-game');
+    if (btnEnterGame) {
+      btnEnterGame.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (selectedCharName) {
+          doSelectNameAndEnterLobby(selectedCharName);
+        } else {
+          ui.showToast('Lütfen oynamak için bir karakter seçin!', 'warning');
         }
-      }
-    });
+      };
+    }
   }
+
+  // Initial event binding
+  initNamePickerEvents();
 
   function showLobby() {
     stopTurnTimerLoop();
@@ -287,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     selectedCharName = null;
     updateNamePickerUI();
+    initNamePickerEvents();
   }
 
   function handleLoginSuccess(user, token, isReconnectCheck = false) {
