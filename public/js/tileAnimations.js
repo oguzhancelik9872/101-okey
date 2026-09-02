@@ -288,10 +288,8 @@ class TileAnimationEngine {
         isClosed: false,
         duration: 380,
         onComplete: () => {
-          if (tile && tile.id && window.pendingDiscardTileIds) {
-            window.pendingDiscardTileIds.delete(tile.id);
-          }
           if (window.tableManager) {
+            window.tableManager.activeDiscardTiles[seatPos] = tile;
             window.tableManager.renderDiscards();
           }
           if (typeof onDone === 'function') onDone();
@@ -338,10 +336,8 @@ class TileAnimationEngine {
         isClosed: false,
         duration: 380,
         onComplete: () => {
-          if (tile && tile.id && window.pendingDiscardTileIds) {
-            window.pendingDiscardTileIds.delete(tile.id);
-          }
           if (window.tableManager) {
+            window.tableManager.activeDiscardTiles[toPos] = tile;
             window.tableManager.renderDiscards();
           }
           if (typeof onDone === 'function') onDone();

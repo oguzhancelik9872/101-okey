@@ -1012,6 +1012,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const seatPos = table.getRelativePosition(viewerSeatIndex);
           if (isRecentManualDrag) {
             window.lastManualDragTime = 0;
+            table.activeDiscardTiles[seatPos] = discardedTile;
+            table.renderDiscards();
           } else {
             anim.animateDiscard(seatPos, discardedTile, true);
           }
@@ -1304,6 +1306,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bottomDiscardEl.classList.remove('drag-over');
       const tileId = e.dataTransfer.getData('text/plain') || window.draggedTileId;
       if (tileId && !tileId.startsWith('ACTION:')) {
+        window.lastManualDragTime = Date.now();
         window.lastActionWasManualDrag = true;
         handleQuickDiscard({ id: tileId });
       }

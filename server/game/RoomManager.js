@@ -460,8 +460,8 @@ class RoomManager {
           const elapsed = now - room.lastBotActionTime;
           if (room.botPhase === undefined) room.botPhase = 0;
 
-          // Phase 1: Draw tile at ~1.0s
-          if (room.botPhase === 0 && elapsed >= 1000) {
+          // Phase 1: Draw tile at ~0.8s
+          if (room.botPhase === 0 && elapsed >= 800) {
             room.botPhase = 1;
             try {
               game.executeBotDraw(currentIdx);
@@ -470,8 +470,8 @@ class RoomManager {
             }
             this.broadcastGameState(room.id);
           }
-          // Phase 2: Open melds / process tiles at ~2.8s
-          else if (room.botPhase === 1 && elapsed >= 2800) {
+          // Phase 2: Open melds / process tiles at ~2.2s
+          else if (room.botPhase === 1 && elapsed >= 2200) {
             room.botPhase = 2;
             const hadMelds = game.tableMelds ? game.tableMelds.length : 0;
             try {
@@ -483,8 +483,8 @@ class RoomManager {
               this.broadcastGameState(room.id);
             }
           }
-          // Phase 3: Discard tile at ~4.8s (completing 5s human-paced turn)
-          else if (room.botPhase === 2 && elapsed >= 4800) {
+          // Phase 3: Discard tile at ~3.8s (completing 4.0s sequential turn)
+          else if (room.botPhase === 2 && elapsed >= 3800) {
             room.botPhase = 0;
             room.lastBotActionTime = now;
             try {

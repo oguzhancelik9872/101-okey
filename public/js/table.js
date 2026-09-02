@@ -85,6 +85,7 @@ class TableManager {
 
     this.viewerSeatIndex = 0;
     this.gameState = null;
+    this.activeDiscardTiles = {}; // Map of { [pos]: tileObject } currently visible on table
   }
 
   setViewerSeatIndex(seatIndex) {
@@ -103,6 +104,20 @@ class TableManager {
 
   update(gameState) {
     this.gameState = gameState;
+
+    // Synchronize initial state of discard piles
+    if (this.gameState && this.gameState.discards) {
+      for (let i = 0; i < 4; i++) {
+        const pos = this.getRelativePosition(i);
+        const pile = this.gameState.discards[i] || [];
+        if (pile.length === 0) {
+          this.activeDiscardTiles[pos] = null;
+        } else if (!this.activeDiscardTiles[pos]) {
+          this.activeDiscardTiles[pos] = pile[pile.length - 1];
+        }
+      }
+    }
+
     this.renderSeats();
     this.renderCenterDeck();
     this.renderDiscards();
@@ -272,11 +287,10 @@ class TableManager {
       if (!discardSlot) continue;
 
       discardSlot.innerHTML = '';
-      const pile = this.gameState.discards[i];
+      const displayedTile = this.activeDiscardTiles[pos];
 
-      if (pile && pile.length > 0) {
-        const topTile = pile[pile.length - 1];
-        const tileEl = this.createTileDOM(topTile, false);
+      if (displayedTile) {
+        const tileEl = this.createTileDOM(displayedTile, false);
         tileEl.style.opacity = '1';
         discardSlot.appendChild(tileEl);
       }
@@ -284,6 +298,7 @@ class TableManager {
       const leftPlayerSeat = (this.viewerSeatIndex + 3) % 4;
       const isLeftPlayerDiscard = (i === leftPlayerSeat);
       const isViewerTurnToDraw = (this.gameState.currentTurn === this.viewerSeatIndex && this.gameState.turnState === 'DRAW');
+      const pile = this.gameState.discards[i];
 
       if (isLeftPlayerDiscard && isViewerTurnToDraw && pile && pile.length > 0) {
         discardSlot.classList.add('can-draw-pulse');
