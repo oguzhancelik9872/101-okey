@@ -606,6 +606,28 @@ class IstakaManager {
       }
     }
 
+    // Save exact physical pixel coordinates of every tile currently sitting on the rack
+    window.lastKnownRackCoords = {};
+    for (let r = 0; r < this.ROWS; r++) {
+      for (let c = 0; c < this.COLS; c++) {
+        const t = this.grid[r][c];
+        if (t) {
+          const slotEl = this.container.querySelector(`.istaka-slot[data-row="${r}"][data-col="${c}"]`);
+          if (slotEl) {
+            const rect = slotEl.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+              window.lastKnownRackCoords[t.id] = {
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2,
+                width: rect.width,
+                height: rect.height
+              };
+            }
+          }
+        }
+      }
+    }
+
     if (this.onStateChange) {
       this.onStateChange({
         selectedTiles: [],

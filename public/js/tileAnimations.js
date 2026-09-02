@@ -379,14 +379,18 @@ class TileAnimationEngine {
       tileEntries.forEach((tile) => {
         // Find exact rack origin coordinates for viewer
         if (isViewer) {
-          const rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
-          if (rackTileEl) {
-            tile._rackCoords = this.getElCenter(rackTileEl);
-            rackTileEl.style.opacity = '0';
+          if (window.lastKnownRackCoords && window.lastKnownRackCoords[tile.id]) {
+            tile._rackCoords = window.lastKnownRackCoords[tile.id];
+          } else {
+            const rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
+            if (rackTileEl) {
+              tile._rackCoords = this.getElCenter(rackTileEl);
+              rackTileEl.style.opacity = '0';
+            }
           }
         }
 
-        const destEl = document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`);
+        const destEl = document.querySelector(`.center-table-zone .okey-tile[data-id="${tile.id}"]`) || document.querySelector(`.center-table-zone [data-id="${tile.id}"]`);
         if (destEl) {
           destEl.style.opacity = '0';
           const parentSlot = destEl.closest('.grid-cell-slot');
@@ -398,7 +402,7 @@ class TileAnimationEngine {
 
       let completedCount = 0;
       tileEntries.forEach((tile, index) => {
-        const destEl = document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`);
+        const destEl = document.querySelector(`.center-table-zone .okey-tile[data-id="${tile.id}"]`) || document.querySelector(`.center-table-zone [data-id="${tile.id}"]`);
         let endCoords = null;
 
         if (destEl) {
@@ -408,7 +412,7 @@ class TileAnimationEngine {
           endCoords = this.getElCenter(fallbackPanel);
         }
 
-        const tileStartCoords = (isViewer && tile._rackCoords) ? tile._rackCoords : defaultStartCoords;
+        const tileStartCoords = (isViewer && (tile._rackCoords || (window.lastKnownRackCoords && window.lastKnownRackCoords[tile.id]))) || defaultStartCoords;
 
         if (!endCoords) {
           completedCount++;
@@ -458,10 +462,14 @@ class TileAnimationEngine {
       let rackTileEl = null;
 
       if (isViewer && tile && tile.id) {
-        rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
-        if (rackTileEl) {
-          startCoords = this.getElCenter(rackTileEl);
-          rackTileEl.style.opacity = '0';
+        if (window.lastKnownRackCoords && window.lastKnownRackCoords[tile.id]) {
+          startCoords = window.lastKnownRackCoords[tile.id];
+        } else {
+          rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
+          if (rackTileEl) {
+            startCoords = this.getElCenter(rackTileEl);
+            rackTileEl.style.opacity = '0';
+          }
         }
       }
 
@@ -472,7 +480,7 @@ class TileAnimationEngine {
         startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(seatPos);
       }
 
-      const destEl = tile && tile.id ? document.querySelector(`.table-grid-panel [data-id="${tile.id}"]`) : null;
+      const destEl = tile && tile.id ? (document.querySelector(`.center-table-zone .okey-tile[data-id="${tile.id}"]`) || document.querySelector(`.center-table-zone [data-id="${tile.id}"]`)) : null;
       let endCoords = null;
 
       if (destEl) {
