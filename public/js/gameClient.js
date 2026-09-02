@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
     onProcessTileDragDrop: (tileId, targetMeldId) => handleProcessTileById(tileId, targetMeldId)
   });
 
+  window.tableManager = table;
+  window.istakaManager = istaka;
+
   // --- Dynamic Title, LocalStorage & Global UI State ---
   let currentActivePlayerName = 'Oyuncu';
   let titleBlinkInterval = null;
@@ -906,6 +909,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update Istaka hand if viewer hand is provided
     const me = state.players[viewerSeatIndex];
+    const lastMe = lastGameState && lastGameState.players ? lastGameState.players[viewerSeatIndex] : null;
+    const isViewerJustOpened = me && me.opened && (!lastMe || !lastMe.opened);
+
     istaka.setViewerOpened(me ? me.opened : false);
     if (me && me.hand) {
       const isInitialDeal = (!roundStartedHandSorted && state.state === 'PLAYING' && me.hand.length >= 21);
@@ -918,7 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Yalnızca oyun ilk başladığında veya yeni maçta bir kez otomatik seri dizilir
         istaka.setHand(me.hand, false, false);
         istaka.autoSortRuns();
-      } else {
+      } else if (!isViewerJustOpened) {
         // Taş çekerken/atarken dizilim aynen korunur, asla otomatik dizilmez
         istaka.setHand(me.hand, true, false);
       }
@@ -967,7 +973,11 @@ document.addEventListener('DOMContentLoaded', () => {
               const seatPos = table.getRelativePosition(p);
               const isViewer = (p === viewerSeatIndex);
               const playerMelds = state.tableMelds.filter(m => m.playerIndex === p);
-              anim.animateOpenMelds(seatPos, playerMelds, newP.openType, isViewer);
+              anim.animateOpenMelds(seatPos, playerMelds, newP.openType, isViewer, () => {
+                if (isViewer && me && me.hand) {
+                  istaka.setHand(me.hand, true, false);
+                }
+              });
             }
           }
         }

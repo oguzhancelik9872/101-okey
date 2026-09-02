@@ -79,9 +79,11 @@ class TileAnimationEngine {
 
   createTileDOM(tile, isClosed = false) {
     const tileEl = document.createElement('div');
-    tileEl.className = 'flying-tile-clone';
+    tileEl.className = 'flying-tile-clone okey-tile';
 
-    if (isClosed || !tile) {
+    const hasValue = Boolean(tile && (tile.number !== undefined || tile.value !== undefined || tile.isOkey || tile.isFake));
+
+    if (isClosed || !tile || !hasValue) {
       tileEl.classList.add('tile-face-down');
       tileEl.innerHTML = '<div class="tile-back-pattern"></div>';
       return tileEl;
@@ -93,6 +95,7 @@ class TileAnimationEngine {
 
     if (tile.isOkey) {
       tileEl.classList.add('is-okey-joker');
+      tileEl.innerHTML = `<span class="tile-number">★</span><span class="tile-dot"></span>`;
     } else if (tile.isFake) {
       tileEl.classList.add('is-fake-okey');
       tileEl.innerHTML = `
@@ -281,12 +284,18 @@ class TileAnimationEngine {
         return;
       }
 
+      // Hide landing slot incoming tile during flight
+      window.flyingDiscardSeatPos = seatPos;
+      if (window.tableManager) {
+        window.tableManager.renderDiscards();
+      }
+
       this.flyTile({
         fromCoords: startCoords,
         toCoords: endCoords,
         tile,
         isClosed: false,
-        duration: 380,
+        duration: 340,
         onComplete: () => {
           window.flyingDiscardSeatPos = null;
           if (window.tableManager) {
@@ -329,12 +338,17 @@ class TileAnimationEngine {
         return;
       }
 
+      window.flyingDiscardSeatPos = toPos;
+      if (window.tableManager) {
+        window.tableManager.renderDiscards();
+      }
+
       this.flyTile({
         fromCoords: startCoords,
         toCoords: endCoords,
         tile,
         isClosed: false,
-        duration: 380,
+        duration: 340,
         onComplete: () => {
           window.flyingDiscardSeatPos = null;
           if (window.tableManager) {
@@ -377,16 +391,13 @@ class TileAnimationEngine {
       }
 
       tileEntries.forEach((tile) => {
-        // Find exact rack origin coordinates for viewer
+        // Record rack coordinates if available
         if (isViewer) {
-          if (window.lastKnownRackCoords && window.lastKnownRackCoords[tile.id]) {
+          const rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
+          if (rackTileEl) {
+            tile._rackCoords = this.getElCenter(rackTileEl);
+          } else if (window.lastKnownRackCoords && window.lastKnownRackCoords[tile.id]) {
             tile._rackCoords = window.lastKnownRackCoords[tile.id];
-          } else {
-            const rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
-            if (rackTileEl) {
-              tile._rackCoords = this.getElCenter(rackTileEl);
-              rackTileEl.style.opacity = '0';
-            }
           }
         }
 
@@ -424,12 +435,20 @@ class TileAnimationEngine {
         }
 
         setTimeout(() => {
+          // Hide tile on rack right as it begins flying
+          if (isViewer) {
+            const rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
+            if (rackTileEl) {
+              rackTileEl.style.opacity = '0';
+            }
+          }
+
           this.flyTile({
             fromCoords: tileStartCoords,
             toCoords: endCoords,
             tile,
             isClosed: false,
-            duration: 350,
+            duration: 330,
             onComplete: () => {
               if (destEl) {
                 destEl.style.opacity = '1';
@@ -448,7 +467,7 @@ class TileAnimationEngine {
               }
             }
           });
-        }, index * 70);
+        }, index * 85);
       });
     });
   }
