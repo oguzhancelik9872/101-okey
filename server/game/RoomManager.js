@@ -29,6 +29,17 @@ class RoomManager {
       }
       const roomId = 'MASA-101';
       const game = new OkeyGame(roomId, { mode: 'standard', targetRounds: 1 });
+      game.onSystemMessage = (text) => {
+        if (this.io) {
+          this.io.to(roomId).emit('chatMessage', {
+            sender: 'SİSTEM',
+            text,
+            isSystem: true,
+            time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+            roomId
+          });
+        }
+      };
       publicRoom = {
         id: roomId,
         hostId: null,
@@ -128,6 +139,17 @@ class RoomManager {
     }
 
     const game = new OkeyGame(roomId, { mode, targetRounds });
+    game.onSystemMessage = (text) => {
+      if (this.io) {
+        this.io.to(roomId).emit('chatMessage', {
+          sender: 'SİSTEM',
+          text,
+          isSystem: true,
+          time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+          roomId
+        });
+      }
+    };
     game.addPlayer(hostId, hostName || 'Oyuncu 1', false, gender, userId, targetSeatIndex, avatarIndex);
 
     if (vsBots) {

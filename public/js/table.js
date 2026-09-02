@@ -306,9 +306,18 @@ class TableManager {
       }
     }
 
-    // Totals
-    const t1Total = (p0 ? (p0.score || 0) : 0) + (p2 ? (p2.score || 0) : 0);
-    const t2Total = (p1 ? (p1.score || 0) : 0) + (p3 ? (p3.score || 0) : 0);
+    // Calculate cumulative match totals by summing all finished rounds in match history
+    let t1Total = 0;
+    let t2Total = 0;
+    if (history.length > 0) {
+      history.forEach(r => {
+        t1Total += (Number(r.team1Score) || 0);
+        t2Total += (Number(r.team2Score) || 0);
+      });
+    } else {
+      t1Total = (p0 ? (p0.score || 0) : 0) + (p2 ? (p2.score || 0) : 0);
+      t2Total = (p1 ? (p1.score || 0) : 0) + (p3 ? (p3.score || 0) : 0);
+    }
 
     const total1El = document.getElementById('score-team1-total');
     const total2El = document.getElementById('score-team2-total');

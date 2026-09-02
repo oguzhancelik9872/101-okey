@@ -259,7 +259,7 @@ class UIManager {
     }, 2500);
   }
 
-  appendChatMessage(sender, text, time, isMe = false) {
+  appendChatMessage(sender, text, time, isMe = false, isSystem = false) {
     const chatLogs = document.getElementById('chat-messages');
     if (!chatLogs) return;
 
@@ -268,11 +268,12 @@ class UIManager {
       welcome.remove();
     }
 
+    const isSys = isSystem || sender === 'SİSTEM';
     const msgEl = document.createElement('div');
-    msgEl.className = 'chat-message-item' + (isMe ? ' is-me' : '');
+    msgEl.className = 'chat-message-item' + (isSys ? ' is-system-announcement' : (isMe ? ' is-me' : ''));
     msgEl.innerHTML = `
       <div class="chat-msg-header">
-        <strong class="chat-sender">${isMe ? 'Siz' : sender}</strong>
+        <strong class="chat-sender">${isSys ? '📢 SİSTEM' : (isMe ? 'Siz' : sender)}</strong>
         <span class="chat-time">${time || ''}</span>
       </div>
       <span class="chat-text">${text}</span>

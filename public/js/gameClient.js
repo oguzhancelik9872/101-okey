@@ -1857,7 +1857,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   socket.on('chatMessage', (msg) => {
     const isMe = (msg.sender === currentActivePlayerName) || (currentUser && msg.sender === currentUser.displayName);
-    ui.appendChatMessage(msg.sender, msg.text, msg.time, isMe);
+    const isSys = Boolean(msg.isSystem || msg.sender === 'SİSTEM');
+    ui.appendChatMessage(msg.sender, msg.text, msg.time, isMe, isSys);
+
+    if (isSys) {
+      ui.showToast(msg.text, 'error', 4500);
+    }
 
     // If chat is closed and message is from someone else, show unread badge
     const isChatOpen = chatDrawer && chatDrawer.classList.contains('open');

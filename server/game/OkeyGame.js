@@ -36,6 +36,17 @@ class OkeyGame {
     this.logs = [];
     this.roundResults = null;
     this.matchHistory = [];
+    this.onSystemMessage = null;
+  }
+
+  _emitPenaltySystemChat(msg) {
+    if (typeof this.onSystemMessage === 'function') {
+      try {
+        this.onSystemMessage(msg);
+      } catch (e) {
+        console.error('[OkeyGame] Error in onSystemMessage:', e);
+      }
+    }
   }
 
   addPlayer(id, name, isBot = false, gender = null, userId = null, preferredSeat = null, avatarIndex = null, avatarFile = null) {
@@ -519,7 +530,9 @@ class OkeyGame {
               points: penalty,
               desc: `Yandan 5+ taş vererek seri açtırma cezası (+${penalty})`
             });
-            this.addLog(`⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} seri açtığı için +${penalty} ceza puanı aldı!`);
+            const pMsg = `⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} seri açtığı için +${penalty} ceza puanı aldı!`;
+            this.addLog(pMsg);
+            this._emitPenaltySystemChat(pMsg);
           }
         }
       }
@@ -538,7 +551,9 @@ class OkeyGame {
       if (oppP) {
         oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
         oppP.penalties.push({ type: 'OPPONENT_HIGH_OPEN', points: 101, desc: '153+ açılış cezası (+101)' });
-        this.addLog(`🔥 ${player.name} ${validation.score} (153+) puanla açtı! Rakip (${oppP.name}) +101 ceza aldı!`);
+        const pMsg = `🔥 ${player.name} ${validation.score} (153+) puanla açtı! Rakip (${oppP.name}) +101 ceza aldı!`;
+        this.addLog(pMsg);
+        this._emitPenaltySystemChat(pMsg);
       }
     }
 
@@ -652,7 +667,9 @@ class OkeyGame {
               points: penalty,
               desc: `Yandan 5+ taş vererek çift açtırma cezası (+${penalty})`
             });
-            this.addLog(`⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} çift açtığı için +${penalty} ceza puanı aldı!`);
+            const pMsg = `⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} çift açtığı için +${penalty} ceza puanı aldı!`;
+            this.addLog(pMsg);
+            this._emitPenaltySystemChat(pMsg);
           }
         }
       }
@@ -663,7 +680,9 @@ class OkeyGame {
         if (oppP) {
           oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
           oppP.penalties.push({ type: 'OPPONENT_SEVEN_PAIRS', points: 101, desc: '7+ çift açılış cezası (+101)' });
-          this.addLog(`💎 ${player.name} ${pairs.length} (7+) çift açtı! Rakip (${oppP.name}) +101 ceza aldı!`);
+          const pMsg = `💎 ${player.name} ${pairs.length} (7+) çift açtı! Rakip (${oppP.name}) +101 ceza aldı!`;
+          this.addLog(pMsg);
+          this._emitPenaltySystemChat(pMsg);
         }
       }
     }
@@ -731,7 +750,9 @@ class OkeyGame {
         if (meldOwner) {
           meldOwner.penaltyPoints = (meldOwner.penaltyPoints || 0) + 101;
           meldOwner.penalties.push({ type: 'OKEY_STOLEN', points: 101, desc: 'Okey kaptırma cezası (+101)' });
-          this.addLog(`✨ ${player.name} rakibin perindeki Okey'i aldı! ${meldOwner.name} +101 ceza aldı!`);
+          const pMsg = `✨ ${player.name} rakibin perindeki Okey'i aldı! ${meldOwner.name} +101 ceza aldı!`;
+          this.addLog(pMsg);
+          this._emitPenaltySystemChat(pMsg);
         }
       } else {
         this.addLog(`✨ ${player.name} perdeki Okey'in yerine taş işleyerek OKEY'i eline aldı!`);
@@ -796,7 +817,9 @@ class OkeyGame {
     if (tile.isOkey(this.indicator)) {
       player.penaltyPoints = (player.penaltyPoints || 0) + 101;
       player.penalties.push({ type: 'DISCARDED_OKEY', points: 101, desc: 'Okey atma cezası (+101)' });
-      this.addLog(`⚠️ ${player.name} elinde taş varken OKEY attığı için +101 ceza puanı aldı!`);
+      const pMsg = `⚠️ ${player.name} elinde taş varken OKEY attığı için +101 ceza puanı aldı!`;
+      this.addLog(pMsg);
+      this._emitPenaltySystemChat(pMsg);
     }
 
     // Check "İşlek Taş Atma" penalty
@@ -804,7 +827,9 @@ class OkeyGame {
     if (isPlayable) {
       player.penaltyPoints = (player.penaltyPoints || 0) + 101;
       player.penalties.push({ type: 'DISCARDED_PLAYABLE', points: 101, desc: 'İşlek taş atma cezası (+101)' });
-      this.addLog(`⚠️ ${player.name} masaya işlenebilecek işlek bir taş attığı için +101 ceza puanı aldı!`);
+      const pMsg = `⚠️ ${player.name} masaya işlenebilecek işlek bir taş attığı için +101 ceza puanı aldı!`;
+      this.addLog(pMsg);
+      this._emitPenaltySystemChat(pMsg);
     }
 
     // Conclude turn and clear snapshot
@@ -839,6 +864,9 @@ class OkeyGame {
    * Handles hand finish
    */
   endRound(finishingPlayerIndex, isOkeyDiscard = false) {
+    if (this.state === GAME_STATES.GAME_OVER) return;
+    this.state = GAME_STATES.GAME_OVER;
+
     const finisher = this.players[finishingPlayerIndex];
     if (!finisher) return;
 
@@ -854,7 +882,7 @@ class OkeyGame {
     }
 
     finisher.roundScore = finisherPoints + (finisher.penaltyPoints || 0);
-    finisher.score += finisher.roundScore;
+    finisher.score = (finisher.score || 0) + finisher.roundScore;
 
     const partnerIndex = (finishingPlayerIndex + 2) % 4;
     const roundScores = {};
@@ -881,7 +909,7 @@ class OkeyGame {
       if (i === partnerIndex) {
         // Partner of finisher gets 0 penalty from hand + any in-game penalties
         p.roundScore = 0 + (p.penaltyPoints || 0);
-        p.score += p.roundScore;
+        p.score = (p.score || 0) + p.roundScore;
         roundScores[p.id] = {
           name: p.name,
           points: p.roundScore,
@@ -914,7 +942,7 @@ class OkeyGame {
       }
 
       p.roundScore = pPoints + (p.penaltyPoints || 0);
-      p.score += p.roundScore;
+      p.score = (p.score || 0) + p.roundScore;
       roundScores[p.id] = {
         name: p.name,
         points: p.roundScore,
@@ -934,8 +962,6 @@ class OkeyGame {
     const team1Score = (this.players[0] ? this.players[0].roundScore : 0) + (this.players[2] ? this.players[2].roundScore : 0);
     const team2Score = (this.players[1] ? this.players[1].roundScore : 0) + (this.players[3] ? this.players[3].roundScore : 0);
     const isTeam1Winner = team1Score <= team2Score;
-
-    this.state = GAME_STATES.GAME_OVER;
 
     this.roundResults = {
       currentRound: 1,
@@ -986,6 +1012,9 @@ class OkeyGame {
   }
 
   endRoundNoWinner() {
+    if (this.state === GAME_STATES.GAME_OVER) return;
+    this.state = GAME_STATES.GAME_OVER;
+
     const roundScores = {};
 
     for (const p of this.players.filter(Boolean)) {
@@ -999,7 +1028,7 @@ class OkeyGame {
         pPoints = handSum * playerPairsMultiplier;
       }
       p.roundScore = pPoints + (p.penaltyPoints || 0);
-      p.score += p.roundScore;
+      p.score = (p.score || 0) + p.roundScore;
       roundScores[p.id] = {
         name: p.name,
         points: p.roundScore,
@@ -1019,8 +1048,6 @@ class OkeyGame {
     const team1Score = (this.players[0] ? this.players[0].roundScore : 0) + (this.players[2] ? this.players[2].roundScore : 0);
     const team2Score = (this.players[1] ? this.players[1].roundScore : 0) + (this.players[3] ? this.players[3].roundScore : 0);
     const isTeam1Winner = team1Score <= team2Score;
-
-    this.state = GAME_STATES.GAME_OVER;
 
     this.roundResults = {
       currentRound: 1,
@@ -1082,14 +1109,13 @@ class OkeyGame {
     // Next match rotates first player counter-clockwise
     this.firstPlayerIndex = (this.firstPlayerIndex + 1) % 4;
 
-    // Reset player scores & round penalties/opened state
+    // Reset round penalties and opened state, but KEEP cumulative match score!
     for (const player of this.players) {
       if (player) {
         player.hand = [];
         player.opened = false;
         player.openType = null;
         player.openedMelds = [];
-        player.score = 0;
         player.roundScore = 0;
         player.penaltyPoints = 0;
         player.penalties = [];
