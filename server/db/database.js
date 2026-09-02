@@ -88,12 +88,12 @@ class Database {
     return token;
   }
 
-  getAvailableNames() {
+  getAvailableNames(isSocketActive = null) {
     return ALLOWED_PLAYERS.map(name => {
       const uname = name.toLowerCase();
       const activeSocketId = this.activeUsers.get(uname);
       const user = this.users.get(this.usernameIndex.get(uname));
-      const isOnline = Boolean(activeSocketId);
+      const isOnline = Boolean(activeSocketId && (typeof isSocketActive !== 'function' || isSocketActive(activeSocketId)));
 
       return {
         name,
@@ -101,7 +101,7 @@ class Database {
         gender: user ? user.gender : 'male',
         avatarIndex: user ? user.avatarIndex : 0,
         isOnline,
-        activeSocketId: activeSocketId || null
+        activeSocketId: isOnline ? activeSocketId : null
       };
     });
   }
@@ -117,11 +117,7 @@ class Database {
     const uname = matched.toLowerCase();
     const existingSocket = this.activeUsers.get(uname);
     if (existingSocket && existingSocket !== socketId) {
-      // If the other player is still actively connected, block duplicate selection
-      if (typeof isSocketActive === 'function' && isSocketActive(existingSocket)) {
-        return { success: false, reason: 'Bu karakter şu anda başka bir oyuncu tarafından kullanılıyor.' };
-      }
-      // Release ghost or previous session socket
+      // Release ghost or previous session socket gracefully
       this.releaseSocket(existingSocket);
     }
 

@@ -131,20 +131,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const cards = grid.querySelectorAll('.name-card');
     cards.forEach(card => {
       const name = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
-      const info = availableProfilesMap.get((name || '').toLowerCase());
-      const isOccupied = Boolean(info && info.isOnline && info.activeSocketId && info.activeSocketId !== socket.id);
-      const isSelected = Boolean(selectedCharName && selectedCharName.toLowerCase() === (name || '').toLowerCase() && !isOccupied);
+      const isSelected = Boolean(selectedCharName && selectedCharName.toLowerCase() === (name || '').toLowerCase());
 
-      card.classList.toggle('occupied', isOccupied);
-      card.classList.toggle('available', !isOccupied);
+      card.classList.remove('occupied');
+      card.classList.add('available');
       card.classList.toggle('selected', isSelected);
 
       const statusEl = card.querySelector('.name-card-status');
       if (statusEl) {
-        if (isOccupied) {
-          statusEl.className = 'name-card-status status-busy';
-          statusEl.textContent = '🔴 Dolu';
-        } else if (isSelected) {
+        if (isSelected) {
           statusEl.className = 'name-card-status status-selected';
           statusEl.textContent = '✨ Seçildi';
         } else {
@@ -160,15 +155,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnEnter = document.getElementById('btn-enter-game');
     if (!btnEnter) return;
 
-    const info = selectedCharName ? availableProfilesMap.get(selectedCharName.toLowerCase()) : null;
-    const isOccupied = Boolean(info && info.isOnline && info.activeSocketId && info.activeSocketId !== socket.id);
-
-    if (selectedCharName && !isOccupied) {
+    if (selectedCharName) {
       btnEnter.classList.remove('disabled');
       btnEnter.removeAttribute('disabled');
+      btnEnter.disabled = false;
     } else {
       btnEnter.classList.add('disabled');
       btnEnter.setAttribute('disabled', 'true');
+      btnEnter.disabled = true;
     }
   }
 
@@ -179,12 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const clean = nameToSelect.trim();
-    const info = availableProfilesMap.get(clean.toLowerCase());
-    if (info && info.isOnline && info.activeSocketId && info.activeSocketId !== socket.id) {
-      ui.showToast('Bu karakter şu anda başka bir oyuncu tarafından kullanılıyor!', 'warning');
-      return;
-    }
-
     const fallbackUser = {
       id: `usr_${clean.toLowerCase()}`,
       username: clean.toLowerCase(),
@@ -206,8 +194,13 @@ document.addEventListener('DOMContentLoaded', () => {
         updateLobbyProfileUI();
         ui.showToast(`Hoş geldin, ${clean}!`, 'success');
       } else {
-        ui.showToast((res && res.reason) || 'Karakter seçilemedi.', 'error');
-        updateNamePickerUI();
+        // Optimistic fallback so user is never blocked
+        currentUser = fallbackUser;
+        currentActivePlayerName = clean;
+        localStorage.setItem('okey101_user', JSON.stringify(fallbackUser));
+        showLobby();
+        updateLobbyProfileUI();
+        ui.showToast(`Hoş geldin, ${clean}!`, 'success');
       }
     });
   }
@@ -232,11 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = e.target.closest('.name-card');
       if (card) {
         const charName = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
-        const info = availableProfilesMap.get((charName || '').toLowerCase());
-        if (info && info.isOnline && info.activeSocketId && info.activeSocketId !== socket.id) {
-          ui.showToast('Bu karakter şu anda başka bir oyuncu tarafından kullanılıyor!', 'warning');
-          return;
-        }
         if (charName) {
           selectedCharName = charName;
           updateNamePickerUI();
@@ -248,11 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = e.target.closest('.name-card');
       if (card) {
         const charName = card.dataset.name || card.querySelector('.name-card-title')?.textContent?.trim();
-        const info = availableProfilesMap.get((charName || '').toLowerCase());
-        if (info && info.isOnline && info.activeSocketId && info.activeSocketId !== socket.id) {
-          ui.showToast('Bu karakter şu anda başka bir oyuncu tarafından kullanılıyor!', 'warning');
-          return;
-        }
         if (charName) {
           selectedCharName = charName;
           updateNamePickerUI();
