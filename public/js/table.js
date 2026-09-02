@@ -292,8 +292,8 @@ class TableManager {
         history.forEach((round, idx) => {
           html += `
             <div class="score-round-row">
-              <span class="round-tag">${round.roundNumber || (idx + 1)}. El:</span>
               <span class="round-score-team1">${round.team1Score}</span>
+              <span class="round-tag">${round.roundNumber || (idx + 1)}. El</span>
               <span class="round-score-team2">${round.team2Score}</span>
             </div>
           `;

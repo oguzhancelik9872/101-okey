@@ -1437,7 +1437,13 @@ class OkeyGame {
       canUndo: Boolean(this.turnSnapshot && this.turnSnapshot.modified && this.turnSnapshot.playerIndex === viewerSeatIndex && this.currentTurn === viewerSeatIndex && this.turnState === 'DISCARD'),
       drawnFromDiscard: this.drawnFromDiscard ? {
         playerIndex: this.drawnFromDiscard.playerIndex,
-        tileId: this.drawnFromDiscard.tile.id
+        tileId: this.drawnFromDiscard.tile.id,
+        tile: {
+          ...this.drawnFromDiscard.tile.toJSON(),
+          effectiveColor: this.drawnFromDiscard.tile.getColor(this.indicator),
+          effectiveValue: this.drawnFromDiscard.tile.getValue(this.indicator),
+          isOkey: this.drawnFromDiscard.tile.isOkey(this.indicator)
+        }
       } : null,
       logs: this.logs.slice(-15)
     };

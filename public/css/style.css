@@ -2094,8 +2094,8 @@ body.plus-theme {
 /* Orta/Ayırıcı: Deste ve Gösterge Ahşap Şeridi (Bölmenin En Altına Yapışık) */
 .center-deck-strip {
   width: fit-content;
-  min-width: 120px;
-  max-width: 135px;
+  min-width: 135px;
+  max-width: 155px;
   background: linear-gradient(180deg, #1b3829 0%, #0d2117 100%);
   border: 2px solid #284c39;
   border-radius: 10px;
@@ -2115,8 +2115,8 @@ body.plus-theme {
 /* Live 101 Okey Scoreboard Card in Center Strip */
 .center-scoreboard-card {
   width: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid rgba(241, 196, 15, 0.4);
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(241, 196, 15, 0.45);
   border-radius: 8px;
   padding: 4px 5px;
   display: flex;
@@ -2131,66 +2131,81 @@ body.plus-theme {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(241, 196, 15, 0.3);
+  padding-bottom: 3px;
+  width: 100%;
 }
 
-.team-header-pill {
+.team-header-col {
+  flex: 1;
   font-size: 8px;
   font-weight: 800;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.15;
+  word-break: break-word;
+  padding: 0 2px;
+}
+
+.team-header-col.team1-col {
   color: #f1c40f;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 52px;
-  line-height: 1.1;
 }
 
-.team-header-pill.team2-header {
+.team-header-col.team2-col {
   color: #5dade2;
-  text-align: right;
 }
 
-.score-vs-divider {
-  font-size: 8px;
-  color: rgba(255, 255, 255, 0.3);
+.scoreboard-col-divider {
+  width: 1px;
+  background: rgba(241, 196, 15, 0.35);
+  align-self: stretch;
+  min-height: 14px;
 }
 
 .scoreboard-rounds-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 52px;
+  max-height: 54px;
   overflow-y: auto;
+  width: 100%;
 }
 
 .score-round-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
-  font-size: 8px;
+  font-size: 8.5px;
   font-weight: 700;
   color: #d5e8dc;
-  padding: 1px 3px;
+  padding: 1.5px 2px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.05);
-}
-
-.score-round-row .round-tag {
-  font-size: 7.5px;
-  color: #a8d5ba;
-  font-weight: 800;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .score-round-row .round-score-team1 {
   color: #f1c40f;
   font-weight: 900;
+  text-align: center;
+}
+
+.score-round-row .round-tag {
+  font-size: 7px;
+  color: #a8d5ba;
+  font-weight: 800;
+  padding: 1px 3px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
 }
 
 .score-round-row .round-score-team2 {
   color: #5dade2;
   font-weight: 900;
+  text-align: center;
 }
 
 .score-empty-history {
@@ -2202,12 +2217,13 @@ body.plus-theme {
 }
 
 .scoreboard-totals-footer {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   border-top: 1px solid rgba(241, 196, 15, 0.35);
   padding-top: 2px;
   margin-top: 1px;
+  width: 100%;
 }
 
 .total-score-val {
@@ -2215,6 +2231,7 @@ body.plus-theme {
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.5px;
+  text-align: center;
 }
 
 .total-score-val.team1-total {
@@ -2225,11 +2242,12 @@ body.plus-theme {
   color: #3498db;
 }
 
-.total-label {
-  font-size: 7.5px;
+.total-label-badge {
+  font-size: 7px;
   font-weight: 900;
   letter-spacing: 0.5px;
   color: #f1c40f;
+  text-align: center;
 }
 
 .center-deck-side-by-side {
@@ -2267,6 +2285,20 @@ body.plus-theme {
   opacity: 0.85;
 }
 
+/* Invisible hit area covering the top-right quarter of the tile */
+.meld-group-drag-handle::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 24px;
+  height: 30px;
+  background: transparent;
+  cursor: grab;
+  z-index: -1;
+  pointer-events: auto;
+}
+
 .meld-group-drag-handle:hover {
   transform: scale(1.22);
   opacity: 1;
@@ -2277,6 +2309,10 @@ body.plus-theme {
 .meld-group-drag-handle:active {
   cursor: grabbing;
   transform: scale(1.1);
+}
+
+.meld-group-drag-handle:active::before {
+  cursor: grabbing;
 }
 
 .okey-tile.active-meld-group-focus {

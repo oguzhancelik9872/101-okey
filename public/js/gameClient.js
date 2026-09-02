@@ -1060,7 +1060,16 @@ document.addEventListener('DOMContentLoaded', () => {
               if (state.drawnFromDiscard && state.drawnFromDiscard.playerIndex === turnPlayer) {
                 const fromSeat = (turnPlayer + 3) % 4;
                 const fromPos = table.getRelativePosition(fromSeat);
-                const drawnTile = state.drawnFromDiscard.tile || { id: state.drawnFromDiscard.tileId };
+                let drawnTile = state.drawnFromDiscard.tile;
+                if (!drawnTile || (!drawnTile.color && !drawnTile.effectiveColor)) {
+                  const leftPile = (lastGameState && lastGameState.discards) ? lastGameState.discards[fromSeat] : null;
+                  if (leftPile && leftPile.length > 0) {
+                    drawnTile = leftPile[leftPile.length - 1];
+                  }
+                }
+                if (!drawnTile && isViewer && me && me.hand) {
+                  drawnTile = me.hand.find(t => t.id === state.drawnFromDiscard.tileId);
+                }
                 anim.animateDrawFromDiscard(seatPos, fromPos, drawnTile, isViewer);
               } else {
                 anim.animateDrawFromDeck(seatPos, isViewer);
