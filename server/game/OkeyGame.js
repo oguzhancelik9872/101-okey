@@ -947,8 +947,8 @@ class OkeyGame {
     const isTeam2Winner = !isDraw && (team2Score < team1Score);
 
     this.roundResults = {
-      currentRound: 1,
-      targetRounds: 1,
+      currentRound: this.currentRound,
+      targetRounds: this.targetRounds,
       hasNextRound: false,
       finisher: finisher.name,
       isOkeyDiscard,
@@ -977,7 +977,7 @@ class OkeyGame {
 
     this.matchHistory = this.matchHistory || [];
     this.matchHistory.push({
-      roundNumber: this.matchHistory.length + 1,
+      roundNumber: this.currentRound,
       team1Score,
       team2Score,
       finisher: finisher ? finisher.name : null,
@@ -1042,8 +1042,8 @@ class OkeyGame {
     const isTeam2Winner = !isDraw && (team2Score < team1Score);
 
     this.roundResults = {
-      currentRound: 1,
-      targetRounds: 1,
+      currentRound: this.currentRound,
+      targetRounds: this.targetRounds,
       hasNextRound: false,
       finisher: null,
       reason: 'Deste bitti',
@@ -1069,7 +1069,7 @@ class OkeyGame {
 
     this.matchHistory = this.matchHistory || [];
     this.matchHistory.push({
-      roundNumber: this.matchHistory.length + 1,
+      roundNumber: this.currentRound,
       team1Score,
       team2Score,
       finisher: null,
@@ -1101,15 +1101,16 @@ class OkeyGame {
     this.minOpenScore = 101;
     this.minOpenPairs = 5;
     this.roundResults = null;
-    this.currentRound = 1;
-    this.targetRounds = 1;
+    // A rematch at the same table is the next hand of the running scorecard.
+    // Keep completed hands and cumulative player scores so the centre
+    // scoreboard can display and total the previous hand(s).
+    this.matchHistory = this.matchHistory || [];
+    this.currentRound = this.matchHistory.length + 1;
     this.logs = [];
 
     // Next match rotates first player counter-clockwise
     this.firstPlayerIndex = (this.firstPlayerIndex + 1) % 4;
 
-    // This is a brand-new match: no score/history may leak from the previous one.
-    this.matchHistory = [];
     for (const player of this.players) {
       if (player) {
         player.hand = [];
@@ -1117,7 +1118,6 @@ class OkeyGame {
         player.openType = null;
         player.openedMelds = [];
         player.roundScore = 0;
-        player.score = 0;
         player.penaltyPoints = 0;
         player.penalties = [];
       }
@@ -1341,22 +1341,32 @@ class OkeyGame {
    * Emergency Turn Executor for inactive/stuck players (handles timeout exploit prevention)
    */
   executeEmergencyTurn(playerIndex) {
-    if (this.state !== GAME_STATES.PLAYING) return;
-    if (this.currentTurn !== playerIndex) return;
+    if (this.state !== GAME_STATES.PLAYING) return null;
+    if (this.currentTurn !== playerIndex) return null;
 
     const player = this.players[playerIndex];
-    if (!player) return;
+    if (!player) return null;
+
+    const actions = [];
 
     try {
       // 1. If player took a tile from discard and didn't use it, RETURN it back immediately!
       if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
-        this.returnDiscardTile(playerIndex);
+        const returnedTile = this.drawnFromDiscard.tile;
+        const toSeat = (playerIndex + 3) % 4;
+        const returnResult = this.returnDiscardTile(playerIndex);
+        if (returnResult && returnResult.success) {
+          actions.push({ type: 'returnDiscard', tile: returnedTile, fromSeat: playerIndex, toSeat });
+        }
         this.addLog(`⏳ ${player.name} süresi dolduğu için yandan aldığı taş masaya geri bırakıldı.`);
       }
 
       // 2. If turnState is still DRAW, draw from deck
       if (this.turnState === 'DRAW') {
-        this.drawTile(playerIndex, 'deck');
+        const drawResult = this.drawTile(playerIndex, 'deck');
+        if (drawResult && drawResult.success) {
+          actions.push({ type: 'drawDeck', tile: drawResult.tile, playerIndex });
+        }
       }
 
       // 3. Auto-discard a safe non-Okey, non-işlek tile with lowest number (1, 2, 3...) to conclude turn
@@ -1373,8 +1383,12 @@ class OkeyGame {
         candidatePool.sort((a, b) => a.getValue(this.indicator) - b.getValue(this.indicator));
 
         const discardTile = candidatePool[0];
-        this.discardTile(playerIndex, discardTile.id);
+        const discardResult = this.discardTile(playerIndex, discardTile.id);
+        if (discardResult && discardResult.success) {
+          actions.push({ type: 'discard', tile: discardTile, playerIndex });
+        }
       }
+      return { playerIndex, actions };
     } catch (e) {
       console.error(`[EmergencyTurn] Error for player ${playerIndex}:`, e);
       if (this.currentTurn === playerIndex) {
@@ -1382,6 +1396,7 @@ class OkeyGame {
         this.turnState = 'DRAW';
         this.drawnFromDiscard = null;
       }
+      return { playerIndex, actions, error: true };
     }
   }
 

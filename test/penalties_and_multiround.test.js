@@ -151,24 +151,28 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
 
   console.log('   Team Folding Rules: PASSED');
 
-  // 6. Test Single-Match Game Over and Rematch Starting Player Rotation
-  console.log('5. Testing Single-Match Finish & Rematch Rotation...');
+  // 6. Test completed-hand score retention and next-hand rotation
+  console.log('5. Testing Score Retention & Next-Hand Rotation...');
   // End match 1
   game.endRound(2, false, false);
   assert.strictEqual(game.state, GAME_STATES.GAME_OVER);
   assert.strictEqual(game.roundResults.hasNextRound, false);
 
+  const firstHandHistory = JSON.parse(JSON.stringify(game.matchHistory));
+  const firstHandTotals = game.players.map(p => p && p.score);
+
   // Trigger Rematch (Tekrar Oyna)
   game.resetForNewMatch();
   assert.strictEqual(game.state, GAME_STATES.PLAYING);
-  assert.strictEqual(game.matchHistory.length, 0);
-  assert.ok(game.players.every(p => !p || p.score === 0));
+  assert.deepStrictEqual(game.matchHistory, firstHandHistory);
+  assert.deepStrictEqual(game.players.map(p => p && p.score), firstHandTotals);
+  assert.strictEqual(game.currentRound, 2);
   assert.strictEqual(game.firstPlayerIndex, 1); // Rotated to seat 1 (counter-clockwise)!
   assert.strictEqual(game.currentTurn, 1);
   assert.strictEqual(game.players[1].hand.length, 22); // Starter gets 22 tiles
   assert.strictEqual(game.players[0].hand.length, 21); // Others get 21
 
-  console.log('   Single Match & Rematch Rotation: PASSED');
+  console.log('   Score Retention & Next-Hand Rotation: PASSED');
 
   // 6. Test Timeout Auto-Discard logic (Never discard Real Okey, pick lowest tile including low Sahte Okey)
   console.log('6. Testing Timeout Emergency Auto-Discard...');
@@ -182,7 +186,8 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   game.turnState = 'DISCARD';
   game.players[1].hand = [realOkeyTile, sahteOkeyTile, normalTile7, normalTile10];
 
-  game.executeEmergencyTurn(1);
+  const timeoutSequence = game.executeEmergencyTurn(1);
+  assert.deepStrictEqual(timeoutSequence.actions.map(action => action.type), ['discard']);
 
   // The discarded tile into discard pile should be sahteOkeyTile (value 1, lowest non-real-okey)
   const lastDiscarded = game.discards[1][game.discards[1].length - 1];

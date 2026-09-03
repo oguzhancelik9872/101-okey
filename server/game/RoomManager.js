@@ -526,10 +526,14 @@ class RoomManager {
           if (now - turnStart >= turnDur) {
             game.turnStartTime = now;
             room.turnStartTime = now;
+            let timeoutSequence = null;
             try {
-              game.executeEmergencyTurn(currentIdx);
+              timeoutSequence = game.executeEmergencyTurn(currentIdx);
             } catch (autoErr) {
               console.error('[RoomManager] Inactive player auto-discard error:', autoErr);
+            }
+            if (timeoutSequence && timeoutSequence.actions && timeoutSequence.actions.length > 0 && this.io) {
+              this.io.to(room.id).emit('timeoutActionSequence', timeoutSequence);
             }
             this.broadcastGameState(room.id);
           }

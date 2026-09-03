@@ -312,11 +312,16 @@ class TileAnimationEngine {
    * Return drawn discard tile back to the left player's corner pile (From viewer's hand)
    */
   animateReturnDiscard(toPos, tile, onDone = null) {
+    this.animateReturnDiscardFromSeat('bottom', toPos, tile, true, onDone);
+  }
+
+  /** Return a side-drawn tile from any player's rack/profile to its original pile. */
+  animateReturnDiscardFromSeat(fromPos, toPos, tile, isViewer = false, onDone = null) {
     this.enqueue((done) => {
       let startCoords = null;
       let rackTileEl = null;
 
-      if (tile && tile.id) {
+      if (isViewer && tile && tile.id) {
         rackTileEl = document.querySelector(`.istaka-slot .okey-tile[data-id="${tile.id}"]`);
         if (rackTileEl) {
           startCoords = this.getElCenter(rackTileEl);
@@ -325,8 +330,10 @@ class TileAnimationEngine {
       }
 
       if (!startCoords) {
-        const fromEl = document.getElementById('player-istaka-container') || document.getElementById('seat-bottom');
-        startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords('bottom');
+        const fromEl = isViewer
+          ? (document.getElementById('player-istaka-container') || document.getElementById('seat-bottom'))
+          : document.getElementById('seat-' + fromPos);
+        startCoords = this.getElCenter(fromEl) || this.getSeatFallbackCoords(fromPos);
       }
 
       const discardEl = document.getElementById('discard-pile-' + toPos);

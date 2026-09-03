@@ -41,6 +41,33 @@ document.addEventListener('DOMContentLoaded', () => {
   let turnTimerLoop = null;
   let lastTickedSecond = null;
   let isUndoingTurn = false;
+  let pendingTimeoutAnimationSeat = null;
+
+  socket.on('timeoutActionSequence', (sequence) => {
+    if (!sequence || !Array.isArray(sequence.actions)) return;
+    pendingTimeoutAnimationSeat = sequence.playerIndex;
+
+    // Let the immediately following authoritative state render, then animate
+    // the timeout's physical actions through the engine's sequential queue.
+    setTimeout(() => {
+      const anim = window.tileAnimations;
+      if (!anim) return;
+      const seatPos = table.getRelativePosition(sequence.playerIndex);
+      const isViewer = sequence.playerIndex === viewerSeatIndex;
+
+      sequence.actions.forEach(action => {
+        if (!action) return;
+        if (action.type === 'returnDiscard') {
+          const toPos = table.getRelativePosition(action.toSeat);
+          anim.animateReturnDiscardFromSeat(seatPos, toPos, action.tile, isViewer);
+        } else if (action.type === 'drawDeck') {
+          anim.animateDrawFromDeck(seatPos, isViewer);
+        } else if (action.type === 'discard') {
+          anim.animateDiscard(seatPos, action.tile, isViewer);
+        }
+      });
+    }, 0);
+  });
 
   function updateDocumentTitle(isMyTurn = false) {
     if (titleBlinkInterval) {
@@ -860,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const lastDiscardCount = countDiscards(lastGameState);
       const currentDiscardCount = countDiscards(state);
 
-      if (currentDiscardCount > lastDiscardCount && state.discards && lastGameState.discards) {
+      if (pendingTimeoutAnimationSeat === null && currentDiscardCount > lastDiscardCount && state.discards && lastGameState.discards) {
         for (let p = 0; p < 4; p++) {
           const curPile = state.discards[p] || [];
           const lastPile = lastGameState.discards[p] || [];
@@ -1015,6 +1042,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 3. Draw & Discard Orchestration
       if (anim) {
+        const isTimeoutSequenceUpdate = pendingTimeoutAnimationSeat !== null;
+        if (isTimeoutSequenceUpdate) pendingTimeoutAnimationSeat = null;
         const isReturnDiscardByViewer = Boolean(
           lastGameState.drawnFromDiscard &&
           lastGameState.drawnFromDiscard.playerIndex === viewerSeatIndex &&
@@ -1025,7 +1054,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const isRecentManualDrag = (Date.now() - (window.lastManualDragTime || 0)) < 3000;
 
-        if (isReturnDiscardByViewer) {
+        if (isTimeoutSequenceUpdate) {
+          // timeoutActionSequence owns this update to avoid a duplicate discard.
+        } else if (isReturnDiscardByViewer) {
           // Viewer returns the drawn discard tile back to the left player's corner box
           const leftPos = table.getRelativePosition(discardedByPlayer); // 'left'
           anim.animateReturnDiscard(leftPos, discardedTile);

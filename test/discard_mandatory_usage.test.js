@@ -111,7 +111,8 @@ assert.strictEqual(game.drawnFromDiscard.tile.id, 'extra1');
 assert.strictEqual(game.turnState, 'DISCARD');
 
 // Timeout triggers executeEmergencyTurn
-game.executeEmergencyTurn(2);
+const timeoutSequence = game.executeEmergencyTurn(2);
+assert.deepStrictEqual(timeoutSequence.actions.map(action => action.type), ['returnDiscard', 'drawDeck', 'discard']);
 // The drawn tile 'extra1' MUST NOT remain in player 2's hand, and MUST be back in player 1's discard pile
 assert.strictEqual(game.players[2].hand.some(t => t.id === 'extra1'), false);
 assert.strictEqual(game.discards[1][game.discards[1].length - 1].id, 'extra1');
