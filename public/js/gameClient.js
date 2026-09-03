@@ -1919,7 +1919,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // If chat is closed and message is from someone else, show unread badge
     const isChatOpen = chatDrawer && chatDrawer.classList.contains('open');
-    if (!isChatOpen && !isMe) {
+    if (!isChatOpen && !isMe && !isSys) {
       if (lobbyChatBadge) lobbyChatBadge.classList.remove('hidden');
       if (tableChatBadge) tableChatBadge.classList.remove('hidden');
     }
