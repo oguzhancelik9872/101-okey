@@ -175,7 +175,7 @@ class OkeyAudio {
 
   // Alias for backward compatibility
   playTilePlace() {
-    this._synthTilePlace();
+    // Meld/opening animations stay silent; only approved draw/discard samples play.
   }
 
   _synthTilePlace() {
@@ -304,7 +304,7 @@ class OkeyAudio {
    * Birisi El Açtığında (Open Hand) - Tok taşlar ve tatlı casino tınısı
    */
   playOpenHand() {
-    this._playMP3OrFallback('open_hand', 'sfx', this._synthOpenHand);
+    // Intentionally silent. The former synthesized opening sound was not approved.
   }
 
   _synthOpenHand() {
@@ -359,7 +359,7 @@ class OkeyAudio {
   }
 
   playProcess() {
-    this._synthTilePlace();
+    // Processing a tile uses no additional synthesized sound.
   }
 
   /**
