@@ -1044,22 +1044,31 @@ document.addEventListener('DOMContentLoaded', () => {
       if (anim) {
         const isTimeoutSequenceUpdate = pendingTimeoutAnimationSeat !== null;
         if (isTimeoutSequenceUpdate) pendingTimeoutAnimationSeat = null;
-        const isReturnDiscardByViewer = Boolean(
+        const returnedDiscardPlayer = lastGameState.drawnFromDiscard
+          ? lastGameState.drawnFromDiscard.playerIndex
+          : null;
+        const returnedDiscardPile = returnedDiscardPlayer !== null
+          ? ((returnedDiscardPlayer + 3) % 4)
+          : null;
+        const isReturnDiscard = Boolean(
           lastGameState.drawnFromDiscard &&
-          lastGameState.drawnFromDiscard.playerIndex === viewerSeatIndex &&
           !state.drawnFromDiscard &&
-          state.currentTurn === viewerSeatIndex &&
-          discardedByPlayer === ((viewerSeatIndex + 3) % 4)
+          state.currentTurn === lastGameState.currentTurn &&
+          state.turnState === 'DRAW' &&
+          discardedByPlayer === returnedDiscardPile
         );
 
         const isRecentManualDrag = (Date.now() - (window.lastManualDragTime || 0)) < 3000;
 
         if (isTimeoutSequenceUpdate) {
           // timeoutActionSequence owns this update to avoid a duplicate discard.
-        } else if (isReturnDiscardByViewer) {
-          // Viewer returns the drawn discard tile back to the left player's corner box
-          const leftPos = table.getRelativePosition(discardedByPlayer); // 'left'
-          anim.animateReturnDiscard(leftPos, discardedTile);
+        } else if (isReturnDiscard) {
+          // Every viewer sees the tile travel from the returning player's hand/profile
+          // back to the original discard pile, never as a fresh discard by its owner.
+          const fromPos = table.getRelativePosition(returnedDiscardPlayer);
+          const toPos = table.getRelativePosition(returnedDiscardPile);
+          const isViewerReturning = returnedDiscardPlayer === viewerSeatIndex;
+          anim.animateReturnDiscardFromSeat(fromPos, toPos, discardedTile, isViewerReturning);
         } else if (discardedByPlayer !== null && discardedByPlayer !== viewerSeatIndex) {
           // Other player / Bot discards a tile: Direct flight from player's profile avatar to corner box
           const seatPos = table.getRelativePosition(discardedByPlayer);
@@ -1112,14 +1121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 4. Audio Feedback for Discards
       if (discardedByPlayer !== null) {
-        if (islekDiscarded) {
-          window.soundEngine.playDiscard();
-          if (discardedByPlayer === viewerSeatIndex) {
-            ui.showToast('⚠️ İşlek Taş Attınız! (Masaya işlenebilecek taştı)', 'error', 3500);
-          }
-        } else {
-          window.soundEngine.playDiscard();
-        }
+        window.soundEngine.playDiscard();
       }
     }
     lastGameState = state;

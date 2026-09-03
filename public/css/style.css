@@ -3194,6 +3194,52 @@ body.plus-theme {
   z-index: 60;
 }
 
+/* Compact table-chat bubble, anchored directly above the player's avatar. */
+.chat-speech-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  transform: translateX(-50%);
+  z-index: 80;
+  max-width: 180px;
+  min-width: 34px;
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.38);
+  color: #172019;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
+.speech-bubble-pointer {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 9px;
+  height: 9px;
+  background: inherit;
+  border-right: 1px solid rgba(255, 255, 255, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.72);
+  transform: translate(-50%, -5px) rotate(45deg);
+}
+
+.speech-bubble-text {
+  position: relative;
+  z-index: 1;
+}
+
+.speech-bubble-fade-out {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
 /* =========================================================
    MODALS & TOASTS (PLUS CASINO THEME)
    ========================================================= */

@@ -277,8 +277,10 @@ class UIManager {
     const seatEl = document.getElementById(`seat-${seatPosition}`);
     if (!seatEl) return;
 
+    const bubbleHost = seatEl.querySelector('.avatar-ring-container') || seatEl;
+
     // Remove any previous speech bubble on this seat
-    const prev = seatEl.querySelector('.chat-speech-bubble');
+    const prev = bubbleHost.querySelector('.chat-speech-bubble');
     if (prev) prev.remove();
 
     const bubble = document.createElement('div');
@@ -290,7 +292,7 @@ class UIManager {
     pointer.className = 'speech-bubble-pointer';
     bubble.append(textEl, pointer);
 
-    seatEl.appendChild(bubble);
+    bubbleHost.appendChild(bubble);
 
     setTimeout(() => {
       if (bubble.parentNode) {

@@ -41,13 +41,13 @@ class OkeyAudio {
     });
   }
 
-  _playMP3OrFallback(name, type = 'sfx', fallbackFn = null) {
+  _playMP3OrFallback(name, type = 'sfx', fallbackFn = null, volume = 0.85) {
     if (this.settings.muted) return;
 
     if (this.mp3Audios[name] && !this.mp3Missing[name]) {
       try {
         const sound = this.mp3Audios[name].cloneNode();
-        sound.volume = 0.85;
+        sound.volume = Math.max(0, Math.min(1, volume));
         sound.play().catch(() => {
           if (fallbackFn) fallbackFn.call(this);
         });
@@ -175,7 +175,9 @@ class OkeyAudio {
 
   // Alias for backward compatibility
   playTilePlace() {
-    // Meld/opening animations stay silent; only approved draw/discard samples play.
+    // Reuse the approved short tile samples quietly as meld tiles land.
+    const soundName = Math.random() < 0.5 ? 'tile_discard_1' : 'tile_discard_2';
+    this._playMP3OrFallback(soundName, 'sfx', null, 0.38);
   }
 
   _synthTilePlace() {
@@ -359,7 +361,7 @@ class OkeyAudio {
   }
 
   playProcess() {
-    // Processing a tile uses no additional synthesized sound.
+    this.playTilePlace();
   }
 
   /**

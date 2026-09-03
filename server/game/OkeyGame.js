@@ -513,6 +513,7 @@ class OkeyGame {
             });
             const pMsg = `⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} seri açtığı için +${penalty} ceza puanı aldı!`;
             this.addLog(pMsg);
+            this._emitSystemMessage(pMsg);
           }
         }
       }
@@ -533,6 +534,7 @@ class OkeyGame {
         oppP.penalties.push({ type: 'OPPONENT_HIGH_OPEN', points: 101, desc: '153+ açılış cezası (+101)' });
         const pMsg = `🔥 ${player.name} ${validation.score} (153+) puanla açtı! Rakip (${oppP.name}) +101 ceza aldı!`;
         this.addLog(pMsg);
+        this._emitSystemMessage(pMsg);
       }
     }
 
@@ -650,6 +652,7 @@ class OkeyGame {
             });
             const pMsg = `⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} çift açtığı için +${penalty} ceza puanı aldı!`;
             this.addLog(pMsg);
+            this._emitSystemMessage(pMsg);
           }
         }
       }
@@ -662,6 +665,7 @@ class OkeyGame {
           oppP.penalties.push({ type: 'OPPONENT_SEVEN_PAIRS', points: 101, desc: '7+ çift açılış cezası (+101)' });
           const pMsg = `💎 ${player.name} ${pairs.length} (7+) çift açtı! Rakip (${oppP.name}) +101 ceza aldı!`;
           this.addLog(pMsg);
+          this._emitSystemMessage(pMsg);
         }
       }
     }
@@ -733,6 +737,7 @@ class OkeyGame {
           meldOwner.penalties.push({ type: 'OKEY_STOLEN', points: 101, desc: 'Okey kaptırma cezası (+101)' });
           const pMsg = `✨ ${player.name} rakibin perindeki Okey'i aldı! ${meldOwner.name} +101 ceza aldı!`;
           this.addLog(pMsg);
+          this._emitSystemMessage(pMsg);
         }
       } else {
         this.addLog(`✨ ${player.name} perdeki Okey'in yerine taş işleyerek OKEY'i eline aldı!`);
@@ -799,6 +804,7 @@ class OkeyGame {
       player.penalties.push({ type: 'DISCARDED_OKEY', points: 101, desc: 'Okey atma cezası (+101)' });
       const pMsg = `⚠️ ${player.name} elinde taş varken OKEY attığı için +101 ceza puanı aldı!`;
       this.addLog(pMsg);
+      this._emitSystemMessage(pMsg);
     }
 
     // Check "İşlek Taş Atma" penalty
@@ -811,6 +817,7 @@ class OkeyGame {
       player.penalties.push({ type: 'DISCARDED_PLAYABLE', points: 101, desc: 'İşlek taş atma cezası (+101)' });
       const pMsg = `⚠️ ${player.name} masaya işlenebilecek işlek bir taş attığı için +101 ceza puanı aldı!`;
       this.addLog(pMsg);
+      this._emitSystemMessage(pMsg);
     }
 
     // Conclude turn and clear snapshot
