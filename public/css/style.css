@@ -2928,20 +2928,20 @@ body.plus-theme {
 
 /* On opponents' turns the action dock is absent, so the rack and its tiles
    use the released desktop width while preserving the tile aspect ratio. */
-@media (min-width: 1024px) and (min-height: 620px) {
+@media (min-width: 1120px) and (min-height: 620px) {
   .plus-table-canvas:not(.my-turn-focus) + .plus-istaka-section .istaka-slot {
-    width: 52px;
-    min-width: 52px;
-    max-width: 52px;
-    height: 71px;
+    width: 58px;
+    min-width: 58px;
+    max-width: 58px;
+    height: 79px;
   }
 
   .plus-table-canvas:not(.my-turn-focus) + .plus-istaka-section .istaka-row {
-    min-height: 71px;
+    min-height: 79px;
   }
 
   .plus-table-canvas:not(.my-turn-focus) + .plus-istaka-section .istaka-slot .okey-tile .tile-number {
-    font-size: 30px !important;
+    font-size: 34px !important;
   }
 }
 
@@ -3151,7 +3151,7 @@ body.plus-theme {
   gap: 0px;
   width: fit-content;
   margin: 0 auto;
-  min-height: 65px;
+  min-height: 74px;
   background: rgba(0, 0, 0, 0.4);
   border-radius: 6px;
   padding: 2px 4px;
@@ -3159,10 +3159,10 @@ body.plus-theme {
 }
 
 .istaka-slot {
-  width: 48px;
-  height: 65px;
-  min-width: 48px;
-  max-width: 48px;
+  width: 54px;
+  height: 74px;
+  min-width: 54px;
+  max-width: 54px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3191,7 +3191,7 @@ body.plus-theme {
 
 .istaka-slot .okey-tile .tile-number {
   font-family: 'Montserrat', sans-serif !important;
-  font-size: 28px !important;
+  font-size: 32px !important;
   font-weight: 900 !important;
   line-height: 1 !important;
   margin-top: -2px !important;
@@ -3202,6 +3202,19 @@ body.plus-theme {
   height: 5px !important;
   border-radius: 50% !important;
   margin-top: 2px !important;
+}
+
+@media (min-width: 769px) and (max-width: 1050px) {
+  .istaka-slot {
+    width: clamp(46px, calc((100vw - 150px) / 16), 54px);
+    min-width: clamp(46px, calc((100vw - 150px) / 16), 54px);
+    max-width: clamp(46px, calc((100vw - 150px) / 16), 54px);
+    height: clamp(63px, calc((100vw - 150px) / 11.76), 74px);
+  }
+
+  .istaka-row {
+    min-height: clamp(63px, calc((100vw - 150px) / 11.76), 74px);
+  }
 }
 
 
