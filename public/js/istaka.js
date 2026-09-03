@@ -689,14 +689,16 @@ class IstakaManager {
       e.dataTransfer.setData('text/plain', tile.id);
       e.dataTransfer.effectAllowed = 'move';
 
-      // Create a 100% solid, identical clone directly in the viewport for the drag preview
+      // Keep a 100% solid, identical clone alive for the whole native drag.
+      // Chromium can lose the drag image when its source node is removed too early.
       const rect = el.getBoundingClientRect();
+      if (this.dragPreviewEl) this.dragPreviewEl.remove();
       const dragPreview = el.cloneNode(true);
       dragPreview.id = 'active-drag-tile-preview';
       dragPreview.classList.remove('dragging', 'selected', 'active-focus', 'tile-just-drawn');
       dragPreview.style.position = 'fixed';
-      dragPreview.style.left = `${rect.left}px`;
-      dragPreview.style.top = `${rect.top}px`;
+      dragPreview.style.left = '-10000px';
+      dragPreview.style.top = '0';
       dragPreview.style.width = `${rect.width}px`;
       dragPreview.style.height = `${rect.height}px`;
       dragPreview.style.opacity = '1';
@@ -705,23 +707,24 @@ class IstakaManager {
       dragPreview.style.pointerEvents = 'none';
       dragPreview.style.transform = 'none';
       dragPreview.style.margin = '0';
+      dragPreview.style.transition = 'none';
       document.body.appendChild(dragPreview);
+      this.dragPreviewEl = dragPreview;
 
       if (e.dataTransfer && e.dataTransfer.setDragImage) {
         e.dataTransfer.setDragImage(dragPreview, (rect.width || 38) / 2, (rect.height || 52) / 2);
       }
 
-      setTimeout(() => {
-        if (dragPreview.parentNode) {
-          dragPreview.parentNode.removeChild(dragPreview);
-        }
-      }, 50);
     });
 
     el.addEventListener('dragend', () => {
       el.classList.remove('dragging');
       this.draggedSource = null;
       window.draggedTileId = null;
+      if (this.dragPreviewEl) {
+        this.dragPreviewEl.remove();
+        this.dragPreviewEl = null;
+      }
       document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
       document.querySelectorAll('.meld-drag-hover').forEach(m => m.classList.remove('meld-drag-hover'));
     });

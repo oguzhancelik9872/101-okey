@@ -1670,7 +1670,7 @@ document.addEventListener('DOMContentLoaded', () => {
       topTimerBar.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
     }
 
-    // Update Opening Target Requirements Badge at the top of the center deck strip (Personalized Requirement - Eşe Katlama Yok)
+    // Update the shared table-wide opening threshold (partner openings count too).
     const centerTargetBadge = document.getElementById('center-target-badge');
     const minOpenScore = (currentGameState.minOpenScore !== undefined && currentGameState.minOpenScore !== null)
       ? currentGameState.minOpenScore
@@ -1683,7 +1683,6 @@ document.addEventListener('DOMContentLoaded', () => {
       : `${minOpenScore}`;
 
     if (centerTargetBadge) {
-      const partnerNote = currentGameState.partnerOpened ? '<span class="target-partner-note">Eşe Katlama Yok</span>' : '';
       centerTargetBadge.innerHTML = `
         <div class="target-title">AÇILIŞ BARAJI</div>
         <div class="target-values">
@@ -1691,7 +1690,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="target-divider">•</span>
           <span class="target-pairs-line">${minOpenPairs} Çift</span>
         </div>
-        ${partnerNote}
       `;
     }
 
@@ -1857,21 +1855,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Quick message pills
-  document.querySelectorAll('.btn-quick-msg').forEach(pill => {
-    pill.addEventListener('click', () => {
-      const msg = pill.getAttribute('data-msg');
-      if (msg) sendChatMessage(msg);
-    });
-  });
-
   socket.on('chatMessage', (msg) => {
     const isMe = (msg.sender === currentActivePlayerName) || (currentUser && msg.sender === currentUser.displayName);
     const isSys = Boolean(msg.isSystem || msg.sender === 'SİSTEM');
     ui.appendChatMessage(msg.sender, msg.text, msg.time, isMe, isSys);
 
     if (isSys) {
-      ui.showToast(msg.text, 'error', 4500);
+      ui.showToast(msg.text, 'info', 4500);
     } else {
       // In-game floating speech bubble over player avatar (lasts 2.5 seconds, no timestamp)
       let targetSeatPosition = null;

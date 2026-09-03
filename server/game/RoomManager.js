@@ -35,7 +35,7 @@ class RoomManager {
             sender: 'SİSTEM',
             text,
             isSystem: true,
-            time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+            time: new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' }),
             roomId
           });
         }
@@ -145,7 +145,7 @@ class RoomManager {
           sender: 'SİSTEM',
           text,
           isSystem: true,
-          time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+          time: new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' }),
           roomId
         });
       }

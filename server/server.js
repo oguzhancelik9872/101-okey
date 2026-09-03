@@ -53,6 +53,13 @@ function censorProfanity(text) {
   return censored;
 }
 
+function localizeTileNames(text) {
+  const colors = { red: 'Kırmızı', blue: 'Mavi', black: 'Siyah', yellow: 'Sarı' };
+  return String(text || '').replace(/\b(red|blue|black|yellow)[_\s-]?(1[0-3]|[1-9])\b/gi, (_, color, number) => {
+    return `${colors[color.toLowerCase()]} ${number}`;
+  });
+}
+
 // Socket.IO Event Handlers
 io.on('connection', (socket) => {
   console.log(`[Socket] Client connected: ${socket.id}`);
@@ -571,9 +578,14 @@ io.on('connection', (socket) => {
     if (room && room.game && room.game.players) {
       senderSeatIndex = room.game.players.findIndex(p => p && p.id === socket.id);
     }
-    const cleanText = censorProfanity((data && data.text) || '');
+    const rawText = String((data && data.text) || '').trim().slice(0, 120);
+    if (!rawText) return;
+    const cleanText = censorProfanity(localizeTileNames(rawText));
+    const senderPlayer = room && room.game && room.game.players
+      ? room.game.players.find(p => p && p.id === socket.id)
+      : null;
     io.to(targetRoom).emit('chatMessage', {
-      sender: (data && data.sender) || 'Oyuncu',
+      sender: senderPlayer ? senderPlayer.name : 'Oyuncu',
       senderSeatIndex: senderSeatIndex !== -1 ? senderSeatIndex : null,
       text: cleanText,
       time: new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' }),

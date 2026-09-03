@@ -399,29 +399,12 @@ class OkeyGame {
     const player = this.players[playerIndex];
     if (!player) return { minScore: 101, minPairs: 5 };
 
-    const isTeam1 = (playerIndex % 2 === 0);
-    const oppIndices = isTeam1 ? [1, 3] : [0, 2];
-
-    let maxOpponentScore = 0;
-    let maxOpponentPairs = 0;
-
-    for (const oppIdx of oppIndices) {
-      const opp = this.players[oppIdx];
-      if (opp && opp.opened) {
-        if (opp.openType === 'seri') {
-          const oppScore = opp.initialOpenScore || (opp.openedMelds ? opp.openedMelds.reduce((s, m) => s + (m.score || 0), 0) : 0);
-          if (oppScore > maxOpponentScore) maxOpponentScore = oppScore;
-        } else if (opp.openType === 'pairs') {
-          const oppPairs = opp.initialOpenPairs || (opp.openedMelds ? opp.openedMelds.filter(m => m.type === 'pairs').length : 0);
-          if (oppPairs > maxOpponentPairs) maxOpponentPairs = oppPairs;
-        }
-      }
-    }
-
-    const minScore = maxOpponentScore > 0 ? (maxOpponentScore + 1) : 101;
-    const minPairs = maxOpponentPairs > 0 ? (maxOpponentPairs + 1) : 5;
-
-    return { minScore, minPairs };
+    // Katlama barajı masa genelindedir. Eş dahil herhangi bir oyuncunun açışı
+    // bir sonraki ilk açışı yükseltir; ortadaki değer herkes için aynı gerçektir.
+    return {
+      minScore: this.minOpenScore || 101,
+      minPairs: this.minOpenPairs || 5
+    };
   }
 
   /**
@@ -671,7 +654,7 @@ class OkeyGame {
       }
     }
 
-    if (firstTime && this.mode === GAME_MODES.FOLDED) {
+    if (firstTime) {
       this.minOpenPairs = Math.max(this.minOpenPairs, pairs.length + 1);
     }
 
@@ -1111,7 +1094,8 @@ class OkeyGame {
     // Next match rotates first player counter-clockwise
     this.firstPlayerIndex = (this.firstPlayerIndex + 1) % 4;
 
-    // Reset round penalties and opened state, but KEEP cumulative match score!
+    // This is a brand-new match: no score/history may leak from the previous one.
+    this.matchHistory = [];
     for (const player of this.players) {
       if (player) {
         player.hand = [];
@@ -1119,6 +1103,7 @@ class OkeyGame {
         player.openType = null;
         player.openedMelds = [];
         player.roundScore = 0;
+        player.score = 0;
         player.penaltyPoints = 0;
         player.penalties = [];
       }

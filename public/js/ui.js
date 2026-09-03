@@ -7,6 +7,12 @@ class UIManager {
     this.currentView = 'lobby'; // 'lobby' | 'game'
   }
 
+  escapeHTML(value) {
+    const el = document.createElement('div');
+    el.textContent = String(value == null ? '' : value);
+    return el.innerHTML;
+  }
+
   showView(viewName) {
     this.currentView = viewName;
     const lobbyView = document.getElementById('lobby-view');
@@ -35,7 +41,7 @@ class UIManager {
     toast.innerHTML = `
       <div class="toast-content" style="display: flex; align-items: center; gap: 8px;">
         <span class="toast-icon">${type === 'error' ? '⚠️' : type === 'success' ? '🎉' : 'ℹ️'}</span>
-        <span class="toast-text">${message}</span>
+        <span class="toast-text">${this.escapeHTML(message)}</span>
       </div>
     `;
 
@@ -271,10 +277,12 @@ class UIManager {
 
     const bubble = document.createElement('div');
     bubble.className = 'chat-speech-bubble animate-pop-in';
-    bubble.innerHTML = `
-      <span class="speech-bubble-text">${text}</span>
-      <div class="speech-bubble-pointer"></div>
-    `;
+    const textEl = document.createElement('span');
+    textEl.className = 'speech-bubble-text';
+    textEl.textContent = String(text || '');
+    const pointer = document.createElement('div');
+    pointer.className = 'speech-bubble-pointer';
+    bubble.append(textEl, pointer);
 
     seatEl.appendChild(bubble);
 
@@ -302,10 +310,10 @@ class UIManager {
     msgEl.className = 'chat-message-item' + (isSys ? ' is-system-announcement' : (isMe ? ' is-me' : ''));
     msgEl.innerHTML = `
       <div class="chat-msg-header">
-        <strong class="chat-sender">${isSys ? '📢 SİSTEM' : (isMe ? 'Siz' : sender)}</strong>
-        <span class="chat-time">${time || ''}</span>
+        <strong class="chat-sender">${isSys ? '📢 SİSTEM' : (isMe ? 'Siz' : this.escapeHTML(sender))}</strong>
+        <span class="chat-time">${this.escapeHTML(time || '')}</span>
       </div>
-      <span class="chat-text">${text}</span>
+      <span class="chat-text">${this.escapeHTML(text)}</span>
     `;
 
     chatLogs.appendChild(msgEl);

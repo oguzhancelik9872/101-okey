@@ -125,9 +125,9 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   const reqsP1 = game.getMinOpenRequirements(1);
   assert.strictEqual(reqsP1.minScore, 172);
 
-  // But Team 1 Player 2 (Partner) only needs 101 points since Team 2 hasn't opened!
+  // The threshold is table-wide: the opener's partner must fold too.
   const reqsP2 = game.getMinOpenRequirements(2);
-  assert.strictEqual(reqsP2.minScore, 101);
+  assert.strictEqual(reqsP2.minScore, 172);
 
   // If Player 1 opens 5 pairs:
   game.players[1].opened = true;
@@ -139,14 +139,15 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
     { type: 'pairs', score: 10 },
     { type: 'pairs', score: 10 }
   ];
+  game.minOpenPairs = 6;
 
   // Now Team 1 (Player 0 & 2) needs 6 pairs to open pairs!
   const reqsTeam1Pairs = game.getMinOpenRequirements(2);
   assert.strictEqual(reqsTeam1Pairs.minPairs, 6);
 
-  // But Player 3 (Partner of Player 1) only needs 5 pairs!
+  // Pair threshold is table-wide for partners as well.
   const reqsTeam2Pairs = game.getMinOpenRequirements(3);
-  assert.strictEqual(reqsTeam2Pairs.minPairs, 5);
+  assert.strictEqual(reqsTeam2Pairs.minPairs, 6);
 
   console.log('   Team Folding Rules: PASSED');
 
@@ -160,6 +161,8 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   // Trigger Rematch (Tekrar Oyna)
   game.resetForNewMatch();
   assert.strictEqual(game.state, GAME_STATES.PLAYING);
+  assert.strictEqual(game.matchHistory.length, 0);
+  assert.ok(game.players.every(p => !p || p.score === 0));
   assert.strictEqual(game.firstPlayerIndex, 1); // Rotated to seat 1 (counter-clockwise)!
   assert.strictEqual(game.currentTurn, 1);
   assert.strictEqual(game.players[1].hand.length, 22); // Starter gets 22 tiles
