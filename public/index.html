@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=125">
+  <link rel="stylesheet" href="css/style.css?v=126">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -374,21 +374,20 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Shown only during the viewer's turn, outside the expanded oval. -->
-        <div id="turn-action-dock" class="turn-action-dock hidden">
-          <div class="turn-open-actions">
-            <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled>
-              <span>Seri Aç</span>
-            </button>
-            <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled>
-              <span>Çift Aç</span>
+          <!-- Shown only during the viewer's turn and anchored to this oval. -->
+          <div id="turn-action-dock" class="turn-action-dock hidden">
+            <div class="turn-open-actions">
+              <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled>
+                <span>Seri Aç</span>
+              </button>
+              <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled>
+                <span>Çift Aç</span>
+              </button>
+            </div>
+            <button id="btn-undo-turn" class="btn-pill-action btn-pill-danger hidden" title="Açtığınız perleri ve işlediğiniz taşları geri toplayın">
+              <span>↩️ Geri Topla</span>
             </button>
           </div>
-          <button id="btn-undo-turn" class="btn-pill-action btn-pill-danger hidden" title="Açtığınız perleri ve işlediğiniz taşları geri toplayın">
-            <span>↩️ Geri Topla</span>
-          </button>
         </div>
 
         <!-- Bottom Outer Player & Action Strip (In Dark Green Canvas, Right Above the Brown Istaka Bar!) -->

@@ -1761,8 +1761,8 @@ body.plus-theme {
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%) !important;
-  width: calc(100% - 28px) !important;
-  max-width: none !important;
+  width: fit-content !important;
+  max-width: calc(100% - 96px) !important;
   border-radius: 36px !important;
   box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.9), 0 16px 45px rgba(0, 0, 0, 0.95), 0 0 0 3px rgba(241, 196, 15, 0.6) !important;
 }
@@ -2889,8 +2889,9 @@ body.plus-theme {
 /* Turn-only controls live outside the enlarged oval, at its lower-right edge. */
 .turn-action-dock {
   position: absolute;
-  right: 86px;
-  bottom: 70px;
+  right: 12px;
+  bottom: 0;
+  transform: translateY(45%);
   z-index: 45;
   display: flex;
   flex-direction: row;
@@ -2901,8 +2902,8 @@ body.plus-theme {
 /* When the viewer profile disappears, pin controls to the expanded felt's
    lower border instead of leaving them at an unrelated canvas coordinate. */
 .my-turn-focus .turn-action-dock {
-  right: 86px;
-  bottom: 8px;
+  right: 12px;
+  bottom: 0;
   transform: translateY(45%);
 }
 
