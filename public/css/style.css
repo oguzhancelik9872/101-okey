@@ -1756,13 +1756,13 @@ body.plus-theme {
 }
 
 .my-turn-focus .table-felt-mat {
-  top: 12px !important;
-  bottom: 8px !important;
+  top: 18px !important;
+  bottom: 66px !important;
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%) !important;
   width: fit-content !important;
-  max-width: calc(100% - 96px) !important;
+  max-width: 98% !important;
   border-radius: 36px !important;
   box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.9), 0 16px 45px rgba(0, 0, 0, 0.95), 0 0 0 3px rgba(241, 196, 15, 0.6) !important;
 }
@@ -1776,7 +1776,7 @@ body.plus-theme {
 }
 
 .my-turn-focus .grid-cell-slot .okey-tile .tile-number {
-  font-size: 20px !important;
+  font-size: 15px !important;
 }
 
 .table-top-actions {
@@ -2130,22 +2130,22 @@ body.plus-theme {
 
 .grid-cell-slot .okey-tile .tile-number {
   font-family: 'Montserrat', sans-serif !important;
-  font-size: 19px !important;
+  font-size: 14px !important;
   font-weight: 900 !important;
   line-height: 1 !important;
   margin-top: -2px !important;
 }
 
 .grid-cell-slot .okey-tile .tile-dot {
-  width: 5px !important;
-  height: 5px !important;
+  width: 3.5px !important;
+  height: 3.5px !important;
   border-radius: 50% !important;
   margin-top: 1px !important;
 }
 
 .grid-cell-slot .okey-tile .fake-okey-emblem {
-  width: 19px !important;
-  height: 19px !important;
+  width: 14px !important;
+  height: 14px !important;
 }
 
 .table-grid-row.meld-drag-hover .grid-cell-slot.has-tile,
@@ -2639,8 +2639,8 @@ body.plus-theme {
 }
 
 .plus-discard-box {
-  width: 58px;
-  height: 79px;
+  width: 44px;
+  height: 60px;
   background: rgba(0, 0, 0, 0.35);
   border: 2px dashed rgba(255, 255, 255, 0.25);
   border-radius: 8px;
@@ -2649,28 +2649,6 @@ body.plus-theme {
   justify-content: center;
   transition: all 0.2s;
   position: relative;
-  box-sizing: border-box;
-}
-
-/* Kenardaki son atılan taşlar, oyuncunun ıstakasındaki taşlarla aynı
-   ölçü ve okunurlukta gösterilir. */
-.plus-discard-box .okey-tile {
-  width: 58px !important;
-  height: 79px !important;
-  max-width: none !important;
-  max-height: none !important;
-  border-radius: 4px !important;
-  flex: 0 0 auto;
-}
-
-.plus-discard-box .okey-tile .tile-number {
-  font-size: 34px !important;
-}
-
-.plus-discard-box .okey-tile .tile-dot {
-  width: 5px !important;
-  height: 5px !important;
-  margin-top: 2px !important;
 }
 
 .plus-discard-box.can-draw-pulse {
@@ -2862,7 +2840,7 @@ body.plus-theme {
   padding: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   z-index: 30;
   box-sizing: border-box;
   pointer-events: none;
@@ -2906,69 +2884,6 @@ body.plus-theme {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-/* Turn-only controls live outside the enlarged oval, at its lower-right edge. */
-.turn-action-dock {
-  position: absolute;
-  right: -154px;
-  bottom: 0;
-  transform: translateY(45%);
-  z-index: 45;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 7px;
-}
-
-/* When the viewer profile disappears, pin controls to the expanded felt's
-   lower border instead of leaving them at an unrelated canvas coordinate. */
-.my-turn-focus .turn-action-dock {
-  right: -154px;
-  bottom: 0;
-  transform: translateY(45%);
-}
-
-.turn-open-actions {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.turn-action-dock > .btn-pill-danger {
-  width: 100%;
-}
-
-/* Keep return next to the discard pile it actually came from. */
-.return-discard-near-pile {
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 46;
-}
-
-.return-discard-near-pile:hover:not(:disabled) {
-  transform: translateY(calc(-50% - 2px));
-}
-
-/* On opponents' turns the action dock is absent, so the rack and its tiles
-   use the released desktop width while preserving the tile aspect ratio. */
-@media (min-width: 1200px) and (min-height: 620px) {
-  .plus-table-canvas:not(.my-turn-focus) + .plus-istaka-section .istaka-slot {
-    width: 62px;
-    min-width: 62px;
-    max-width: 62px;
-    height: 85px;
-  }
-
-  .plus-table-canvas:not(.my-turn-focus) + .plus-istaka-section .istaka-row {
-    min-height: 85px;
-  }
-
-  .plus-table-canvas:not(.my-turn-focus) + .plus-istaka-section .istaka-slot .okey-tile .tile-number {
-    font-size: 36px !important;
-  }
 }
 
 /* 3D Glossy Action Buttons - Compact 30px Height (Zero table collision) */
@@ -3177,7 +3092,7 @@ body.plus-theme {
   gap: 0px;
   width: fit-content;
   margin: 0 auto;
-  min-height: 79px;
+  min-height: 60px;
   background: rgba(0, 0, 0, 0.4);
   border-radius: 6px;
   padding: 2px 4px;
@@ -3185,10 +3100,10 @@ body.plus-theme {
 }
 
 .istaka-slot {
-  width: 58px;
-  height: 79px;
-  min-width: 58px;
-  max-width: 58px;
+  width: 44px;
+  height: 60px;
+  min-width: 44px;
+  max-width: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3217,7 +3132,7 @@ body.plus-theme {
 
 .istaka-slot .okey-tile .tile-number {
   font-family: 'Montserrat', sans-serif !important;
-  font-size: 34px !important;
+  font-size: 26px !important;
   font-weight: 900 !important;
   line-height: 1 !important;
   margin-top: -2px !important;
@@ -3228,19 +3143,6 @@ body.plus-theme {
   height: 5px !important;
   border-radius: 50% !important;
   margin-top: 2px !important;
-}
-
-@media (min-width: 769px) and (max-width: 1119px) {
-  .istaka-slot {
-    width: clamp(46px, calc((100vw - 150px) / 16), 58px);
-    min-width: clamp(46px, calc((100vw - 150px) / 16), 58px);
-    max-width: clamp(46px, calc((100vw - 150px) / 16), 58px);
-    height: clamp(63px, calc((100vw - 150px) / 11.76), 79px);
-  }
-
-  .istaka-row {
-    min-height: clamp(63px, calc((100vw - 150px) / 11.76), 79px);
-  }
 }
 
 

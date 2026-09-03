@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=129">
+  <link rel="stylesheet" href="css/style.css?v=120">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -255,9 +255,6 @@
         <!-- 3. Sol Alt Köşe (Left Discard - Yandan Al) -->
         <div class="table-corner-discard corner-bottom-left" title="Sol Oyuncunun Attığı Taş (Yandan Al)">
           <div id="discard-pile-left" class="plus-discard-box"></div>
-          <button id="btn-return-discard" class="btn-pill-action btn-pill-warning return-discard-near-pile hidden" title="Yandan aldığınız taşı geri bırakın ve desteden çekin">
-            <span>↩️ Geri Bırak</span>
-          </button>
         </div>
 
         <!-- 4. Sağ Alt Köşe (Bottom Discard - Taş At) -->
@@ -374,24 +371,19 @@
               </div>
             </div>
           </div>
-          <!-- Shown only during the viewer's turn and anchored to this oval. -->
-          <div id="turn-action-dock" class="turn-action-dock hidden">
-            <div class="turn-open-actions">
-              <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled>
-                <span>Seri Aç</span>
-              </button>
-              <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled>
-                <span>Çift Aç</span>
-              </button>
-            </div>
-            <button id="btn-undo-turn" class="btn-pill-action btn-pill-danger hidden" title="Açtığınız perleri ve işlediğiniz taşları geri toplayın">
-              <span>↩️ Geri Topla</span>
-            </button>
-          </div>
         </div>
 
         <!-- Bottom Outer Player & Action Strip (In Dark Green Canvas, Right Above the Brown Istaka Bar!) -->
         <div class="canvas-bottom-strip">
+          <div class="canvas-bottom-left">
+            <button id="btn-return-discard" class="btn-pill-action btn-pill-warning hidden" title="Yandan aldığınız taşı geri bırakın ve desteden çekin">
+              <span>↩️ Geri Bırak</span>
+            </button>
+            <button id="btn-undo-turn" class="btn-pill-action btn-pill-danger hidden" title="Açtığınız perleri ve işlediğiniz taşları geri alın">
+              <span>↩️ Geri Al</span>
+            </button>
+          </div>
+
           <!-- Center: Bottom Player Profile Card (Centered directly above istaka) -->
           <div id="seat-bottom" class="player-outer-bar bar-bottom">
             <div class="avatar-ring-container">
@@ -407,6 +399,17 @@
             </div>
           </div>
 
+          <!-- Right: Open Hand / Pairs Action Buttons (In Dark Green Canvas on the Right) -->
+          <div class="canvas-bottom-right">
+            <div class="play-actions">
+              <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled>
+                <span>Seri Aç</span>
+              </button>
+              <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled>
+                <span>Çift Aç</span>
+              </button>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -531,6 +534,6 @@
   <script src="js/istaka.js?v=115"></script>
   <script src="js/table.js?v=115"></script>
   <script src="js/ui.js?v=120"></script>
-  <script src="js/gameClient.js?v=121"></script>
+  <script src="js/gameClient.js?v=119"></script>
 </body>
 </html>
