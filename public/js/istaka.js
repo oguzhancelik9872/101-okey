@@ -644,6 +644,7 @@ class IstakaManager {
     el.dataset.row = row;
     el.dataset.col = col;
     el.draggable = true;
+    el.style.touchAction = 'none';
 
     if (tile.isOkey) el.classList.add('is-okey-joker');
     if (tile.isFake) el.classList.add('is-fake-okey');
@@ -729,6 +730,80 @@ class IstakaManager {
       document.querySelectorAll('.meld-drag-hover').forEach(m => m.classList.remove('meld-drag-hover'));
     });
 
+    // Native HTML drag/drop is unreliable or completely disabled on many
+    // mobile browsers. Pointer events provide the same rack, discard and
+    // table-meld actions for a finger/stylus without breaking mouse drag.
+    el.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' || e.button !== 0) return;
+      this.touchDrag = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        row,
+        col,
+        tile,
+        moved: false
+      };
+      el.setPointerCapture?.(e.pointerId);
+    });
+
+    el.addEventListener('pointermove', (e) => {
+      const drag = this.touchDrag;
+      if (!drag || drag.pointerId !== e.pointerId) return;
+      const distance = Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY);
+      if (distance < 8) return;
+      drag.moved = true;
+      e.preventDefault();
+      el.classList.add('dragging', 'touch-dragging');
+      document.querySelectorAll('.mobile-drag-target').forEach(node => node.classList.remove('mobile-drag-target'));
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+      const dropTarget = target?.closest('.istaka-slot, #discard-pile-bottom, .meld-row');
+      if (dropTarget && !dropTarget.contains(el)) dropTarget.classList.add('mobile-drag-target');
+    });
+
+    const finishTouchDrag = (e) => {
+      const drag = this.touchDrag;
+      if (!drag || drag.pointerId !== e.pointerId) return;
+      this.touchDrag = null;
+      el.releasePointerCapture?.(e.pointerId);
+      el.classList.remove('dragging', 'touch-dragging');
+      document.querySelectorAll('.mobile-drag-target').forEach(node => node.classList.remove('mobile-drag-target'));
+      if (!drag.moved) return;
+
+      e.preventDefault();
+      this.suppressClickUntil = Date.now() + 450;
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+      const targetSlot = target?.closest('.istaka-slot');
+      const targetMeld = target?.closest('.meld-row[data-meld-id]');
+      const targetDiscard = target?.closest('#discard-pile-bottom');
+
+      if (targetSlot) {
+        const targetRow = Number(targetSlot.dataset.row);
+        const targetCol = Number(targetSlot.dataset.col);
+        if (Number.isInteger(targetRow) && Number.isInteger(targetCol)) {
+          this.insertTileAt(row, col, targetRow, targetCol, tile);
+          this.activeTile = null;
+          this.activeMeldGroup = null;
+          this.render();
+        }
+      } else if (targetDiscard && this.onTileDoubleClicked) {
+        window.lastManualDragTime = Date.now();
+        window.lastActionWasManualDrag = true;
+        this.onTileDoubleClicked(tile);
+      } else if (targetMeld && window.tableManager?.onProcessTileDragDrop) {
+        window.lastManualDragTime = Date.now();
+        window.lastActionWasManualDrag = true;
+        window.tableManager.onProcessTileDragDrop(tile.id, targetMeld.dataset.meldId);
+      }
+    };
+
+    el.addEventListener('pointerup', finishTouchDrag);
+    el.addEventListener('pointercancel', (e) => {
+      if (this.touchDrag?.pointerId === e.pointerId) this.touchDrag = null;
+      el.classList.remove('dragging', 'touch-dragging');
+      document.querySelectorAll('.mobile-drag-target').forEach(node => node.classList.remove('mobile-drag-target'));
+    });
+
     // Drop onto this specific tile to insert directly before/at this tile
     el.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -788,6 +863,7 @@ class IstakaManager {
     // Click & Double-Click Handler (Foolproof across all devices and DOM re-renders)
     el.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (Date.now() < (this.suppressClickUntil || 0)) return;
       const now = Date.now();
       const isDouble = (this.lastClickTileId === tile.id && (now - (this.lastClickTime || 0)) < 350);
       this.lastClickTime = now;
