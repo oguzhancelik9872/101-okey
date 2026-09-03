@@ -2463,6 +2463,10 @@ body.plus-theme {
   box-shadow: 0 0 4px rgba(0,0,0,0.6);
 }
 
+.mobile-third-panel {
+  display: none;
+}
+
 .pairs-rows-container {
   flex: 1;
   height: 100%;
@@ -3782,12 +3786,28 @@ body.plus-theme {
     padding: 1px;
   }
 
+  .mobile-third-panel { display: flex; }
+  .seri-divider-line.mobile-third-panel,
+  .pairs-divider-line.mobile-third-panel { display: block; }
+
   .seri-section-wrapper { flex: 1 1 auto; min-width: 0; border-width: 1px; border-radius: 6px; }
-  .seri-panel { flex: 1 1 50%; min-width: 0; width: 50%; padding: 1px; }
-  .panel-rows-container { gap: 1px; padding: 0; }
-  .grid-cell-slot { min-width: 0; border-width: 0; }
-  .grid-cell-slot .okey-tile .tile-number { font-size: clamp(6px, 1.8vw, 11px) !important; }
-  .grid-cell-slot .okey-tile .tile-dot { width: 2px !important; height: 2px !important; }
+  .seri-panel { flex: 1 1 33.333%; min-width: 0; width: 33.333%; padding: 1px; }
+  .panel-rows-container { grid-template-rows: repeat(9, 1fr); gap: 2px; padding: 1px; }
+
+  /* Mobilde boş 1-13 kılavuz hücrelerini kaldır. Açılmış perler
+     bitişik durur ve satır yüksekliğinin tamamını kullanır. */
+  .table-grid-row .grid-cell-slot:not(.has-tile) { display: none; }
+  .table-grid-row { justify-content: center; gap: 1px; overflow: visible; }
+  .table-grid-row .grid-cell-slot.has-tile {
+    flex: 0 1 auto;
+    width: auto;
+    height: 100%;
+    aspect-ratio: 44 / 60;
+    min-width: 0;
+    border-width: 0;
+  }
+  .grid-cell-slot .okey-tile .tile-number { font-size: clamp(9px, 2.6vw, 16px) !important; }
+  .grid-cell-slot .okey-tile .tile-dot { width: 3px !important; height: 3px !important; }
 
   .pairs-section-wrapper {
     flex: 0 1 44px;
@@ -3796,7 +3816,14 @@ body.plus-theme {
     border-radius: 6px;
   }
 
-  .pairs-panel { flex: 1 1 50%; min-width: 0; width: 50%; padding: 1px; }
+  .pairs-panel { flex: 1 1 33.333%; min-width: 0; width: 33.333%; padding: 1px; }
+  .table-pairs-row { justify-content: center; gap: 1px; }
+  .table-pairs-row .grid-cell-slot {
+    flex: 0 1 auto;
+    width: auto;
+    height: 100%;
+    aspect-ratio: 44 / 60;
+  }
 
   .center-deck-strip {
     flex: 0 0 clamp(64px, 18vw, 90px);

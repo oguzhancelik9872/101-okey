@@ -380,14 +380,18 @@ class TableManager {
   renderTableMelds() {
     const seri1RowsEl = document.getElementById('seri-1-rows');
     const seri2RowsEl = document.getElementById('seri-2-rows');
+    const seri3RowsEl = document.getElementById('seri-3-rows');
     const pairs1RowsEl = document.getElementById('pairs-1-rows') || document.getElementById('pairs-rows');
     const pairs2RowsEl = document.getElementById('pairs-2-rows');
+    const pairs3RowsEl = document.getElementById('pairs-3-rows');
     if (!seri1RowsEl || !seri2RowsEl || !pairs1RowsEl || !this.gameState) return;
 
     seri1RowsEl.innerHTML = '';
     seri2RowsEl.innerHTML = '';
+    if (seri3RowsEl) seri3RowsEl.innerHTML = '';
     pairs1RowsEl.innerHTML = '';
     if (pairs2RowsEl) pairs2RowsEl.innerHTML = '';
+    if (pairs3RowsEl) pairs3RowsEl.innerHTML = '';
 
     // Update Opening Target Requirements Badges
     const seriTargetBadge = document.getElementById('table-seri-target-badge');
@@ -410,9 +414,12 @@ class TableManager {
     const isViewerTurn = (this.gameState.currentTurn === this.viewerSeatIndex && this.gameState.turnState === 'DISCARD');
     const viewerPlayer = this.gameState.players[this.viewerSeatIndex];
     const viewerOpened = viewerPlayer && viewerPlayer.opened;
+    const isMobileBoard = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
+    const rowsPerPanel = isMobileBoard ? 9 : 13;
 
     const renderSeriPanel = (container, startMeldIdx) => {
-      for (let rowIdx = 0; rowIdx < 13; rowIdx++) {
+      if (!container) return;
+      for (let rowIdx = 0; rowIdx < rowsPerPanel; rowIdx++) {
         const meld = seriMelds[startMeldIdx + rowIdx];
         const meldRow = document.createElement('div');
         meldRow.className = 'table-grid-row';
@@ -535,7 +542,8 @@ class TableManager {
     };
 
     const renderPairsPanel = (container, startPairIdx) => {
-      for (let rowIdx = 0; rowIdx < 13; rowIdx++) {
+      if (!container) return;
+      for (let rowIdx = 0; rowIdx < rowsPerPanel; rowIdx++) {
         const meld = pairMelds[startPairIdx + rowIdx];
         const pairRow = document.createElement('div');
         pairRow.className = 'table-pairs-row';
@@ -607,11 +615,13 @@ class TableManager {
 
     // 1. Render Left and Right 13x13 Seri Panels
     renderSeriPanel(seri1RowsEl, 0);
-    renderSeriPanel(seri2RowsEl, 13);
+    renderSeriPanel(seri2RowsEl, rowsPerPanel);
+    if (isMobileBoard) renderSeriPanel(seri3RowsEl, rowsPerPanel * 2);
 
     // 2. Render Left and Right 2x13 Pairs Panels
     renderPairsPanel(pairs1RowsEl, 0);
-    if (pairs2RowsEl) renderPairsPanel(pairs2RowsEl, 13);
+    renderPairsPanel(pairs2RowsEl, rowsPerPanel);
+    if (isMobileBoard) renderPairsPanel(pairs3RowsEl, rowsPerPanel * 2);
   }
 
   createTileDOM(tile, isIndicator = false, isSmall = false) {
