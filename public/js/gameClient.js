@@ -1445,7 +1445,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const viewerPlayer = currentGameState.players[viewerSeatIndex];
       const isFirstOpen = viewerPlayer ? !viewerPlayer.opened : true;
 
-      const hasPairsOnTable = currentGameState.tableMelds.some(m => m.type === 'pairs') || currentGameState.players.some(p => p.opened && p.openType === 'pairs');
+      const hasPairsOnTable = currentGameState.tableMelds.some(m => m.type === 'pairs') || currentGameState.players.some(p => p && p.opened && p.openType === 'pairs');
       if (!isFirstOpen && viewerPlayer && viewerPlayer.openType === 'seri' && !hasPairsOnTable) {
         return;
       }
@@ -1701,7 +1701,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isFirstOpen = viewerPlayer ? !viewerPlayer.opened : true;
     const cannotOpenSeri = viewerPlayer && viewerPlayer.opened && viewerPlayer.openType === 'pairs';
-    const hasPairsOnTable = currentGameState.tableMelds.some(m => m.type === 'pairs') || currentGameState.players.some(p => p.opened && p.openType === 'pairs');
+    const hasPairsOnTable = currentGameState.tableMelds.some(m => m.type === 'pairs') || currentGameState.players.some(p => p && p.opened && p.openType === 'pairs');
     const cannotOpenPairs = viewerPlayer && viewerPlayer.opened && viewerPlayer.openType === 'seri' && !hasPairsOnTable;
 
     const hasDrawnFromDiscard = isMyTurn && turnState === 'DISCARD' && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;

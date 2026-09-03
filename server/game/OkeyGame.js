@@ -564,7 +564,7 @@ class OkeyGame {
 
     // Seri açan oyuncu, masada çift açan başka bir oyuncu yoksa çift açamaz
     if (player.opened && player.openType === 'seri') {
-      const hasPairsOnTable = this.tableMelds.some(m => m.type === 'pairs') || this.players.some(p => p.opened && p.openType === 'pairs');
+      const hasPairsOnTable = this.tableMelds.some(m => m.type === 'pairs') || this.players.some(p => p && p.opened && p.openType === 'pairs');
       if (!hasPairsOnTable) {
         return { success: false, reason: 'Masada çift açmış bir oyuncu olmadığı sürece seri açan oyuncular çift açamaz.' };
       }

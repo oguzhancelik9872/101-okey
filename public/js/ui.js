@@ -255,10 +255,16 @@ class UIManager {
 
     const bubble = document.createElement('div');
     bubble.className = 'reaction-bubble animate-bounce-float';
-    bubble.innerHTML = `
-      <span class="reaction-emoji">${emoji}</span>
-      ${label ? `<span class="reaction-label">${label}</span>` : ''}
-    `;
+    const emojiEl = document.createElement('span');
+    emojiEl.className = 'reaction-emoji';
+    emojiEl.textContent = String(emoji || '');
+    bubble.appendChild(emojiEl);
+    if (label) {
+      const labelEl = document.createElement('span');
+      labelEl.className = 'reaction-label';
+      labelEl.textContent = String(label);
+      bubble.appendChild(labelEl);
+    }
 
     seatEl.appendChild(bubble);
 

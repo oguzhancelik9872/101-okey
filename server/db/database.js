@@ -100,8 +100,7 @@ class Database {
         displayName: user ? user.displayName : name,
         gender: user ? user.gender : 'male',
         avatarIndex: user ? user.avatarIndex : 0,
-        isOnline,
-        activeSocketId: isOnline ? activeSocketId : null
+        isOnline
       };
     });
   }
@@ -212,7 +211,11 @@ class Database {
       user.gender = gender === 'female' ? 'female' : 'male';
     }
     if (avatarIndex !== undefined && avatarIndex !== null) {
-      user.avatarIndex = parseInt(avatarIndex, 10);
+      const parsedAvatarIndex = Number.parseInt(avatarIndex, 10);
+      if (!Number.isInteger(parsedAvatarIndex) || parsedAvatarIndex < 0 || parsedAvatarIndex > 8) {
+        return { success: false, reason: 'Geçersiz avatar seçimi.' };
+      }
+      user.avatarIndex = parsedAvatarIndex;
     }
     this.save();
     return { success: true, user: this.sanitizeUser(user) };

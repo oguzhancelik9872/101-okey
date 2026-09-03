@@ -82,7 +82,16 @@ io.on('connection', (socket) => {
 
   socket.on('auth:logout', (data, callback) => {
     try {
-      db.logout(socket.userId, socket.id);
+      const userId = socket.userId;
+      if (userId) db.updateActiveRoom(userId, null);
+      if (socket.roomId) {
+        roomManager.handleLeave(socket.roomId, socket.id, userId);
+        socket.leave(socket.roomId);
+        socket.roomId = null;
+      } else {
+        roomManager.leaveSeat(socket.id, userId);
+      }
+      db.logout(userId, socket.id);
       socket.userId = null;
       io.emit('auth:namesUpdate', db.getAvailableNames());
       if (callback) callback({ success: true });
@@ -93,7 +102,7 @@ io.on('connection', (socket) => {
 
   socket.on('auth:updateProfile', (data, callback) => {
     try {
-      const uId = data.userId || socket.userId;
+      const uId = socket.userId;
       if (!uId) return callback && callback({ success: false, reason: 'Oturum bulunamadı.' });
       const res = db.updateProfile(uId, data);
       if (res.success) {
@@ -109,7 +118,7 @@ io.on('connection', (socket) => {
   socket.on('reconnectRoom', (data, callback) => {
     try {
       const { roomId, userId } = data;
-      const uId = userId || socket.userId;
+      const uId = socket.userId;
       const result = roomManager.reconnectPlayer(roomId, socket.id, uId);
 
       if (!result.success) {
@@ -139,7 +148,7 @@ io.on('connection', (socket) => {
   // Create Room
   socket.on('createRoom', (data, callback) => {
     try {
-      const userId = data.userId || socket.userId;
+      const userId = socket.userId;
       const room = roomManager.createRoom({
         hostId: socket.id,
         hostName: data.playerName || 'Oyuncu',
@@ -177,7 +186,7 @@ io.on('connection', (socket) => {
   // Create Single-player Bot Room
   socket.on('createBotRoom', (data, callback) => {
     try {
-      const userId = data.userId || socket.userId;
+      const userId = socket.userId;
       const room = roomManager.createBotRoom({
         hostId: socket.id,
         hostName: data.playerName || 'Oyuncu',
@@ -211,7 +220,7 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', (data, callback) => {
     try {
       const { roomId, playerName, userId, seatIndex, gender, avatarIndex } = data;
-      const uId = userId || socket.userId;
+      const uId = socket.userId;
       const result = roomManager.joinRoom(
         roomId.toUpperCase(),
         socket.id,
@@ -251,22 +260,10 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Logout
-  socket.on('auth:logout', (data) => {
-    const uId = (data && data.userId) || socket.userId;
-    if (uId) db.updateActiveRoom(uId, null);
-    if (socket.roomId) {
-      roomManager.handleLeave(socket.roomId, socket.id, uId);
-      socket.leave(socket.roomId);
-      socket.roomId = null;
-    }
-    roomManager.leaveSeat(socket.id, uId);
-  });
-
   // Switch Seat in Lobby
   socket.on('lobby:switchSeat', (data, callback) => {
     try {
-      const uId = (data && data.userId) || socket.userId;
+      const uId = socket.userId;
       const res = roomManager.switchSeat(socket.id, data.targetSeatIndex, uId);
       if (callback) callback(res);
     } catch (err) {
@@ -277,7 +274,7 @@ io.on('connection', (socket) => {
   // Leave Seat in Lobby
   socket.on('lobby:leaveSeat', (data, callback) => {
     const cb = typeof data === 'function' ? data : callback;
-    const uId = (data && data.userId) || socket.userId;
+    const uId = socket.userId;
     try {
       const res = roomManager.leaveSeat(socket.id, uId);
       if (uId) db.updateActiveRoom(uId, null);
@@ -290,7 +287,7 @@ io.on('connection', (socket) => {
   // Add Bot to Seat in Lobby
   socket.on('lobby:addBot', (data, callback) => {
     try {
-      const uId = (data && data.userId) || socket.userId;
+      const uId = socket.userId;
       const res = roomManager.addBotToSeat(socket.id, data.seatIndex, uId);
       if (callback) callback(res);
     } catch (err) {
@@ -301,7 +298,7 @@ io.on('connection', (socket) => {
   // Remove Bot from Seat in Lobby
   socket.on('lobby:removeBot', (data, callback) => {
     try {
-      const uId = (data && data.userId) || socket.userId;
+      const uId = socket.userId;
       const res = roomManager.removeBotFromSeat(socket.id, data.seatIndex, uId);
       if (callback) callback(res);
     } catch (err) {
@@ -313,7 +310,7 @@ io.on('connection', (socket) => {
   socket.on('lobby:fillAllBots', (data, callback) => {
     const cb = typeof data === 'function' ? data : callback;
     try {
-      const uId = (data && data.userId) || socket.userId;
+      const uId = socket.userId;
       const res = roomManager.fillAllBots(socket.id, uId);
       if (cb) cb(res);
     } catch (err) {
@@ -324,7 +321,7 @@ io.on('connection', (socket) => {
   // Quick Match
   socket.on('quickMatch', (data, callback) => {
     try {
-      const userId = data.userId || socket.userId;
+      const userId = socket.userId;
       const result = roomManager.findQuickMatch(socket.id, data.playerName);
       if (!result.success) {
         if (callback) callback({ success: false, reason: result.reason });
@@ -381,7 +378,6 @@ io.on('connection', (socket) => {
 
       const result = room.game.drawTile(playerIdx, data.source || 'deck');
       if (callback) callback(result);
-      this.addLog && this.addLog('');
       if (result.success) {
         roomManager.broadcastGameState(roomId);
       }
@@ -545,16 +541,19 @@ io.on('connection', (socket) => {
     const targetRoom = (data && data.roomId) || socket.roomId;
     if (!targetRoom || targetRoom === 'lobby') return;
     const room = roomManager.rooms.get(targetRoom);
+    if (!room || socket.roomId !== targetRoom) return;
     let senderSeatIndex = null;
     if (room && room.game && room.game.players) {
       senderSeatIndex = room.game.players.findIndex(p => p && p.id === socket.id);
     }
+    const now = Date.now();
+    if (socket.lastChatAt && now - socket.lastChatAt < 350) return;
+    socket.lastChatAt = now;
     const rawText = String((data && data.text) || '').trim().slice(0, 120);
     if (!rawText) return;
     const cleanText = localizeTileNames(rawText);
-    const senderPlayer = room && room.game && room.game.players
-      ? room.game.players.find(p => p && p.id === socket.id)
-      : null;
+    const senderPlayer = room.game.players.find(p => p && p.id === socket.id && !p.isBot);
+    if (!senderPlayer) return;
     io.to(targetRoom).emit('chatMessage', {
       sender: senderPlayer ? senderPlayer.name : 'Oyuncu',
       senderSeatIndex: senderSeatIndex !== -1 ? senderSeatIndex : null,
@@ -566,12 +565,17 @@ io.on('connection', (socket) => {
 
   // Emoji / Quick Voice reaction
   socket.on('sendReaction', (data) => {
-    const roomId = data.roomId || socket.roomId;
-    if (roomId) {
+    const roomId = (data && data.roomId) || socket.roomId;
+    const room = roomManager.rooms.get(roomId);
+    if (room && socket.roomId === roomId) {
+      const seatIndex = room.game.players.findIndex(p => p && p.id === socket.id && !p.isBot);
+      if (seatIndex === -1) return;
+      const reaction = String((data && data.reaction) || '').slice(0, 8);
+      const label = String((data && data.label) || '').slice(0, 30);
       io.to(roomId).emit('playerReaction', {
-        seatIndex: data.seatIndex,
-        reaction: data.reaction,
-        label: data.label
+        seatIndex,
+        reaction,
+        label
       });
     }
   });
@@ -579,8 +583,8 @@ io.on('connection', (socket) => {
   // Leave Room
   socket.on('leaveRoom', (data, callback) => {
     try {
-      const roomId = (data && data.roomId) || socket.roomId;
-      const uId = (data && data.userId) || socket.userId;
+      const roomId = socket.roomId;
+      const uId = socket.userId;
       if (uId) db.updateActiveRoom(uId, null);
       if (roomId) {
         socket.leave(roomId);

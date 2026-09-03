@@ -134,7 +134,7 @@ class TableManager {
       if (!seatEl) return;
 
       // Find player mapped to this relative position
-      const player = this.gameState.players.find(p => this.getRelativePosition(p.seatIndex) === pos);
+      const player = this.gameState.players.find(p => p && this.getRelativePosition(p.seatIndex) === pos);
 
       if (player) {
         seatEl.classList.remove('seat-empty');

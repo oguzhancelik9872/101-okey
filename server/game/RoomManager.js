@@ -20,7 +20,7 @@ class RoomManager {
     let publicRoom = this.rooms.get('MASA-101');
     const hasActiveHuman = publicRoom && publicRoom.game && publicRoom.game.players.some(p => p && !p.isBot);
 
-    if (!publicRoom || publicRoom.game.state === GAME_STATES.GAME_OVER || (publicRoom.game.state === GAME_STATES.PLAYING && !hasActiveHuman)) {
+    if (!publicRoom || ((publicRoom.game.state === GAME_STATES.PLAYING || publicRoom.game.state === GAME_STATES.GAME_OVER) && !hasActiveHuman)) {
       if (publicRoom && publicRoom.botInterval) {
         clearInterval(publicRoom.botInterval);
       }
@@ -415,7 +415,7 @@ class RoomManager {
   findQuickMatch(playerId, playerName) {
     // Find open public waiting room
     for (const [roomId, room] of this.rooms.entries()) {
-      if (!room.isPrivate && !room.vsBots && room.game.state === GAME_STATES.WAITING && room.game.players.length < 4) {
+      if (!room.isPrivate && !room.vsBots && room.game.state === GAME_STATES.WAITING && room.game.players.filter(Boolean).length < 4) {
         const joinRes = this.joinRoom(roomId, playerId, playerName);
         if (joinRes.success) return joinRes;
       }
@@ -440,9 +440,12 @@ class RoomManager {
 
     const game = room.game;
     if (game.state !== GAME_STATES.WAITING) return { success: false, reason: 'Oyun zaten başladı.' };
+    if (!game.players.some(p => p && p.id === playerId && !p.isBot)) {
+      return { success: false, reason: 'Yalnızca masadaki oyuncular oyunu başlatabilir.' };
+    }
 
     // Fill remaining spots with bots if needed
-    if (game.players.length < 4) {
+    if (game.players.filter(Boolean).length < 4) {
       game.fillWithBots();
     }
 
@@ -548,6 +551,11 @@ class RoomManager {
     const game = room.game;
     if (game.state !== GAME_STATES.GAME_OVER) {
       return { success: false, reason: 'Oyun henüz bitmedi.' };
+    }
+
+    const voter = game.players.find(p => p && !p.isBot && p.id === socketId);
+    if (!voter) {
+      return { success: false, reason: 'Yalnızca bu maçtaki oyuncular yeniden başlatma oyu verebilir.' };
     }
 
     if (!room.rematchVotes) room.rematchVotes = new Set();
