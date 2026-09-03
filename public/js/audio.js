@@ -21,7 +21,13 @@ class OkeyAudio {
   }
 
   _preloadMP3s() {
-    const soundNames = ['discard', 'draw', 'draw_discard', 'open_hand', 'your_turn', 'fail', 'tick', 'win', 'penalty'];
+    const soundNames = [
+      'tile_draw_deck',
+      'tile_draw_discard',
+      'tile_discard_1',
+      'tile_discard_2',
+      'tile_discard_3'
+    ];
     soundNames.forEach(name => {
       const audio = new Audio(`/audio/${name}.mp3`);
       audio.preload = 'auto';
@@ -112,7 +118,12 @@ class OkeyAudio {
    * Yana Taş Atma (Discard) - Tok, pürüzsüz ve gerçekçi ahşap-kemik vuruşu
    */
   playDiscard() {
-    this._playMP3OrFallback('discard', 'sfx', this._synthDiscard);
+    // Keep the common sounds varied while making the harder hit less frequent.
+    const roll = Math.random();
+    const soundName = roll < 0.4
+      ? 'tile_discard_1'
+      : (roll < 0.8 ? 'tile_discard_2' : 'tile_discard_3');
+    this._playMP3OrFallback(soundName, 'sfx', this._synthDiscard);
   }
 
   _synthDiscard() {
@@ -215,7 +226,7 @@ class OkeyAudio {
    * Desteden Taş Alma (Draw from Deck) - Çuhada yumuşak kayma ve hafif ahşap dokunuşu
    */
   playDrawDeck() {
-    this._playMP3OrFallback('draw', 'sfx', this._synthDrawDeck);
+    this._playMP3OrFallback('tile_draw_deck', 'sfx', this._synthDrawDeck);
   }
 
   _synthDrawDeck() {
@@ -250,7 +261,7 @@ class OkeyAudio {
    * Yandan Taş Alma (Draw from Discard) - Çift vuruşlu tok taş kavrama sesi
    */
   playDrawDiscard() {
-    this._playMP3OrFallback('draw_discard', 'sfx', this._synthDrawDiscard);
+    this._playMP3OrFallback('tile_draw_discard', 'sfx', this._synthDrawDiscard);
   }
 
   _synthDrawDiscard() {
