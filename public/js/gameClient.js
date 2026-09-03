@@ -1709,6 +1709,11 @@ document.addEventListener('DOMContentLoaded', () => {
       topTimerBar.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
     }
 
+    const turnActionDock = document.getElementById('turn-action-dock');
+    if (turnActionDock) {
+      turnActionDock.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
+    }
+
     // Shared table indicator; personal opening validation still excludes the partner.
     const centerTargetBadge = document.getElementById('center-target-badge');
     const minOpenScore = (currentGameState.minOpenScore !== undefined && currentGameState.minOpenScore !== null)
