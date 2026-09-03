@@ -2889,20 +2889,20 @@ body.plus-theme {
 /* Turn-only controls live outside the enlarged oval, at its lower-right edge. */
 .turn-action-dock {
   position: absolute;
-  right: 12px;
+  right: -154px;
   bottom: 0;
   transform: translateY(45%);
   z-index: 45;
   display: flex;
-  flex-direction: row;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 7px;
 }
 
 /* When the viewer profile disappears, pin controls to the expanded felt's
    lower border instead of leaving them at an unrelated canvas coordinate. */
 .my-turn-focus .turn-action-dock {
-  right: 12px;
+  right: -154px;
   bottom: 0;
   transform: translateY(45%);
 }
@@ -2914,7 +2914,7 @@ body.plus-theme {
 }
 
 .turn-action-dock > .btn-pill-danger {
-  width: auto;
+  width: 100%;
 }
 
 /* Keep return next to the discard pile it actually came from. */
