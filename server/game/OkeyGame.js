@@ -39,7 +39,7 @@ class OkeyGame {
     this.onSystemMessage = null;
   }
 
-  _emitPenaltySystemChat(msg) {
+  _emitSystemMessage(msg) {
     if (typeof this.onSystemMessage === 'function') {
       try {
         this.onSystemMessage(msg);
@@ -399,11 +399,25 @@ class OkeyGame {
     const player = this.players[playerIndex];
     if (!player) return { minScore: 101, minPairs: 5 };
 
-    // Katlama barajı masa genelindedir. Eş dahil herhangi bir oyuncunun açışı
-    // bir sonraki ilk açışı yükseltir; ortadaki değer herkes için aynı gerçektir.
+    const opponentIndices = playerIndex % 2 === 0 ? [1, 3] : [0, 2];
+    let maxOpponentScore = 0;
+    let maxOpponentPairs = 0;
+    for (const opponentIndex of opponentIndices) {
+      const opponent = this.players[opponentIndex];
+      if (!opponent || !opponent.opened) continue;
+      if (opponent.openType === 'seri') {
+        const openingScore = Number(opponent.initialOpenScore) ||
+          (opponent.openedMelds || []).reduce((sum, meld) => sum + (Number(meld.score) || 0), 0);
+        maxOpponentScore = Math.max(maxOpponentScore, openingScore);
+      } else if (opponent.openType === 'pairs') {
+        const openingPairs = Number(opponent.initialOpenPairs) ||
+          (opponent.openedMelds || []).filter(meld => meld.type === 'pairs').length;
+        maxOpponentPairs = Math.max(maxOpponentPairs, openingPairs);
+      }
+    }
     return {
-      minScore: this.minOpenScore || 101,
-      minPairs: this.minOpenPairs || 5
+      minScore: maxOpponentScore > 0 ? maxOpponentScore + 1 : 101,
+      minPairs: maxOpponentPairs > 0 ? maxOpponentPairs + 1 : 5
     };
   }
 
@@ -499,7 +513,6 @@ class OkeyGame {
             });
             const pMsg = `⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} seri açtığı için +${penalty} ceza puanı aldı!`;
             this.addLog(pMsg);
-            this._emitPenaltySystemChat(pMsg);
           }
         }
       }
@@ -520,7 +533,6 @@ class OkeyGame {
         oppP.penalties.push({ type: 'OPPONENT_HIGH_OPEN', points: 101, desc: '153+ açılış cezası (+101)' });
         const pMsg = `🔥 ${player.name} ${validation.score} (153+) puanla açtı! Rakip (${oppP.name}) +101 ceza aldı!`;
         this.addLog(pMsg);
-        this._emitPenaltySystemChat(pMsg);
       }
     }
 
@@ -533,7 +545,9 @@ class OkeyGame {
     }
     if (this.turnSnapshot) this.turnSnapshot.modified = true;
 
-    this.addLog(`${player.name} ${validation.score} puan ile el açtı!`);
+    const openingMessage = `${player.name} ${Math.floor(validation.score / 3)}/${validation.score % 3} ile seri açtı!`;
+    this.addLog(openingMessage);
+    if (firstTime) this._emitSystemMessage(openingMessage);
     return { success: true, score: validation.score, remainingTilesCount: player.hand.length };
   }
 
@@ -636,7 +650,6 @@ class OkeyGame {
             });
             const pMsg = `⚠️ ${discarder.name} attığı ${discardTile.toString(this.indicator)} taşıyla ${player.name} çift açtığı için +${penalty} ceza puanı aldı!`;
             this.addLog(pMsg);
-            this._emitPenaltySystemChat(pMsg);
           }
         }
       }
@@ -649,7 +662,6 @@ class OkeyGame {
           oppP.penalties.push({ type: 'OPPONENT_SEVEN_PAIRS', points: 101, desc: '7+ çift açılış cezası (+101)' });
           const pMsg = `💎 ${player.name} ${pairs.length} (7+) çift açtı! Rakip (${oppP.name}) +101 ceza aldı!`;
           this.addLog(pMsg);
-          this._emitPenaltySystemChat(pMsg);
         }
       }
     }
@@ -667,7 +679,9 @@ class OkeyGame {
     }
     if (this.turnSnapshot) this.turnSnapshot.modified = true;
 
-    this.addLog(`${player.name} ${pairs.length} çift açtı!`);
+    const openingMessage = `${player.name} ${pairs.length} çift açtı!`;
+    this.addLog(openingMessage);
+    if (firstTime) this._emitSystemMessage(openingMessage);
     return { success: true, count: pairs.length, remainingTilesCount: player.hand.length };
   }
 
@@ -719,7 +733,6 @@ class OkeyGame {
           meldOwner.penalties.push({ type: 'OKEY_STOLEN', points: 101, desc: 'Okey kaptırma cezası (+101)' });
           const pMsg = `✨ ${player.name} rakibin perindeki Okey'i aldı! ${meldOwner.name} +101 ceza aldı!`;
           this.addLog(pMsg);
-          this._emitPenaltySystemChat(pMsg);
         }
       } else {
         this.addLog(`✨ ${player.name} perdeki Okey'in yerine taş işleyerek OKEY'i eline aldı!`);
@@ -786,17 +799,18 @@ class OkeyGame {
       player.penalties.push({ type: 'DISCARDED_OKEY', points: 101, desc: 'Okey atma cezası (+101)' });
       const pMsg = `⚠️ ${player.name} elinde taş varken OKEY attığı için +101 ceza puanı aldı!`;
       this.addLog(pMsg);
-      this._emitPenaltySystemChat(pMsg);
     }
 
     // Check "İşlek Taş Atma" penalty
     const isPlayable = Validator.isPlayableToTable(tile, this.tableMelds, this.indicator);
-    if (isPlayable) {
+    // A single discarded tile can trigger only one discard penalty. An Okey can
+    // also validate as playable; charging both rules doubled penalties and made
+    // long games snowball into implausible multi-thousand totals.
+    if (!tile.isOkey(this.indicator) && isPlayable) {
       player.penaltyPoints = (player.penaltyPoints || 0) + 101;
       player.penalties.push({ type: 'DISCARDED_PLAYABLE', points: 101, desc: 'İşlek taş atma cezası (+101)' });
       const pMsg = `⚠️ ${player.name} masaya işlenebilecek işlek bir taş attığı için +101 ceza puanı aldı!`;
       this.addLog(pMsg);
-      this._emitPenaltySystemChat(pMsg);
     }
 
     // Conclude turn and clear snapshot

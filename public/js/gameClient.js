@@ -1172,6 +1172,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.roundResultModalActive = false;
     roundStartedHandSorted = false;
     istaka.clearSelection();
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+      chatMessages.innerHTML = '<div class="chat-welcome-msg">💬 Sohbet yeni maç için temizlendi.</div>';
+    }
+    if (lobbyChatBadge) lobbyChatBadge.classList.add('hidden');
+    if (tableChatBadge) tableChatBadge.classList.add('hidden');
     ui.showToast('🎮 Yeni Maç Başladı!', 'success', 2500);
   });
 
@@ -1670,7 +1676,7 @@ document.addEventListener('DOMContentLoaded', () => {
       topTimerBar.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
     }
 
-    // Update the shared table-wide opening threshold (partner openings count too).
+    // Shared table indicator; personal opening validation still excludes the partner.
     const centerTargetBadge = document.getElementById('center-target-badge');
     const minOpenScore = (currentGameState.minOpenScore !== undefined && currentGameState.minOpenScore !== null)
       ? currentGameState.minOpenScore
@@ -1679,16 +1685,16 @@ document.addEventListener('DOMContentLoaded', () => {
       ? currentGameState.minOpenPairs
       : 5;
     const formattedScore = (window.formatOkeyScore && typeof window.formatOkeyScore === 'function')
-      ? window.formatOkeyScore(minOpenScore)
-      : `${minOpenScore}`;
+      ? window.formatOkeyScore(currentGameState.tableMinOpenScore || 101)
+      : `${currentGameState.tableMinOpenScore || 101}`;
+    const tableMinOpenPairs = currentGameState.tableMinOpenPairs || 5;
 
     if (centerTargetBadge) {
       centerTargetBadge.innerHTML = `
-        <div class="target-title">AÇILIŞ BARAJI</div>
         <div class="target-values">
-          <span class="target-seri-line">${minOpenScore} Puan</span>
+          <span class="target-seri-line">${formattedScore}</span>
           <span class="target-divider">•</span>
-          <span class="target-pairs-line">${minOpenPairs} Çift</span>
+          <span class="target-pairs-line">${tableMinOpenPairs} Çift</span>
         </div>
       `;
     }

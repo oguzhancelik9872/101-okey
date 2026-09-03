@@ -125,9 +125,9 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   const reqsP1 = game.getMinOpenRequirements(1);
   assert.strictEqual(reqsP1.minScore, 172);
 
-  // The threshold is table-wide: the opener's partner must fold too.
+  // A partner does not fold over their teammate's opening.
   const reqsP2 = game.getMinOpenRequirements(2);
-  assert.strictEqual(reqsP2.minScore, 172);
+  assert.strictEqual(reqsP2.minScore, 101);
 
   // If Player 1 opens 5 pairs:
   game.players[1].opened = true;
@@ -145,9 +145,9 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   const reqsTeam1Pairs = game.getMinOpenRequirements(2);
   assert.strictEqual(reqsTeam1Pairs.minPairs, 6);
 
-  // Pair threshold is table-wide for partners as well.
+  // A partner does not fold over their teammate's pair opening.
   const reqsTeam2Pairs = game.getMinOpenRequirements(3);
-  assert.strictEqual(reqsTeam2Pairs.minPairs, 6);
+  assert.strictEqual(reqsTeam2Pairs.minPairs, 5);
 
   console.log('   Team Folding Rules: PASSED');
 

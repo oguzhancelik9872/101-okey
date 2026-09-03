@@ -230,7 +230,7 @@ class TableManager {
         ? formatOkeyScore(minOpenScore)
         : `${minOpenScore}`;
       centerTargetBadge.innerHTML = `
-        <span class="target-seri-line">${minOpenScore} (${formattedScore})</span>
+        <span class="target-seri-line">${formattedScore}</span>
         <span class="target-pairs-line">${minOpenPairs} Çift</span>
       `;
     }
@@ -397,9 +397,7 @@ class TableManager {
     const formattedScore = (typeof formatOkeyScore === 'function') ? formatOkeyScore(minOpenScore) : `${minOpenScore}`;
 
     if (seriTargetBadge) {
-      seriTargetBadge.textContent = minOpenScore > 101
-        ? `SERİ HEDEF: ${formattedScore} (${minOpenScore})`
-        : `SERİ HEDEF: 101 (${formattedScore})`;
+      seriTargetBadge.textContent = `SERİ HEDEF: ${formattedScore}`;
     }
     if (pairsTargetBadge) {
       pairsTargetBadge.textContent = `ÇİFT HEDEF: ${minOpenPairs} Çift`;
