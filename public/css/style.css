@@ -2639,8 +2639,8 @@ body.plus-theme {
 }
 
 .plus-discard-box {
-  width: 44px;
-  height: 60px;
+  width: 58px;
+  height: 79px;
   background: rgba(0, 0, 0, 0.35);
   border: 2px dashed rgba(255, 255, 255, 0.25);
   border-radius: 8px;
@@ -2649,6 +2649,28 @@ body.plus-theme {
   justify-content: center;
   transition: all 0.2s;
   position: relative;
+  box-sizing: border-box;
+}
+
+/* Kenardaki son atılan taşlar, oyuncunun ıstakasındaki taşlarla aynı
+   ölçü ve okunurlukta gösterilir. */
+.plus-discard-box .okey-tile {
+  width: 58px !important;
+  height: 79px !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 4px !important;
+  flex: 0 0 auto;
+}
+
+.plus-discard-box .okey-tile .tile-number {
+  font-size: 34px !important;
+}
+
+.plus-discard-box .okey-tile .tile-dot {
+  width: 5px !important;
+  height: 5px !important;
+  margin-top: 2px !important;
 }
 
 .plus-discard-box.can-draw-pulse {
