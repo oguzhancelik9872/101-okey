@@ -549,7 +549,8 @@ io.on('connection', (socket) => {
     const now = Date.now();
     if (socket.lastChatAt && now - socket.lastChatAt < 350) return;
     socket.lastChatAt = now;
-    const rawText = String((data && data.text) || '').trim().slice(0, 120);
+    // Server-enforced limit: clients cannot bypass the table chat size cap.
+    const rawText = String((data && data.text) || '').trim().slice(0, 80);
     if (!rawText) return;
     const cleanText = localizeTileNames(rawText);
     const senderPlayer = room.game.players.find(p => p && p.id === socket.id && !p.isBot);

@@ -3201,7 +3201,8 @@ body.plus-theme {
   bottom: calc(100% + 9px);
   transform: translateX(-50%);
   z-index: 80;
-  max-width: 180px;
+  width: max-content;
+  max-width: 150px;
   min-width: 34px;
   padding: 6px 9px;
   border: 1px solid rgba(255, 255, 255, 0.72);
@@ -3233,6 +3234,11 @@ body.plus-theme {
 .speech-bubble-text {
   position: relative;
   z-index: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 
 .speech-bubble-fade-out {

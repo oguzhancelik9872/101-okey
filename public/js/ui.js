@@ -287,7 +287,8 @@ class UIManager {
     bubble.className = 'chat-speech-bubble animate-pop-in';
     const textEl = document.createElement('span');
     textEl.className = 'speech-bubble-text';
-    textEl.textContent = String(text || '');
+    const fullText = String(text || '');
+    textEl.textContent = fullText.length > 60 ? `${fullText.slice(0, 57)}...` : fullText;
     const pointer = document.createElement('div');
     pointer.className = 'speech-bubble-pointer';
     bubble.append(textEl, pointer);
