@@ -1756,13 +1756,13 @@ body.plus-theme {
 }
 
 .my-turn-focus .table-felt-mat {
-  top: 18px !important;
-  bottom: 66px !important;
+  top: 12px !important;
+  bottom: 8px !important;
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%) !important;
-  width: fit-content !important;
-  max-width: 98% !important;
+  width: calc(100% - 28px) !important;
+  max-width: none !important;
   border-radius: 36px !important;
   box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.9), 0 16px 45px rgba(0, 0, 0, 0.95), 0 0 0 3px rgba(241, 196, 15, 0.6) !important;
 }
@@ -2896,6 +2896,14 @@ body.plus-theme {
   flex-direction: row;
   align-items: center;
   gap: 7px;
+}
+
+/* When the viewer profile disappears, pin controls to the expanded felt's
+   lower border instead of leaving them at an unrelated canvas coordinate. */
+.my-turn-focus .turn-action-dock {
+  right: 86px;
+  bottom: 8px;
+  transform: translateY(45%);
 }
 
 .turn-open-actions {
