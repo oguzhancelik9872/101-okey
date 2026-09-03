@@ -1670,18 +1670,28 @@ document.addEventListener('DOMContentLoaded', () => {
       topTimerBar.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
     }
 
-    // Update Opening Target Requirements Badge at the top of the center deck strip (Global Table Score - Stacked Alt Alta)
+    // Update Opening Target Requirements Badge at the top of the center deck strip (Personalized Requirement - Eşe Katlama Yok)
     const centerTargetBadge = document.getElementById('center-target-badge');
-    const minOpenScore = currentGameState.tableMinOpenScore || currentGameState.minOpenScore || 101;
-    const minOpenPairs = currentGameState.tableMinOpenPairs || currentGameState.minOpenPairs || 5;
+    const minOpenScore = (currentGameState.minOpenScore !== undefined && currentGameState.minOpenScore !== null)
+      ? currentGameState.minOpenScore
+      : 101;
+    const minOpenPairs = (currentGameState.minOpenPairs !== undefined && currentGameState.minOpenPairs !== null)
+      ? currentGameState.minOpenPairs
+      : 5;
     const formattedScore = (window.formatOkeyScore && typeof window.formatOkeyScore === 'function')
       ? window.formatOkeyScore(minOpenScore)
       : `${minOpenScore}`;
 
     if (centerTargetBadge) {
+      const partnerNote = currentGameState.partnerOpened ? '<span class="target-partner-note">Eşe Katlama Yok</span>' : '';
       centerTargetBadge.innerHTML = `
-        <span class="target-seri-line">${minOpenScore} (${formattedScore})</span>
-        <span class="target-pairs-line">${minOpenPairs} Çift</span>
+        <div class="target-title">AÇILIŞ BARAJI</div>
+        <div class="target-values">
+          <span class="target-seri-line">${minOpenScore} Puan</span>
+          <span class="target-divider">•</span>
+          <span class="target-pairs-line">${minOpenPairs} Çift</span>
+        </div>
+        ${partnerNote}
       `;
     }
 
@@ -1862,6 +1872,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (isSys) {
       ui.showToast(msg.text, 'error', 4500);
+    } else {
+      // In-game floating speech bubble over player avatar (lasts 2.5 seconds, no timestamp)
+      let targetSeatPosition = null;
+      if (msg.senderSeatIndex !== undefined && msg.senderSeatIndex !== null && typeof table !== 'undefined') {
+        targetSeatPosition = table.getRelativePosition(msg.senderSeatIndex);
+      } else if (currentGameState && currentGameState.players) {
+        const foundIdx = currentGameState.players.findIndex(p => p && p.name === msg.sender);
+        if (foundIdx !== -1 && typeof table !== 'undefined') {
+          targetSeatPosition = table.getRelativePosition(foundIdx);
+        }
+      }
+      if (targetSeatPosition) {
+        ui.showSpeechBubble(targetSeatPosition, msg.text);
+      }
     }
 
     // If chat is closed and message is from someone else, show unread badge

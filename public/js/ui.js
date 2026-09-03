@@ -122,10 +122,12 @@ class UIManager {
       `;
     };
 
+    const isDraw = Boolean(results.isDraw || (results.teamResults && results.teamResults.isDraw));
+
     let html = `
       <div class="round-result-header" style="text-align: center; margin-bottom: 16px;">
         <h2 style="font-family: 'Cinzel', serif; font-size: 24px; font-weight: 900; color: #f1c40f; letter-spacing: 2px; margin: 0 0 6px 0;">OYUN BİTTİ</h2>
-        ${results.finisher ? `<div style="font-size: 13px; font-weight: 700; color: #a8d5ba;">${results.isEldenBitme ? '🚀' : '🎉'} <strong>${results.finisher}</strong> ${results.isEldenBitme ? 'elden bitirdi (-606 puan)!' : 'oyunu bitirdi!'}</div>` : `<div style="font-size: 13px; font-weight: 700; color: #bdc3c7;">${results.reason || 'Oyun Tamamlandı'}</div>`}
+        ${isDraw ? '<div style="font-size: 15px; font-weight: 900; color: #f39c12;">🤝 MAÇ BERABERE BİTTİ!</div>' : (results.finisher ? `<div style="font-size: 13px; font-weight: 700; color: #a8d5ba;">${results.isEldenBitme ? '🚀' : '🎉'} <strong>${results.finisher}</strong> ${results.isEldenBitme ? 'elden bitirdi (-606 puan)!' : 'oyunu bitirdi!'}</div>` : `<div style="font-size: 13px; font-weight: 700; color: #bdc3c7;">${results.reason || 'Oyun Tamamlandı'}</div>`)}
         ${results.isEldenBitme ? '<span class="badge-okey-discard" style="display:inline-block; margin-top: 4px; background: linear-gradient(135deg, #e67e22, #d35400);">🚀 ELDEN BİTME (-606)</span>' : ''}
         ${results.isOkeyDiscard ? '<span class="badge-okey-discard" style="display:inline-block; margin-top: 4px;">🔥 OKEY ATTI (2x CEZA)</span>' : ''}
         ${results.isPairsFinish ? '<span class="badge-pairs-finish" style="display:inline-block; margin-top: 4px;">✨ ÇİFT BİTTİ</span>' : ''}
@@ -134,28 +136,28 @@ class UIManager {
       <!-- 2 Side-by-Side Team Clusters -->
       <div class="team-clusters-wrapper" style="display: flex; gap: 14px; margin-bottom: 20px;">
         <!-- Left Cluster: Team 1 (Oyuncu 1 & 3) -->
-        <div class="team-cluster-card ${t1 && t1.isWinner ? 'team-winner' : ''}" style="flex: 1; border-radius: 18px; padding: 14px; background: ${t1 && t1.isWinner ? 'radial-gradient(ellipse at center, rgba(16, 102, 58, 0.6) 0%, rgba(7, 46, 26, 0.8) 100%)' : 'rgba(0, 0, 0, 0.45)'}; border: 2px solid ${t1 && t1.isWinner ? '#2ecc71' : 'rgba(255, 255, 255, 0.12)'}; position: relative; box-shadow: ${t1 && t1.isWinner ? '0 0 25px rgba(46, 204, 113, 0.4), inset 0 0 15px rgba(46, 204, 113, 0.2)' : 'none'};">
-          ${t1 && t1.isWinner ? '<div style="position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; font-size: 11px; font-weight: 900; padding: 3px 14px; border-radius: 12px; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #fff;">🏆 KAZANAN</div>' : ''}
-          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: ${t1 && t1.isWinner ? '6px' : '0'};">
+        <div class="team-cluster-card ${t1 && t1.isWinner ? 'team-winner' : (isDraw ? 'team-draw' : '')}" style="flex: 1; border-radius: 18px; padding: 14px; background: ${t1 && t1.isWinner ? 'radial-gradient(ellipse at center, rgba(16, 102, 58, 0.6) 0%, rgba(7, 46, 26, 0.8) 100%)' : (isDraw ? 'rgba(243, 156, 18, 0.15)' : 'rgba(0, 0, 0, 0.45)')}; border: 2px solid ${t1 && t1.isWinner ? '#2ecc71' : (isDraw ? '#f39c12' : 'rgba(255, 255, 255, 0.12)')}; position: relative; box-shadow: ${t1 && t1.isWinner ? '0 0 25px rgba(46, 204, 113, 0.4), inset 0 0 15px rgba(46, 204, 113, 0.2)' : 'none'};">
+          ${t1 && t1.isWinner ? '<div style="position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; font-size: 11px; font-weight: 900; padding: 3px 14px; border-radius: 12px; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #fff;">🏆 KAZANAN</div>' : (isDraw ? '<div style="position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff; font-size: 11px; font-weight: 900; padding: 3px 14px; border-radius: 12px; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #fff;">🤝 BERABERE</div>' : '')}
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: ${(t1 && t1.isWinner) || isDraw ? '6px' : '0'};">
             ${renderPlayerCard(t1 ? t1.players[0] : null)}
             ${renderPlayerCard(t1 ? t1.players[1] : null)}
           </div>
           <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 800;">
             <span style="color: #bdc3c7;">Takım Toplamı:</span>
-            <span style="color: ${t1 && t1.isWinner ? '#2ecc71' : '#f1c40f'}; font-size: 15px; font-weight: 900;">${t1 ? (t1.score > 0 ? `+${t1.score}` : `${t1.score}`) : 0}</span>
+            <span style="color: ${t1 && t1.isWinner ? '#2ecc71' : (isDraw ? '#f39c12' : '#f1c40f')}; font-size: 15px; font-weight: 900;">${t1 ? (t1.score > 0 ? `+${t1.score}` : `${t1.score}`) : 0}</span>
           </div>
         </div>
 
         <!-- Right Cluster: Team 2 (Oyuncu 2 & 4) -->
-        <div class="team-cluster-card ${t2 && t2.isWinner ? 'team-winner' : ''}" style="flex: 1; border-radius: 18px; padding: 14px; background: ${t2 && t2.isWinner ? 'radial-gradient(ellipse at center, rgba(16, 102, 58, 0.6) 0%, rgba(7, 46, 26, 0.8) 100%)' : 'rgba(0, 0, 0, 0.45)'}; border: 2px solid ${t2 && t2.isWinner ? '#2ecc71' : 'rgba(255, 255, 255, 0.12)'}; position: relative; box-shadow: ${t2 && t2.isWinner ? '0 0 25px rgba(46, 204, 113, 0.4), inset 0 0 15px rgba(46, 204, 113, 0.2)' : 'none'};">
-          ${t2 && t2.isWinner ? '<div style="position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; font-size: 11px; font-weight: 900; padding: 3px 14px; border-radius: 12px; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #fff;">🏆 KAZANAN</div>' : ''}
-          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: ${t2 && t2.isWinner ? '6px' : '0'};">
+        <div class="team-cluster-card ${t2 && t2.isWinner ? 'team-winner' : (isDraw ? 'team-draw' : '')}" style="flex: 1; border-radius: 18px; padding: 14px; background: ${t2 && t2.isWinner ? 'radial-gradient(ellipse at center, rgba(16, 102, 58, 0.6) 0%, rgba(7, 46, 26, 0.8) 100%)' : (isDraw ? 'rgba(243, 156, 18, 0.15)' : 'rgba(0, 0, 0, 0.45)')}; border: 2px solid ${t2 && t2.isWinner ? '#2ecc71' : (isDraw ? '#f39c12' : 'rgba(255, 255, 255, 0.12)')}; position: relative; box-shadow: ${t2 && t2.isWinner ? '0 0 25px rgba(46, 204, 113, 0.4), inset 0 0 15px rgba(46, 204, 113, 0.2)' : 'none'};">
+          ${t2 && t2.isWinner ? '<div style="position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; font-size: 11px; font-weight: 900; padding: 3px 14px; border-radius: 12px; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #fff;">🏆 KAZANAN</div>' : (isDraw ? '<div style="position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff; font-size: 11px; font-weight: 900; padding: 3px 14px; border-radius: 12px; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #fff;">🤝 BERABERE</div>' : '')}
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: ${(t2 && t2.isWinner) || isDraw ? '6px' : '0'};">
             ${renderPlayerCard(t2 ? t2.players[0] : null)}
             ${renderPlayerCard(t2 ? t2.players[1] : null)}
           </div>
           <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 800;">
             <span style="color: #bdc3c7;">Takım Toplamı:</span>
-            <span style="color: ${t2 && t2.isWinner ? '#2ecc71' : '#f1c40f'}; font-size: 15px; font-weight: 900;">${t2 ? (t2.score > 0 ? `+${t2.score}` : `${t2.score}`) : 0}</span>
+            <span style="color: ${t2 && t2.isWinner ? '#2ecc71' : (isDraw ? '#f39c12' : '#f1c40f')}; font-size: 15px; font-weight: 900;">${t2 ? (t2.score > 0 ? `+${t2.score}` : `${t2.score}`) : 0}</span>
           </div>
         </div>
       </div>
@@ -256,6 +258,33 @@ class UIManager {
 
     setTimeout(() => {
       bubble.remove();
+    }, 2500);
+  }
+
+  showSpeechBubble(seatPosition, text) {
+    const seatEl = document.getElementById(`seat-${seatPosition}`);
+    if (!seatEl) return;
+
+    // Remove any previous speech bubble on this seat
+    const prev = seatEl.querySelector('.chat-speech-bubble');
+    if (prev) prev.remove();
+
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-speech-bubble animate-pop-in';
+    bubble.innerHTML = `
+      <span class="speech-bubble-text">${text}</span>
+      <div class="speech-bubble-pointer"></div>
+    `;
+
+    seatEl.appendChild(bubble);
+
+    setTimeout(() => {
+      if (bubble.parentNode) {
+        bubble.classList.add('speech-bubble-fade-out');
+        setTimeout(() => {
+          if (bubble.parentNode) bubble.remove();
+        }, 300);
+      }
     }, 2500);
   }
 

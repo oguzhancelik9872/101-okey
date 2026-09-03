@@ -206,28 +206,12 @@ class OkeyGame {
     this.turnStartTime = Date.now();
     this.turnDuration = 30000;
     this._saveTurnSnapshot(this.firstPlayerIndex);
-    this.addLog(`El ${this.currentRound} başladı! Gösterge: ${this.indicator.color.toUpperCase()} ${this.indicator.number}. Başlayan: ${this.players[this.firstPlayerIndex].name}`);
-
-    // Check Gösterge bonus for players holding it
-    this._checkGostergeBonus();
-  }
-
-  _checkGostergeBonus() {
-    // In 101 Okey, player who has the indicator tile before drawing can claim indicator point (-101 or bonus)
-    // We can auto-award -101 to anyone who holds indicator on deal
-    for (const p of this.players) {
-      const hasIndicator = p.hand.some(t => !t.isFake && t.color === this.indicator.color && t.number === this.indicator.number);
-      if (hasIndicator) {
-        p.score -= 101;
-        p.penalties.push({ type: 'GOSTERGE', points: -101, desc: 'Gösterge taşı puanı (-101)' });
-        this.addLog(`${p.name} elinde gösterge taşını gösterdi (-101 puan kazandı).`);
-      }
-    }
+    this.addLog(`El ${this.currentRound} başladı! Gösterge: ${this.indicator.getTurkishName(this.indicator)}. Başlayan: ${this.players[this.firstPlayerIndex].name}`);
   }
 
   addLog(msg) {
     this.logs.push({
-      time: new Date().toLocaleTimeString('tr-TR'),
+      time: new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       text: msg
     });
     if (this.logs.length > 50) this.logs.shift();
@@ -799,7 +783,7 @@ class OkeyGame {
 
     // Place into player's discard pile
     this.discards[playerIndex].push(tile);
-    this.addLog(`${player.name} ${tile.getColor(this.indicator).toUpperCase()} ${tile.getValue(this.indicator)} attı.`);
+    this.addLog(`${player.name} ${tile.getTurkishName(this.indicator)} attı.`);
 
     // Check if player is finishing (El Bitişi - elinde taş kalmadı)
     if (player.hand.length === 0) {
@@ -961,7 +945,9 @@ class OkeyGame {
 
     const team1Score = (this.players[0] ? this.players[0].roundScore : 0) + (this.players[2] ? this.players[2].roundScore : 0);
     const team2Score = (this.players[1] ? this.players[1].roundScore : 0) + (this.players[3] ? this.players[3].roundScore : 0);
-    const isTeam1Winner = team1Score <= team2Score;
+    const isDraw = (team1Score === team2Score);
+    const isTeam1Winner = !isDraw && (team1Score < team2Score);
+    const isTeam2Winner = !isDraw && (team2Score < team1Score);
 
     this.roundResults = {
       currentRound: 1,
@@ -971,6 +957,7 @@ class OkeyGame {
       isOkeyDiscard,
       isPairsFinish,
       isEldenBitme,
+      isDraw,
       multiplier: isOkeyDiscard ? 2 : 1,
       roundScores,
       teamResults: {
@@ -984,8 +971,9 @@ class OkeyGame {
           name: `${p1Name} & ${p3Name}`,
           players: [p1Name, p3Name],
           score: team2Score,
-          isWinner: !isTeam1Winner
-        }
+          isWinner: isTeam2Winner
+        },
+        isDraw
       },
       totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
@@ -999,6 +987,7 @@ class OkeyGame {
       isOkeyDiscard,
       isPairsFinish,
       isEldenBitme,
+      isDraw,
       roundScores: { ...roundScores }
     });
 
@@ -1008,7 +997,11 @@ class OkeyGame {
     if (isOkeyDiscard) finishMsg += ' 🔥 OKEY ATTI (2x CEZA)!';
     if (isPairsFinish) finishMsg += ' ✨ ÇİFT BİTTİ!';
     this.addLog(finishMsg);
-    this.addLog(`🏆 Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
+    if (isDraw) {
+      this.addLog(`🤝 Maç Berabere Bitti! (Takım 1: ${team1Score} — Takım 2: ${team2Score})`);
+    } else {
+      this.addLog(`🏆 Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
+    }
   }
 
   endRoundNoWinner() {
@@ -1047,7 +1040,9 @@ class OkeyGame {
 
     const team1Score = (this.players[0] ? this.players[0].roundScore : 0) + (this.players[2] ? this.players[2].roundScore : 0);
     const team2Score = (this.players[1] ? this.players[1].roundScore : 0) + (this.players[3] ? this.players[3].roundScore : 0);
-    const isTeam1Winner = team1Score <= team2Score;
+    const isDraw = (team1Score === team2Score);
+    const isTeam1Winner = !isDraw && (team1Score < team2Score);
+    const isTeam2Winner = !isDraw && (team2Score < team1Score);
 
     this.roundResults = {
       currentRound: 1,
@@ -1055,6 +1050,7 @@ class OkeyGame {
       hasNextRound: false,
       finisher: null,
       reason: 'Deste bitti',
+      isDraw,
       roundScores,
       teamResults: {
         team1: {
@@ -1067,8 +1063,9 @@ class OkeyGame {
           name: `${p1Name} & ${p3Name}`,
           players: [p1Name, p3Name],
           score: team2Score,
-          isWinner: !isTeam1Winner
-        }
+          isWinner: isTeam2Winner
+        },
+        isDraw
       },
       totalScores: this.players.filter(Boolean).map(p => ({ id: p.id, name: p.name, score: p.score }))
     };
@@ -1080,11 +1077,16 @@ class OkeyGame {
       team2Score,
       finisher: null,
       reason: 'Deste bitti',
+      isDraw,
       roundScores: { ...roundScores }
     });
 
     this.addLog(`Deste bitti! Kalan eller sayıldı.`);
-    this.addLog(`🏆 Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
+    if (isDraw) {
+      this.addLog(`🤝 Maç Berabere Bitti! (Takım 1: ${team1Score} — Takım 2: ${team2Score})`);
+    } else {
+      this.addLog(`🏆 Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
+    }
   }
 
   nextRound() {
@@ -1415,6 +1417,7 @@ class OkeyGame {
       minOpenPairs: viewerReqs.minPairs,
       tableMinOpenScore: this.minOpenScore || 101,
       tableMinOpenPairs: this.minOpenPairs || 5,
+      partnerOpened: Boolean(this.players[(viewerSeatIndex + 2) % 4] && this.players[(viewerSeatIndex + 2) % 4].opened),
       tableMelds: this.tableMelds.map(m => ({
         id: m.id,
         playerIndex: m.playerIndex,

@@ -38,18 +38,35 @@ class Tile {
     return this.color;
   }
 
+  getTurkishColor(indicatorTile = null) {
+    const c = this.getColor(indicatorTile);
+    const colorMap = {
+      'red': 'Kırmızı',
+      'blue': 'Mavi',
+      'black': 'Siyah',
+      'yellow': 'Sarı',
+      'fake': 'Sahte'
+    };
+    return colorMap[c] || c;
+  }
+
+  getTurkishName(indicatorTile = null) {
+    const colorName = this.getTurkishColor(indicatorTile);
+    const val = this.getValue(indicatorTile);
+    if (this.isFake) {
+      return `Sahte Okey (${colorName} ${val})`;
+    }
+    if (indicatorTile && this.isOkey(indicatorTile)) {
+      return `OKEY (${colorName} ${val})`;
+    }
+    return `${colorName} ${val}`;
+  }
+
   /**
-   * Formats for easy debugging / logging
+   * Formats for easy debugging / logging in Turkish
    */
   toString(indicatorTile) {
-    if (this.isFake) {
-      if (indicatorTile) {
-        return `[Sahte Okey -> ${this.getColor(indicatorTile)} ${this.getValue(indicatorTile)}]`;
-      }
-      return `[Sahte Okey]`;
-    }
-    const isJoker = this.isOkey(indicatorTile) ? ' (OKEY)' : '';
-    return `[${this.color} ${this.number}${isJoker}]`;
+    return this.getTurkishName(indicatorTile);
   }
 
   toJSON() {

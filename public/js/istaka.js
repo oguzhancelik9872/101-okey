@@ -689,32 +689,33 @@ class IstakaManager {
       e.dataTransfer.setData('text/plain', tile.id);
       e.dataTransfer.effectAllowed = 'move';
 
-      // Create an exact solid clone off-screen for the drag preview so it is 100% opaque
+      // Create a 100% solid, identical clone directly in the viewport for the drag preview
+      const rect = el.getBoundingClientRect();
       const dragPreview = el.cloneNode(true);
-      dragPreview.classList.remove('dragging', 'selected', 'active-focus');
+      dragPreview.id = 'active-drag-tile-preview';
+      dragPreview.classList.remove('dragging', 'selected', 'active-focus', 'tile-just-drawn');
       dragPreview.style.position = 'fixed';
-      dragPreview.style.top = '-9999px';
-      dragPreview.style.left = '-9999px';
+      dragPreview.style.left = `${rect.left}px`;
+      dragPreview.style.top = `${rect.top}px`;
+      dragPreview.style.width = `${rect.width}px`;
+      dragPreview.style.height = `${rect.height}px`;
       dragPreview.style.opacity = '1';
+      dragPreview.style.visibility = 'visible';
       dragPreview.style.zIndex = '999999';
       dragPreview.style.pointerEvents = 'none';
       dragPreview.style.transform = 'none';
-      dragPreview.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.8), 0 4px 10px rgba(0, 0, 0, 0.6)';
+      dragPreview.style.margin = '0';
       document.body.appendChild(dragPreview);
 
-      if (e.dataTransfer.setDragImage) {
-        e.dataTransfer.setDragImage(dragPreview, 19, 26);
+      if (e.dataTransfer && e.dataTransfer.setDragImage) {
+        e.dataTransfer.setDragImage(dragPreview, (rect.width || 38) / 2, (rect.height || 52) / 2);
       }
 
       setTimeout(() => {
         if (dragPreview.parentNode) {
           dragPreview.parentNode.removeChild(dragPreview);
         }
-      }, 0);
-
-      requestAnimationFrame(() => {
-        el.classList.add('dragging');
-      });
+      }, 50);
     });
 
     el.addEventListener('dragend', () => {

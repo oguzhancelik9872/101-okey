@@ -2,3 +2,4 @@ node_modules/
 backups/
 .system_generated/
 *.log
+.env.local

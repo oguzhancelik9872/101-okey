@@ -24,6 +24,35 @@ const db = require('./db/database');
 
 const roomManager = new RoomManager(io);
 
+// Profanity Filter: Keeps 1st character, asterisks the rest for Turkish & English
+const BAD_WORDS = [
+  'orospu', 'orospuçocuğu', 'orospucocugu', 'siktir', 'siktirgidin', 'sikerim', 'sikeyim', 'siktiğimin', 'siktimin',
+  'sikik', 'sikiş', 'sikis', 'siktirgit', 'sik', 'yarrak', 'yarak', 'yarrağım', 'yarragim',
+  'amk', 'aq', 'amq', 'oç', 'oc', 'amına', 'amina', 'amınakoyayım', 'aminakoyayim', 'amınakoyim', 'aminakoyim',
+  'amcık', 'amcik', 'amcığı', 'amını', 'amcuk', 'piç', 'pic', 'piçkurusu', 'pickurusu', 'göt', 'got', 'götveren',
+  'götlek', 'götoş', 'gotos', 'puşt', 'pust', 'yavşak', 'yavsak', 'kahpe', 'kaşar', 'kasar', 'pezevenk', 'gavat',
+  'kavat', 'ibne', 'ipne', 'taşak', 'tasak', 'daşak', 'dasak', 'döl', 'dol', 'ananı', 'anani', 'ananın', 'ananin',
+  'ebeni', 'ebenin', 'bacını', 'bacini', 'sokarım', 'sokarim', 'bok', 'boktan', 'dalyarak', 'taşşak', 'tassak',
+  'fuck', 'fucker', 'fucking', 'fucked', 'motherfucker', 'bitch', 'bitches', 'shit', 'shitty', 'bullshit',
+  'asshole', 'ass', 'dick', 'dickhead', 'cunt', 'pussy', 'bastard', 'slut', 'whore', 'cock', 'cocksucker',
+  'nigger', 'nigga', 'faggot', 'retard', 'twat', 'wanker'
+].sort((a, b) => b.length - a.length);
+
+function censorProfanity(text) {
+  if (!text || typeof text !== 'string') return text;
+  let censored = text;
+  for (const bad of BAD_WORDS) {
+    const regex = new RegExp(`(^|[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ])${bad}([^a-zA-Z0-9çğıöşüÇĞİÖŞÜ]|$)`, 'gi');
+    censored = censored.replace(regex, (match, p1, p2) => {
+      const word = match.slice(p1.length, match.length - p2.length);
+      if (!word) return match;
+      const stars = '*'.repeat(Math.max(1, word.length - 1));
+      return p1 + word[0] + stars + p2;
+    });
+  }
+  return censored;
+}
+
 // Socket.IO Event Handlers
 io.on('connection', (socket) => {
   console.log(`[Socket] Client connected: ${socket.id}`);
@@ -537,10 +566,17 @@ io.on('connection', (socket) => {
   socket.on('sendChat', (data) => {
     const targetRoom = (data && data.roomId) || socket.roomId;
     if (!targetRoom || targetRoom === 'lobby') return;
+    const room = roomManager.rooms.get(targetRoom);
+    let senderSeatIndex = null;
+    if (room && room.game && room.game.players) {
+      senderSeatIndex = room.game.players.findIndex(p => p && p.id === socket.id);
+    }
+    const cleanText = censorProfanity((data && data.text) || '');
     io.to(targetRoom).emit('chatMessage', {
       sender: (data && data.sender) || 'Oyuncu',
-      text: (data && data.text) || '',
-      time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      senderSeatIndex: senderSeatIndex !== -1 ? senderSeatIndex : null,
+      text: cleanText,
+      time: new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' }),
       roomId: targetRoom
     });
   });
