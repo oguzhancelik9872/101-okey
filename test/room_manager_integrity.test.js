@@ -46,3 +46,20 @@ test('finished public room survives lobby reads and rejects outsider rematch vot
   assert.equal(vote.restarted, true);
   clearInterval(room.botInterval);
 });
+
+test('reconnecting human loses the temporary bot label', () => {
+  const manager = new RoomManager(makeIo());
+  const room = manager.getOrCreatePublicRoom();
+  manager.joinRoom(room.id, 'old-socket', 'Efe', 'usr-efe', 0);
+  room.game.fillWithBots();
+  room.game.state = GAME_STATES.PLAYING;
+
+  const player = room.game.players[0];
+  player.isBot = true;
+  player.name = 'Efe (Bot)';
+
+  const result = manager.reconnectPlayer(room.id, 'new-socket', 'usr-efe');
+  assert.equal(result.success, true);
+  assert.equal(player.isBot, false);
+  assert.equal(player.name, 'Efe');
+});

@@ -207,6 +207,8 @@ class RoomManager {
     if (existingPlayer) {
       existingPlayer.id = playerId;
       existingPlayer.isBot = false;
+      existingPlayer.name = String(playerName || existingPlayer.name || 'Oyuncu').replace(/\s*\(Bot\)\s*$/i, '');
+      existingPlayer.avatarFile = null;
       if (gender) existingPlayer.gender = gender;
       if (avatarIndex !== undefined && avatarIndex !== null) existingPlayer.avatarIndex = avatarIndex;
       if (!room.hostId || room.hostId === existingPlayer.userId || existingPlayer.seatIndex === 0) {
@@ -389,13 +391,14 @@ class RoomManager {
       return { success: false, reason: 'Oyun henüz başlamamış veya sona ermiş.' };
     }
 
-    const player = game.players.find(p => (userId && p.userId === userId) || p.id === userId || p.id === newSocketId);
+    const player = game.players.find(p => p && ((userId && p.userId === userId) || p.id === userId || p.id === newSocketId));
     if (!player) {
       return { success: false, reason: 'Bu masada size ait bir koltuk bulunamadı.' };
     }
 
     player.id = newSocketId;
     player.isBot = false;
+    player.name = String(player.name || 'Oyuncu').replace(/\s*\(Bot\)\s*$/i, '');
     if (player.seatIndex === 0) {
       room.hostId = newSocketId;
     }

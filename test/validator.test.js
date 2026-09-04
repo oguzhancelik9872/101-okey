@@ -49,6 +49,28 @@ const resJoker = Validator.isValidRun(runJoker, indicator);
 assert.strictEqual(resJoker.valid, true);
 assert.strictEqual(resJoker.score, 18); // 5 + 6 + 7 = 18
 
+// Rack order is authoritative: shuffled numbers are not silently optimized.
+const shuffledRun = [
+  new Tile('order10', COLORS.BLACK, 10),
+  new Tile('order12', COLORS.BLACK, 12),
+  new Tile('order11', COLORS.BLACK, 11)
+];
+assert.strictEqual(Validator.isValidRun(shuffledRun, indicator).valid, false);
+
+// A real Okey represents exactly the position where the player placed it.
+const positionalOkeyStart = [
+  new Tile('posOkeyStart', COLORS.RED, 9),
+  new Tile('pos10a', COLORS.BLACK, 10),
+  new Tile('pos11a', COLORS.BLACK, 11)
+];
+const positionalOkeyEnd = [
+  new Tile('pos10b', COLORS.BLACK, 10),
+  new Tile('pos11b', COLORS.BLACK, 11),
+  new Tile('posOkeyEnd', COLORS.RED, 9)
+];
+assert.strictEqual(Validator.isValidRun(positionalOkeyStart, indicator).score, 30); // 9 + 10 + 11
+assert.strictEqual(Validator.isValidRun(positionalOkeyEnd, indicator).score, 33); // 10 + 11 + 12
+
 // 2. Sahte Okey Tests
 console.log('2. Testing Sahte Okey behavior...');
 // Sahte Okey should behave as Red 9 (since indicator is Red 8)

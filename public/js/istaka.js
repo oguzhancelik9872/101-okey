@@ -58,10 +58,14 @@ class IstakaManager {
         slotEl.addEventListener('dragover', (e) => {
           e.preventDefault();
           e.dataTransfer.dropEffect = 'move';
-          slotEl.classList.add('drag-over');
+          if (window.draggedMeldGroup) {
+            this.showGroupDropPreview(r, c, window.draggedMeldGroup);
+          } else {
+            slotEl.classList.add('drag-over');
+          }
         });
         slotEl.addEventListener('dragleave', () => {
-          slotEl.classList.remove('drag-over');
+          if (!window.draggedMeldGroup) slotEl.classList.remove('drag-over');
         });
         slotEl.addEventListener('drop', (e) => {
           e.preventDefault();
@@ -71,6 +75,8 @@ class IstakaManager {
           if (action === 'ACTION:MOVE_MELD_GROUP' || window.draggedMeldGroup) {
             const mg = window.draggedMeldGroup;
             window.draggedMeldGroup = null;
+            this.clearDragHighlights();
+            this.removeGroupDragPreview();
             if (mg) {
               this.moveMeldGroup(mg.row, mg.startCol, mg.count, r, c);
               this.render();
@@ -352,6 +358,27 @@ class IstakaManager {
     }
   }
 
+  clearDragHighlights() {
+    document.querySelectorAll('.istaka-slot.drag-over, .istaka-slot.drag-group-over')
+      .forEach(slot => slot.classList.remove('drag-over', 'drag-group-over'));
+  }
+
+  showGroupDropPreview(targetRow, targetCol, group) {
+    this.clearDragHighlights();
+    if (!group || !group.count) return;
+    const startCol = Math.max(0, Math.min(this.COLS - group.count, targetCol - group.count + 1));
+    for (let index = 0; index < group.count; index++) {
+      const slot = this.container.querySelector(`.istaka-slot[data-row="${targetRow}"][data-col="${startCol + index}"]`);
+      if (slot) slot.classList.add('drag-group-over');
+    }
+  }
+
+  removeGroupDragPreview() {
+    if (!this.groupDragPreviewEl) return;
+    this.groupDragPreviewEl.remove();
+    this.groupDragPreviewEl = null;
+  }
+
   setIndicator(indicator) {
     this.indicator = indicator;
   }
@@ -410,6 +437,11 @@ class IstakaManager {
    * Loads incoming hand tiles into the rack
    */
   setHand(tiles, preservePositions = true, autoSortRuns = false) {
+    if (preservePositions && (this.draggedSource || window.draggedMeldGroup || (this.touchDrag && this.touchDrag.moved))) {
+      this.pendingServerHand = Array.isArray(tiles) ? [...tiles] : [];
+      return;
+    }
+
     const tileMap = new Map();
     tiles.forEach(t => tileMap.set(t.id, t));
 
@@ -475,6 +507,13 @@ class IstakaManager {
     }
 
     this.render();
+  }
+
+  flushPendingHand() {
+    if (!this.pendingServerHand || this.draggedSource || window.draggedMeldGroup || (this.touchDrag && this.touchDrag.moved)) return;
+    const pending = this.pendingServerHand;
+    this.pendingServerHand = null;
+    this.setHand(pending, true, false);
   }
 
   clearGrid() {
@@ -580,6 +619,8 @@ class IstakaManager {
                 preview.appendChild(clone);
               });
               document.body.appendChild(preview);
+              this.removeGroupDragPreview();
+              this.groupDragPreviewEl = preview;
 
               if (e.dataTransfer.setDragImage) {
                 const previewRect = preview.getBoundingClientRect();
@@ -588,14 +629,13 @@ class IstakaManager {
                 e.dataTransfer.setDragImage(preview, offsetX, offsetY);
               }
 
-              setTimeout(() => {
-                if (preview.parentNode) preview.parentNode.removeChild(preview);
-              }, 0);
             });
 
             handleEl.addEventListener('dragend', () => {
               window.draggedMeldGroup = null;
-              document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
+              this.clearDragHighlights();
+              this.removeGroupDragPreview();
+              this.flushPendingHand();
             });
 
             tileEl.appendChild(handleEl);
@@ -728,6 +768,7 @@ class IstakaManager {
       }
       document.querySelectorAll('.istaka-slot').forEach(s => s.classList.remove('drag-over'));
       document.querySelectorAll('.meld-drag-hover').forEach(m => m.classList.remove('meld-drag-hover'));
+      this.flushPendingHand();
     });
 
     // Native HTML drag/drop is unreliable or completely disabled on many
@@ -795,6 +836,7 @@ class IstakaManager {
         window.lastActionWasManualDrag = true;
         window.tableManager.onProcessTileDragDrop(tile.id, targetMeld.dataset.meldId);
       }
+      this.flushPendingHand();
     };
 
     el.addEventListener('pointerup', finishTouchDrag);
@@ -802,6 +844,7 @@ class IstakaManager {
       if (this.touchDrag?.pointerId === e.pointerId) this.touchDrag = null;
       el.classList.remove('dragging', 'touch-dragging');
       document.querySelectorAll('.mobile-drag-target').forEach(node => node.classList.remove('mobile-drag-target'));
+      this.flushPendingHand();
     });
 
     // Drop onto this specific tile to insert directly before/at this tile
@@ -809,7 +852,11 @@ class IstakaManager {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       const slot = el.closest('.istaka-slot');
-      if (slot) slot.classList.add('drag-over');
+      if (window.draggedMeldGroup) {
+        this.showGroupDropPreview(row, col, window.draggedMeldGroup);
+      } else if (slot) {
+        slot.classList.add('drag-over');
+      }
     });
 
     el.addEventListener('dragleave', () => {
@@ -827,6 +874,8 @@ class IstakaManager {
       if (action === 'ACTION:MOVE_MELD_GROUP' || window.draggedMeldGroup) {
         const mg = window.draggedMeldGroup;
         window.draggedMeldGroup = null;
+        this.clearDragHighlights();
+        this.removeGroupDragPreview();
         if (mg) {
           this.moveMeldGroup(mg.row, mg.startCol, mg.count, row, col);
           this.render();

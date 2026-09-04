@@ -1791,7 +1791,7 @@ body.plus-theme {
 }
 
 .my-turn-focus .grid-cell-slot .okey-tile .tile-number {
-  font-size: 15px !important;
+  font-size: clamp(18px, 2.1vw, 26px) !important;
 }
 
 .table-top-actions {
@@ -2145,15 +2145,15 @@ body.plus-theme {
 
 .grid-cell-slot .okey-tile .tile-number {
   font-family: 'Montserrat', sans-serif !important;
-  font-size: 14px !important;
+  font-size: clamp(18px, 2.1vw, 26px) !important;
   font-weight: 900 !important;
   line-height: 1 !important;
   margin-top: -2px !important;
 }
 
 .grid-cell-slot .okey-tile .tile-dot {
-  width: 3.5px !important;
-  height: 3.5px !important;
+  width: 5px !important;
+  height: 5px !important;
   border-radius: 50% !important;
   margin-top: 1px !important;
 }
@@ -2207,6 +2207,7 @@ body.plus-theme {
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
   font-family: 'Montserrat', sans-serif;
   box-sizing: border-box;
+  align-self: flex-start;
 }
 
 .scoreboard-teams-header {
@@ -2220,7 +2221,7 @@ body.plus-theme {
 
 .team-header-col {
   flex: 1;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   text-align: center;
   white-space: normal;
@@ -2248,8 +2249,8 @@ body.plus-theme {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 54px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
   width: 100%;
 }
 
@@ -2257,7 +2258,7 @@ body.plus-theme {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #d5e8dc;
   padding: 1.5px 2px;
@@ -2274,7 +2275,7 @@ body.plus-theme {
 }
 
 .score-round-row .round-tag {
-  font-size: 7px;
+  font-size: 9px;
   color: #a8d5ba;
   font-weight: 800;
   padding: 1px 3px;
@@ -2291,7 +2292,7 @@ body.plus-theme {
 }
 
 .score-empty-history {
-  font-size: 7.5px;
+  font-size: 10px;
   font-style: italic;
   color: rgba(255, 255, 255, 0.5);
   text-align: center;
@@ -3265,6 +3266,31 @@ body.plus-theme {
   transition: opacity 0.3s ease;
 }
 
+/* The upper player sits against the viewport edge, so their bubble opens below. */
+#seat-top .chat-speech-bubble {
+  top: calc(100% + 9px);
+  bottom: auto;
+}
+
+#seat-top .chat-speech-bubble .speech-bubble-pointer {
+  top: auto;
+  bottom: 100%;
+  transform: translate(-50%, 5px) rotate(225deg);
+}
+
+.istaka-slot.drag-group-over {
+  background: rgba(46, 204, 113, 0.3) !important;
+  border-color: #53ef91 !important;
+  box-shadow: inset 0 0 0 2px rgba(83, 239, 145, 0.75), 0 0 8px rgba(46, 204, 113, 0.5);
+}
+
+.meld-group-drag-preview .okey-tile {
+  flex: 0 0 38px;
+  width: 38px !important;
+  height: 52px !important;
+  opacity: 1 !important;
+}
+
 /* =========================================================
    MODALS & TOASTS (PLUS CASINO THEME)
    ========================================================= */
@@ -3836,7 +3862,7 @@ body.plus-theme {
   }
 
   .okey-tile.touch-dragging {
-    opacity: .72;
+    opacity: 1;
     transform: translateY(-5px) scale(1.06) !important;
     z-index: 100;
   }
@@ -3943,8 +3969,8 @@ body.plus-theme {
     min-width: 0;
     border-width: 0;
   }
-  .grid-cell-slot .okey-tile .tile-number { font-size: clamp(9px, 2.6vw, 16px) !important; }
-  .grid-cell-slot .okey-tile .tile-dot { width: 3px !important; height: 3px !important; }
+  .grid-cell-slot .okey-tile .tile-number { font-size: clamp(13px, 3.6vw, 20px) !important; }
+  .grid-cell-slot .okey-tile .tile-dot { width: 4px !important; height: 4px !important; }
 
   .pairs-section-wrapper {
     flex: 0 1 44px;
@@ -3972,8 +3998,9 @@ body.plus-theme {
   }
 
   .center-scoreboard-card { padding: 2px; gap: 1px; }
-  .scoreboard-rounds-list { max-height: 42px; }
-  .team-header-col, .score-round-row, .score-empty-history { font-size: 6px; }
+  .scoreboard-rounds-list { max-height: none; overflow: visible; }
+  .team-header-col, .score-round-row, .score-empty-history { font-size: 8px; }
+  .score-round-row .round-tag { font-size: 7px; }
   .total-score-val { font-size: 9px; }
   .total-label-badge { font-size: 5px; }
   .center-deck-target { padding: 2px 4px; gap: 0; margin: 0; }

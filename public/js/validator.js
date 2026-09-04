@@ -43,6 +43,50 @@ class ClientValidator {
     }
 
     const tileProps = tiles.map(t => this.getTileProps(t, indicator));
+    const regularTiles = tileProps.filter(t => !t.isOkey);
+    if (regularTiles.length > 0) {
+      const runColor = regularTiles[0].color;
+      if (regularTiles.some(t => t.color !== runColor)) {
+        return { valid: false, reason: 'Serideki tüm taşlar aynı renkte olmalıdır.' };
+      }
+      const numbers = regularTiles.map(t => t.number);
+      if (new Set(numbers).size !== numbers.length) {
+        return { valid: false, reason: 'Seride aynı sayıdan birden fazla taş bulunamaz.' };
+      }
+    }
+
+    let bestMatch = null;
+    for (const direction of [1, -1]) {
+      for (let start = 1; start <= 13; start++) {
+        const substituted = [];
+        let valid = true;
+        for (let index = 0; index < tileProps.length; index++) {
+          const expected = start + (direction * index);
+          const tile = tileProps[index];
+          if (expected < 1 || expected > 13 || (!tile.isOkey && tile.number !== expected)) {
+            valid = false;
+            break;
+          }
+          substituted.push({ id: tile.id, isOkey: tile.isOkey, substitutedNumber: expected, score: expected });
+        }
+        if (valid) {
+          const score = substituted.reduce((sum, item) => sum + item.score, 0);
+          if (!bestMatch || score > bestMatch.score) {
+            bestMatch = { valid: true, type: 'run', score, substituted, direction };
+          }
+        }
+      }
+    }
+
+    return bestMatch || { valid: false, reason: 'Taşlar, ıstakadaki sıralarıyla ardışık bir seri oluşturmuyor.' };
+  }
+
+  static _legacyIsValidRun(tiles, indicator) {
+    if (!tiles || tiles.length < 3 || tiles.length > 13) {
+      return { valid: false, reason: 'Seri 3 ile 13 taş arasında olmalıdır.' };
+    }
+
+    const tileProps = tiles.map(t => this.getTileProps(t, indicator));
     const jokers = tileProps.filter(t => t.isOkey);
     const regularTiles = tileProps.filter(t => !t.isOkey);
 
