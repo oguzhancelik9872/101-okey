@@ -204,7 +204,7 @@ class BotAI {
    * Decides which tile the bot should discard.
    * Avoids discarding Okey, avoids işlek tiles if possible, prefers lonely/useless tiles.
    */
-  static pickDiscardTile(hand, indicator, allOpenedMelds = []) {
+  static pickDiscardTile(hand, indicator, allOpenedMelds = [], options = {}) {
     if (!hand || hand.length === 0) return null;
 
     // Filter out real Okeys if we have any other option
@@ -238,7 +238,7 @@ class BotAI {
 
     // Count color/number neighbor support for each candidate
     let bestTile = targetPool[0];
-    let minSupport = 999;
+    let lowestRisk = Infinity;
 
     for (const t of targetPool) {
       let support = 0;
@@ -256,8 +256,17 @@ class BotAI {
         if (oc === c && Math.abs(onum - num) <= 2) support += 2;
       }
 
-      if (support < minSupport) {
-        minSupport = support;
+      // Before the next player opens, high tiles are dangerous: they can be
+      // taken from the side to open and make the bot pay 10x their value.
+      const receiverRiskMultiplier = options.nextPlayerOpened ? 0.45 : 2.2;
+      const highTileRisk = num * receiverRiskMultiplier;
+      const structureRisk = support * 4;
+      const duplicateCount = hand.filter(other => other.id !== t.id && other.getColor(indicator) === c && other.getValue(indicator) === num).length;
+      const duplicateSafety = duplicateCount > 0 ? -3 : 0;
+      const risk = highTileRisk + structureRisk + duplicateSafety;
+
+      if (risk < lowestRisk || (risk === lowestRisk && num < bestTile.getValue(indicator))) {
+        lowestRisk = risk;
         bestTile = t;
       }
     }

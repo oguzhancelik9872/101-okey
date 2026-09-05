@@ -1093,6 +1093,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const turnPlayer = state.currentTurn;
             const seatPos = table.getRelativePosition(turnPlayer);
             const isViewer = (turnPlayer === viewerSeatIndex);
+            const drewFromDiscard = Boolean(state.drawnFromDiscard && state.drawnFromDiscard.playerIndex === turnPlayer);
+            if (drewFromDiscard) {
+              window.soundEngine.playDrawDiscard();
+            } else {
+              window.soundEngine.playDrawDeck();
+            }
 
             if (isViewer && isRecentManualDrag) {
               window.lastManualDragTime = 0;
@@ -1123,6 +1129,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (discardedByPlayer !== null) {
         window.soundEngine.playDiscard();
       }
+
+      const penaltyIncreased = state.players && lastGameState.players && state.players.some((player, index) => {
+        const previous = lastGameState.players[index];
+        return player && previous && Number(player.penaltyPoints || 0) > Number(previous.penaltyPoints || 0);
+      });
+      if (penaltyIncreased) window.soundEngine.playPenalty();
     }
     lastGameState = state;
 
@@ -1543,7 +1555,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     socket.emit('drawTile', { roomId, source: 'deck' }, (res) => {
       if (res.success) {
-        window.soundEngine.playDrawDeck();
         if (res.tile && res.tile.id) {
           istaka.setDrawnTileId(res.tile.id);
         }
@@ -1562,7 +1573,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     socket.emit('drawTile', { roomId, source: 'discard' }, (res) => {
       if (res.success) {
-        window.soundEngine.playDrawDiscard();
         if (res.tile && res.tile.id) {
           istaka.setDrawnTileId(res.tile.id);
         }
@@ -1826,6 +1836,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnToggleMasterAudio = document.getElementById('btn-toggle-master-audio');
   const labelMasterAudioIcon = document.getElementById('label-master-audio-icon');
   const labelMasterAudioText = document.getElementById('label-master-audio-text');
+  const masterVolumeSlider = document.getElementById('master-volume-slider');
+  const masterVolumeValue = document.getElementById('master-volume-value');
   const drawerInGameActions = document.getElementById('drawer-in-game-actions');
   const btnDrawerLeaveTable = document.getElementById('btn-drawer-leave-table');
 
@@ -1928,6 +1940,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Master Sound Toggle & Settings Drawer Sync ---
   function syncSettingsDrawer() {
     const isMuted = window.soundEngine.isMuted();
+    const volumePercent = Math.round(window.soundEngine.getVolume() * 100);
+    if (masterVolumeSlider) masterVolumeSlider.value = String(volumePercent);
+    if (masterVolumeValue) masterVolumeValue.textContent = `${volumePercent}%`;
     if (btnToggleMasterAudio) {
       btnToggleMasterAudio.className = 'btn-sound-main-toggle ' + (isMuted ? 'muted' : 'active');
       if (labelMasterAudioIcon) labelMasterAudioIcon.textContent = isMuted ? '🔇' : '🔊';
@@ -1950,6 +1965,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isMuted) {
         window.soundEngine.playDiscard();
       }
+    });
+  }
+
+  if (masterVolumeSlider) {
+    masterVolumeSlider.addEventListener('input', () => {
+      const volume = window.soundEngine.setVolume(Number(masterVolumeSlider.value) / 100);
+      if (masterVolumeValue) masterVolumeValue.textContent = `${Math.round(volume * 100)}%`;
+      syncSettingsDrawer();
+    });
+    masterVolumeSlider.addEventListener('change', () => {
+      if (!window.soundEngine.isMuted()) window.soundEngine.playTilePlace();
     });
   }
 

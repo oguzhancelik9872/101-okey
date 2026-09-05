@@ -1202,13 +1202,30 @@ class OkeyGame {
         const botReqs = this.getMinOpenRequirements(botIndex);
         const best = BotAI.findBestMelds(bot.hand, this.indicator);
         if (best.score >= botReqs.minScore) {
-          const meldIds = best.melds.map(m => m.map(t => t.id));
-          this.openHand(botIndex, meldIds);
+          const opponentsOpened = this.players.some((p, index) => p && index % 2 !== botIndex % 2 && p.opened);
+          const usedTileCount = best.melds.reduce((sum, meld) => sum + meld.length, 0);
+          const hasRoomToImprove = bot.hand.length - usedTileCount >= 4;
+          const shouldWaitForStrongerOpen = !opponentsOpened && best.score < 153 && hasRoomToImprove && (bot.openingWaitTurns || 0) < 2;
+
+          if (shouldWaitForStrongerOpen) {
+            bot.openingWaitTurns = (bot.openingWaitTurns || 0) + 1;
+          } else {
+            const meldIds = best.melds.map(m => m.map(t => t.id));
+            this.openHand(botIndex, meldIds);
+            bot.openingWaitTurns = 0;
+          }
         } else {
           const pairs = BotAI.findAllPairs(bot.hand, this.indicator);
           if (pairs.length >= botReqs.minPairs) {
-            const pairIds = pairs.map(p => [p[0].id, p[1].id]);
-            this.openPairs(botIndex, pairIds);
+            const opponentsOpened = this.players.some((p, index) => p && index % 2 !== botIndex % 2 && p.opened);
+            const shouldWaitForSixthPair = !opponentsOpened && pairs.length === botReqs.minPairs && (bot.pairWaitTurns || 0) < 1;
+            if (shouldWaitForSixthPair) {
+              bot.pairWaitTurns = (bot.pairWaitTurns || 0) + 1;
+            } else {
+              const pairIds = pairs.map(p => [p[0].id, p[1].id]);
+              this.openPairs(botIndex, pairIds);
+              bot.pairWaitTurns = 0;
+            }
           }
         }
       }
@@ -1266,7 +1283,10 @@ class OkeyGame {
       if (this.turnState === 'DISCARD' && this.state === GAME_STATES.PLAYING && bot.hand.length > 0) {
         let chosenTile = null;
         try {
-          chosenTile = BotAI.pickDiscardTile(bot.hand, this.indicator, this.tableMelds);
+          const nextPlayer = this.players[(botIndex + 1) % 4];
+          chosenTile = BotAI.pickDiscardTile(bot.hand, this.indicator, this.tableMelds, {
+            nextPlayerOpened: Boolean(nextPlayer && nextPlayer.opened)
+          });
         } catch (pickErr) {
           console.warn('[BotAI] Error picking discard tile:', pickErr);
         }

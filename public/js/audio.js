@@ -13,7 +13,8 @@ class OkeyAudio {
 
     // Simple Sound Settings (Master Mute / Unmute)
     this.settings = {
-      muted: false
+      muted: false,
+      volume: 0.55
     };
 
     this.loadSettings();
@@ -31,6 +32,7 @@ class OkeyAudio {
     soundNames.forEach(name => {
       const audio = new Audio(`/audio/${name}.mp3`);
       audio.preload = 'auto';
+      this.mp3Audios[name] = audio;
       audio.addEventListener('canplaythrough', () => {
         this.mp3Audios[name] = audio;
       }, { once: true });
@@ -47,7 +49,7 @@ class OkeyAudio {
     if (this.mp3Audios[name] && !this.mp3Missing[name]) {
       try {
         const sound = this.mp3Audios[name].cloneNode();
-        sound.volume = Math.max(0, Math.min(1, volume));
+        sound.volume = Math.max(0, Math.min(1, volume * this.getEffectiveVolume()));
         sound.play().catch(() => {
           if (fallbackFn) fallbackFn.call(this);
         });
@@ -63,8 +65,13 @@ class OkeyAudio {
   loadSettings() {
     try {
       const saved = localStorage.getItem('okey101_sound_muted');
+      const rawSavedVolume = localStorage.getItem('okey101_sound_volume');
+      const savedVolume = Number(rawSavedVolume);
       if (saved !== null) {
         this.settings.muted = (saved === 'true');
+      }
+      if (rawSavedVolume !== null && Number.isFinite(savedVolume)) {
+        this.settings.volume = Math.max(0, Math.min(1, savedVolume));
       }
     } catch (e) {}
   }
@@ -72,6 +79,7 @@ class OkeyAudio {
   saveSettings() {
     try {
       localStorage.setItem('okey101_sound_muted', String(this.settings.muted));
+      localStorage.setItem('okey101_sound_volume', String(this.settings.volume));
     } catch (e) {}
   }
 
@@ -88,11 +96,24 @@ class OkeyAudio {
   }
 
   getEffectiveVolume() {
-    return this.settings.muted ? 0 : 0.85;
+    return this.settings.muted ? 0 : this.settings.volume;
+  }
+
+  getVolume() {
+    return this.settings.volume;
+  }
+
+  setVolume(value) {
+    const parsed = Number(value);
+    this.settings.volume = Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : 0.55;
+    this.settings.muted = this.settings.volume === 0;
+    this.saveSettings();
+    return this.settings.volume;
   }
 
   toggleMute() {
     this.settings.muted = !this.settings.muted;
+    if (!this.settings.muted && this.settings.volume === 0) this.settings.volume = 0.55;
     this.saveSettings();
     return this.settings.muted;
   }
@@ -377,7 +398,7 @@ class OkeyAudio {
     this.init();
     if (!this.ctx) return;
 
-    const notes = [392.00, 587.33]; // G4 -> D5 (Yumuşak, dinlendirici 5'li akor)
+    const notes = [523.25, 659.25]; // Kısa ve sıcak sıra bildirimi
     notes.forEach((freq, i) => {
       const t = this.ctx.currentTime + (i * 0.08);
       const osc = this.ctx.createOscillator();
@@ -386,14 +407,14 @@ class OkeyAudio {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, t);
 
-      gain.gain.setValueAtTime(vol * 0.4, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+      gain.gain.setValueAtTime(vol * 0.18, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(t);
-      osc.stop(t + 0.27);
+      osc.stop(t + 0.18);
     });
   }
 
@@ -416,14 +437,14 @@ class OkeyAudio {
     const gain = this.ctx.createGain();
 
     // Saniye azaldıkça frekans yükselir (gerilim ve farkındalık artışı)
-    const baseFreq = secondsLeft <= 3 ? 880 : (secondsLeft <= 5 ? 680 : 520);
-    const duration = secondsLeft <= 3 ? 0.055 : 0.04;
+    const baseFreq = secondsLeft <= 3 ? 560 : (secondsLeft <= 5 ? 480 : 400);
+    const duration = 0.035;
 
-    osc.type = 'triangle';
+    osc.type = 'sine';
     osc.frequency.setValueAtTime(baseFreq, t);
     osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.65, t + duration);
 
-    const gainVal = secondsLeft <= 3 ? vol * 0.5 : vol * 0.35;
+    const gainVal = secondsLeft <= 3 ? vol * 0.2 : vol * 0.12;
     gain.gain.setValueAtTime(gainVal, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
 
@@ -476,6 +497,28 @@ class OkeyAudio {
       osc.start(t);
       osc.stop(t + 0.38);
     });
+
+    // Kısa, filtrelenmiş alkış dokusu; sert yankı oluşturmadan kutlama hissi verir.
+    const sampleRate = this.ctx.sampleRate;
+    const applauseBuffer = this.ctx.createBuffer(1, Math.floor(sampleRate * 1.25), sampleRate);
+    const samples = applauseBuffer.getChannelData(0);
+    for (let i = 0; i < samples.length; i++) {
+      const pulse = Math.pow(Math.max(0, Math.sin(i / sampleRate * Math.PI * 9)), 10);
+      samples[i] = (Math.random() * 2 - 1) * (0.18 + pulse * 0.82) * Math.exp(-i / sampleRate * 1.15);
+    }
+    const applause = this.ctx.createBufferSource();
+    const applauseFilter = this.ctx.createBiquadFilter();
+    const applauseGain = this.ctx.createGain();
+    applause.buffer = applauseBuffer;
+    applauseFilter.type = 'bandpass';
+    applauseFilter.frequency.setValueAtTime(1450, this.ctx.currentTime);
+    applauseFilter.Q.setValueAtTime(0.65, this.ctx.currentTime);
+    applauseGain.gain.setValueAtTime(vol * 0.22, this.ctx.currentTime);
+    applauseGain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 1.2);
+    applause.connect(applauseFilter);
+    applauseFilter.connect(applauseGain);
+    applauseGain.connect(this.ctx.destination);
+    applause.start();
   }
 
   /**
