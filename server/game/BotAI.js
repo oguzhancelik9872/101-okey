@@ -201,6 +201,44 @@ class BotAI {
   }
 
   /**
+   * Situational opening decision. There is no turn counter: the bot reassesses
+   * pressure, hand quality and its stable risk personality on every turn.
+   */
+  static shouldOpenMelds({ hand, melds, score, minScore, indicator, opponentsOpened = false, deckRemaining = 106, opponentSmallestHand = 21, riskTolerance = 0.5, mustUseSideTile = false }) {
+    const usedIds = new Set(melds.flat().map(tile => tile.id));
+    const leftovers = hand.filter(tile => !usedIds.has(tile.id));
+    if (mustUseSideTile || score >= 153 || opponentsOpened || deckRemaining <= 18 || opponentSmallestHand <= 7 || leftovers.length <= 2) return true;
+
+    let improvementPotential = 0;
+    for (const tile of leftovers) {
+      const color = tile.getColor(indicator);
+      const number = tile.getValue(indicator);
+      const hasNeighbour = leftovers.some(other => other.id !== tile.id && other.getColor(indicator) === color && Math.abs(other.getValue(indicator) - number) <= 2);
+      const hasGroupMate = leftovers.some(other => other.id !== tile.id && other.getValue(indicator) === number && other.getColor(indicator) !== color);
+      if (hasNeighbour || hasGroupMate) improvementPotential++;
+    }
+
+    const margin = Math.max(0, score - minScore);
+    const utilization = usedIds.size / Math.max(1, hand.length);
+    const deckPressure = Math.max(0, Math.min(1, (70 - deckRemaining) / 52));
+    const personality = (riskTolerance - 0.5) * 14;
+    const utility = (margin * 0.35) + (utilization * 28) + (deckPressure * 24) + personality
+      - (Math.max(0, 153 - score) * 0.18) - (improvementPotential * 1.5);
+    return utility >= 31;
+  }
+
+  static shouldOpenPairs({ hand, pairs, minPairs, indicator, opponentsOpened = false, deckRemaining = 106, opponentSmallestHand = 21, riskTolerance = 0.5, mustUseSideTile = false }) {
+    const pairedIds = new Set(pairs.flat().map(tile => tile.id));
+    const leftovers = hand.filter(tile => !pairedIds.has(tile.id));
+    if (mustUseSideTile || pairs.length > minPairs || opponentsOpened || deckRemaining <= 18 || opponentSmallestHand <= 7 || leftovers.length <= 4) return true;
+
+    const duplicateProspects = leftovers.filter((tile, index) => leftovers.some((other, otherIndex) => otherIndex !== index && other.getValue(indicator) === tile.getValue(indicator))).length;
+    const deckPressure = Math.max(0, Math.min(1, (70 - deckRemaining) / 52));
+    const utility = (deckPressure * 22) + ((riskTolerance - 0.5) * 12) - (duplicateProspects * 2);
+    return utility >= 8;
+  }
+
+  /**
    * Decides which tile the bot should discard.
    * Avoids discarding Okey, avoids işlek tiles if possible, prefers lonely/useless tiles.
    */
@@ -258,7 +296,8 @@ class BotAI {
 
       // Before the next player opens, high tiles are dangerous: they can be
       // taken from the side to open and make the bot pay 10x their value.
-      const receiverRiskMultiplier = options.nextPlayerOpened ? 0.45 : 2.2;
+      const temperament = Number.isFinite(options.riskTolerance) ? options.riskTolerance : 0.5;
+      const receiverRiskMultiplier = options.nextPlayerOpened ? 0.45 : (2.55 - temperament * 0.7);
       const highTileRisk = num * receiverRiskMultiplier;
       const structureRisk = support * 4;
       const duplicateCount = hand.filter(other => other.id !== t.id && other.getColor(indicator) === c && other.getValue(indicator) === num).length;

@@ -1,9 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const BotAI = require('../server/game/BotAI');
-const OkeyGame = require('../server/game/OkeyGame');
 const Tile = require('../server/game/Tile');
-const { GAME_STATES } = require('../server/game/Constants');
 
 test('Bot avoids feeding an unopened next player a high loose tile', () => {
   const indicator = new Tile('indicator', 'red', 8);
@@ -18,16 +16,8 @@ test('Bot avoids feeding an unopened next player a high loose tile', () => {
   assert.equal(picked.id, 'low');
 });
 
-test('Bot may wait briefly for a stronger opening but cannot stall forever', () => {
-  const game = new OkeyGame('bot-wait-test');
-  for (let index = 0; index < 4; index++) {
-    game.addPlayer(`bot-${index}`, `Bot ${index}`, true, null, null, index);
-  }
-  game.state = GAME_STATES.PLAYING;
-  game.currentTurn = 0;
-  game.turnState = 'DISCARD';
-  game.indicator = new Tile('indicator', 'red', 1);
-
+test('Bot opening choice reacts to table pressure instead of fixed turn counters', () => {
+  const indicator = new Tile('indicator', 'red', 1);
   const hand = [];
   for (const number of [9, 11, 12, 13]) {
     for (const color of ['red', 'blue', 'black']) {
@@ -40,13 +30,31 @@ test('Bot may wait briefly for a stronger opening but cannot stall forever', () 
     new Tile('extra-3', 'black', 5),
     new Tile('extra-4', 'yellow', 7)
   );
-  game.players[0].hand = hand;
+  const best = BotAI.findBestMelds(hand, indicator);
+  assert.equal(best.score, 135);
 
-  game.executeBotPlay(0);
-  assert.equal(game.players[0].opened, false);
-  assert.equal(game.players[0].openingWaitTurns, 1);
-  game.executeBotPlay(0);
-  assert.equal(game.players[0].opened, false);
-  game.executeBotPlay(0);
-  assert.equal(game.players[0].opened, true);
+  const calmDecision = BotAI.shouldOpenMelds({
+    hand,
+    melds: best.melds,
+    score: best.score,
+    minScore: 101,
+    indicator,
+    deckRemaining: 80,
+    opponentSmallestHand: 20,
+    riskTolerance: 0.25
+  });
+  const pressuredDecision = BotAI.shouldOpenMelds({
+    hand,
+    melds: best.melds,
+    score: best.score,
+    minScore: 101,
+    indicator,
+    opponentsOpened: true,
+    deckRemaining: 35,
+    opponentSmallestHand: 10,
+    riskTolerance: 0.25
+  });
+
+  assert.equal(calmDecision, false);
+  assert.equal(pressuredDecision, true);
 });

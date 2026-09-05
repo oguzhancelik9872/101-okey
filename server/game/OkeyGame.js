@@ -94,6 +94,10 @@ class OkeyGame {
       penaltyPoints: 0,   // Accumulated penalty points in current round (+101, +202 etc)
       penalties: []
     };
+    if (isBot) {
+      const personalitySeed = String(id || name || '').split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      player.riskTolerance = 0.25 + ((personalitySeed % 51) / 100);
+    }
     this.players[seatIndex] = player;
     return player;
   }
@@ -1203,28 +1207,43 @@ class OkeyGame {
         const best = BotAI.findBestMelds(bot.hand, this.indicator);
         if (best.score >= botReqs.minScore) {
           const opponentsOpened = this.players.some((p, index) => p && index % 2 !== botIndex % 2 && p.opened);
-          const usedTileCount = best.melds.reduce((sum, meld) => sum + meld.length, 0);
-          const hasRoomToImprove = bot.hand.length - usedTileCount >= 4;
-          const shouldWaitForStrongerOpen = !opponentsOpened && best.score < 153 && hasRoomToImprove && (bot.openingWaitTurns || 0) < 2;
+          const opponentHands = this.players.filter((p, index) => p && index % 2 !== botIndex % 2).map(p => p.hand.length);
+          const shouldOpen = BotAI.shouldOpenMelds({
+            hand: bot.hand,
+            melds: best.melds,
+            score: best.score,
+            minScore: botReqs.minScore,
+            indicator: this.indicator,
+            opponentsOpened,
+            deckRemaining: this.deck ? this.deck.remainingCount() : 0,
+            opponentSmallestHand: opponentHands.length ? Math.min(...opponentHands) : 21,
+            riskTolerance: bot.riskTolerance,
+            mustUseSideTile: Boolean(this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === botIndex)
+          });
 
-          if (shouldWaitForStrongerOpen) {
-            bot.openingWaitTurns = (bot.openingWaitTurns || 0) + 1;
-          } else {
+          if (shouldOpen) {
             const meldIds = best.melds.map(m => m.map(t => t.id));
             this.openHand(botIndex, meldIds);
-            bot.openingWaitTurns = 0;
           }
         } else {
           const pairs = BotAI.findAllPairs(bot.hand, this.indicator);
           if (pairs.length >= botReqs.minPairs) {
             const opponentsOpened = this.players.some((p, index) => p && index % 2 !== botIndex % 2 && p.opened);
-            const shouldWaitForSixthPair = !opponentsOpened && pairs.length === botReqs.minPairs && (bot.pairWaitTurns || 0) < 1;
-            if (shouldWaitForSixthPair) {
-              bot.pairWaitTurns = (bot.pairWaitTurns || 0) + 1;
-            } else {
+            const opponentHands = this.players.filter((p, index) => p && index % 2 !== botIndex % 2).map(p => p.hand.length);
+            const shouldOpen = BotAI.shouldOpenPairs({
+              hand: bot.hand,
+              pairs,
+              minPairs: botReqs.minPairs,
+              indicator: this.indicator,
+              opponentsOpened,
+              deckRemaining: this.deck ? this.deck.remainingCount() : 0,
+              opponentSmallestHand: opponentHands.length ? Math.min(...opponentHands) : 21,
+              riskTolerance: bot.riskTolerance,
+              mustUseSideTile: Boolean(this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === botIndex)
+            });
+            if (shouldOpen) {
               const pairIds = pairs.map(p => [p[0].id, p[1].id]);
               this.openPairs(botIndex, pairIds);
-              bot.pairWaitTurns = 0;
             }
           }
         }
@@ -1285,7 +1304,8 @@ class OkeyGame {
         try {
           const nextPlayer = this.players[(botIndex + 1) % 4];
           chosenTile = BotAI.pickDiscardTile(bot.hand, this.indicator, this.tableMelds, {
-            nextPlayerOpened: Boolean(nextPlayer && nextPlayer.opened)
+            nextPlayerOpened: Boolean(nextPlayer && nextPlayer.opened),
+            riskTolerance: bot.riskTolerance
           });
         } catch (pickErr) {
           console.warn('[BotAI] Error picking discard tile:', pickErr);
