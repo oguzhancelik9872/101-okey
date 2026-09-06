@@ -2818,8 +2818,8 @@ body.plus-theme {
 }
 
 .plus-discard-box.can-draw-pulse .okey-tile {
-  animation: discardTileBob 1.2s infinite alternate ease-in-out !important;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.8) !important;
+  animation: discardTileBob 1.6s infinite alternate ease-in-out !important;
+  box-shadow: 0 5px 13px rgba(0, 0, 0, 0.7) !important;
 }
 
 @keyframes discardTileBob {
@@ -2827,7 +2827,7 @@ body.plus-theme {
     transform: translateY(0px);
   }
   100% {
-    transform: translateY(-6px);
+    transform: translateY(-2px);
   }
 }
 
@@ -2918,16 +2918,16 @@ body.plus-theme {
 .istaka-slot .okey-tile.tile-just-drawn {
   border: 1.5px solid #f1c40f !important;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.75), 0 0 10px rgba(241, 196, 15, 0.6) !important;
-  animation: tileFloatBob 1.2s infinite alternate ease-in-out !important;
+  animation: tileFloatBob 1.6s infinite alternate ease-in-out !important;
   z-index: 20;
 }
 
 @keyframes tileFloatBob {
   0% {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
   100% {
-    transform: translateY(-7px);
+    transform: translateY(-3px);
   }
 }
 
