@@ -1094,11 +1094,7 @@ class OkeyGame {
     if (isOkeyDiscard) finishMsg += ' 🔥 OKEY ATTI (2x CEZA)!';
     if (isPairsFinish) finishMsg += ' ✨ ÇİFT BİTTİ!';
     this.addLog(finishMsg);
-    if (isDraw) {
-      this.addLog(`🤝 Maç Berabere Bitti! (Takım 1: ${team1Score} — Takım 2: ${team2Score})`);
-    } else {
-      this.addLog(`🏆 Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
-    }
+    this.addLog(`📊 ${this.currentRound}. el puanları skor tablosuna eklendi.`);
   }
 
   endRoundNoWinner() {
@@ -1179,11 +1175,7 @@ class OkeyGame {
     });
 
     this.addLog(`Deste bitti! Kalan eller sayıldı.`);
-    if (isDraw) {
-      this.addLog(`🤝 Maç Berabere Bitti! (Takım 1: ${team1Score} — Takım 2: ${team2Score})`);
-    } else {
-      this.addLog(`🏆 Maçın Kazananı: ${isTeam1Winner ? `${p0Name} & ${p2Name}` : `${p1Name} & ${p3Name}`}`);
-    }
+    this.addLog(`📊 ${this.currentRound}. el puanları skor tablosuna eklendi.`);
   }
 
   nextRound() {

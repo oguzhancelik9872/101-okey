@@ -178,6 +178,46 @@ class UIManager {
       </div>
     `;
 
+    // Her el bağımsız bir maç değildir. Bu pencerede yalnızca o elde
+    // oyuncuların aldığı puanlar gösterilir; genel durum orta skor alanındadır.
+    const handNumber = Number(results.currentRound || 1);
+    const playerNames = [
+      t1 && t1.players ? t1.players[0] : null,
+      t2 && t2.players ? t2.players[0] : null,
+      t1 && t1.players ? t1.players[1] : null,
+      t2 && t2.players ? t2.players[1] : null
+    ].filter(Boolean);
+    const renderHandScore = (playerName) => {
+      const entry = Object.values(roundScores).find(player => player.name === playerName) || {};
+      const points = Number(entry.points || 0);
+      const pointColor = points <= 0 ? '#2ecc71' : '#f1c40f';
+      return `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; padding:10px 13px; border-radius:12px; border:1px solid rgba(255,255,255,0.11); background:rgba(0,0,0,0.28);">
+          <strong style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:13px;">${this.escapeHTML(playerName)}</strong>
+          <span style="flex:0 0 auto; color:${pointColor}; font-size:17px; font-weight:900;">${points > 0 ? '+' : ''}${points}</span>
+        </div>
+      `;
+    };
+
+    html = `
+      <div class="round-result-header" style="text-align:center; margin-bottom:16px;">
+        <span style="display:block; color:#72c990; font-size:10px; font-weight:900; letter-spacing:2px; margin-bottom:4px;">EL SONU</span>
+        <h2 style="font-family:'Cinzel',serif; font-size:23px; font-weight:900; color:#f1c40f; letter-spacing:1.5px; margin:0;">${handNumber}. EL TAMAMLANDI</h2>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
+        ${playerNames.map(renderHandScore).join('')}
+      </div>
+      <p style="margin:14px 0 0; text-align:center; color:#91aa9a; font-size:11px;">Biriken puanlar masanın ortasındaki el skorlarında gösterilir.</p>
+      <div class="round-result-actions" style="margin-top:16px; display:flex; gap:10px; justify-content:center;">
+        <button id="btn-vote-rematch" class="btn-plus-gold" style="flex:2; padding:12px 18px; font-size:14px; font-weight:900;">
+          🔄 Sonraki Eli Başlat
+        </button>
+        <button id="btn-result-leave" class="btn-danger-action" style="flex:1; padding:12px 14px; font-size:13px; font-weight:800; border-radius:14px; background:rgba(231,76,60,0.3); border:1.5px solid #e74c3c; color:#ff7675; cursor:pointer;">
+          🚪 Masadan Ayrıl
+        </button>
+      </div>
+    `;
+
     content.innerHTML = html;
     modal.classList.remove('hidden');
 
@@ -200,11 +240,6 @@ class UIManager {
       });
     }
 
-    try {
-      if (window.soundEngine && typeof window.soundEngine.playVictory === 'function') {
-        window.soundEngine.playVictory();
-      }
-    } catch (e) {}
   }
 
   showGameOverModal(totalScores) {
