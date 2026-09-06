@@ -1003,7 +1003,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!(window.pendingMeldTileIds instanceof Set)) window.pendingMeldTileIds = new Set();
     if (typeof window.flyingDiscardSeatPos === 'undefined') window.flyingDiscardSeatPos = null;
 
-    if (lastGameState && lastGameState.state === 'PLAYING' && state.state === 'PLAYING') {
+    const isRoundEndingUpdate = state.state === 'ROUND_OVER' || state.state === 'GAME_OVER';
+    const isActionStateUpdate = state.state === 'PLAYING' || isRoundEndingUpdate;
+
+    if (lastGameState && lastGameState.state === 'PLAYING' && isActionStateUpdate) {
       const countDiscards = (s) => (s && s.discards) ? s.discards.reduce((acc, p) => acc + (p ? p.length : 0), 0) : 0;
       const lastDiscardCount = countDiscards(lastGameState);
       const currentDiscardCount = countDiscards(state);
@@ -1015,7 +1018,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (curPile.length > lastPile.length) {
             const isViewer = (p === viewerSeatIndex);
             const isRecentManual = (Date.now() - (window.lastManualDragTime || 0)) < 3000;
-            if (!isViewer || !isRecentManual) {
+            // A finishing discard always gets the full flight animation. The
+            // result modal waits for this tile to land before it can appear.
+            if (isRoundEndingUpdate || !isViewer || !isRecentManual) {
               window.flyingDiscardSeatPos = table.getRelativePosition(p);
             }
             break;
@@ -1081,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Audio and Visual Flying Tile Animations for Table Actions
-    if (lastGameState && lastGameState.state === 'PLAYING' && state.state === 'PLAYING') {
+    if (lastGameState && lastGameState.state === 'PLAYING' && isActionStateUpdate) {
       const anim = window.tileAnimations;
 
       // 1. Detect if someone discarded a tile
@@ -1206,7 +1211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (discardedByPlayer === viewerSeatIndex && discardedTile) {
           // Viewer discarded a tile
           const seatPos = table.getRelativePosition(viewerSeatIndex);
-          if (isRecentManualDrag) {
+          if (isRecentManualDrag && !isRoundEndingUpdate) {
             window.lastManualDragTime = 0;
             window.flyingDiscardSeatPos = null;
             table.renderDiscards();
@@ -1290,7 +1295,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if ((state.state === 'ROUND_OVER' || state.state === 'GAME_OVER') && state.roundResults) {
       if (!window.roundResultModalActive) {
         window.roundResultModalActive = true;
-        setTimeout(() => {
+        const resultRoomId = roomId;
+        const resultRound = state.currentRound;
+        const showRoundResult = () => {
+          const latestStateIsSameResult = currentGameState &&
+            (currentGameState.state === 'ROUND_OVER' || currentGameState.state === 'GAME_OVER') &&
+            currentGameState.currentRound === resultRound && roomId === resultRoomId;
+          if (!latestStateIsSameResult) return;
+
           ui.showRoundResultModal(state.roundResults, (action) => {
             if (action === 'rematch') {
               socket.emit('voteRematch', { roomId }, (res) => {
@@ -1314,7 +1326,19 @@ document.addEventListener('DOMContentLoaded', () => {
               showLobby();
             }
           });
-        }, 500);
+        };
+
+        // timeoutActionSequence is queued with a zero-delay callback. Check on
+        // the next task so that sequence is included, then wait until every
+        // opening/processing/discard flight (especially the final discard) ends.
+        setTimeout(() => {
+          const anim = window.tileAnimations;
+          if (anim && typeof anim.isBusy === 'function' && anim.isBusy() && typeof anim.whenIdle === 'function') {
+            anim.whenIdle(showRoundResult);
+          } else {
+            requestAnimationFrame(showRoundResult);
+          }
+        }, 0);
       }
     } else if (state.state === 'PLAYING') {
       window.roundResultModalActive = false;

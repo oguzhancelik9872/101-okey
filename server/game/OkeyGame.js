@@ -542,6 +542,12 @@ class OkeyGame {
       return { success: false, reason: validation.reason };
     }
 
+    // A hand can only be won by discarding the final tile. Opening every tile
+    // would leave nothing to discard and must therefore be rejected atomically.
+    if (usedTileIds.size >= player.hand.length) {
+      return { success: false, reason: 'Bitmek için elinizde son bir taş bırakıp onu yana atmalısınız.' };
+    }
+
     // Remove tiles from player's hand
     player.hand = player.hand.filter(t => !usedTileIds.has(t.id));
 
@@ -689,6 +695,12 @@ class OkeyGame {
     }
     if (pairs.length < minRequired) return { success: false, reason: `En az ${minRequired} çift açmalısınız.` };
 
+    // Pair opening is not a finishing action; one tile must remain for the
+    // player's explicit sideways discard.
+    if (usedTileIds.size >= player.hand.length) {
+      return { success: false, reason: 'Bitmek için elinizde son bir taş bırakıp onu yana atmalısınız.' };
+    }
+
     player.hand = player.hand.filter(t => !usedTileIds.has(t.id));
 
     for (let pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
@@ -803,6 +815,13 @@ class OkeyGame {
       return { success: false, reason: 'Bu taş seçilen pere işlenemez.' };
     }
 
+    // Replacing an Okey gives that Okey back to the player, so it still leaves
+    // a discard tile. Every other last-tile process attempt must be blocked.
+    const receivesStolenOkey = Boolean(processCheck.isOkeySteal && processCheck.stolenOkeyTile);
+    if (player.hand.length === 1 && !receivesStolenOkey) {
+      return { success: false, reason: 'Bitmek için elinizde son bir taş bırakıp onu yana atmalısınız.' };
+    }
+
     // Remove tile from hand
     player.hand = player.hand.filter(t => t.id !== tileId);
     targetMeld.tiles = processCheck.newTiles;
@@ -834,12 +853,6 @@ class OkeyGame {
       }
     } else {
       this.addLog(`${player.name} masadaki pere taş işledi.`);
-    }
-
-    // Check if player has finished all tiles
-    if (player.hand.length === 0) {
-      this.endRound(playerIndex, false);
-      return { success: true, finished: true, okeyStolen: processCheck.isOkeySteal };
     }
 
     return {
