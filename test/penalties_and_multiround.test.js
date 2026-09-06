@@ -166,6 +166,8 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(game.state, GAME_STATES.PLAYING);
   assert.deepStrictEqual(game.matchHistory, firstHandHistory);
   assert.deepStrictEqual(game.players.map(p => p && p.score), firstHandTotals);
+  assert.deepStrictEqual(game.players.map(p => p && p.penaltyPoints), [0, 0, 0, 0]);
+  assert.deepStrictEqual(game.players.map(p => p && p.penalties.length), [0, 0, 0, 0]);
   assert.strictEqual(game.currentRound, 2);
   assert.strictEqual(game.firstPlayerIndex, 1); // Rotated to seat 1 (counter-clockwise)!
   assert.strictEqual(game.currentTurn, 1);
@@ -326,6 +328,41 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(uGame.tableMelds.length, 0);
   assert.strictEqual(uGame.players[0].hand.length, originalHandCount);
   console.log('   Undo Turn (Vazgeç): PASSED (Hand and table completely restored!)');
+
+  // 11. A prior +101 penalty may cancel the finisher's -101 in the net score,
+  // but all three values must remain available to the result screen.
+  const scoreBreakdownGame = new OkeyGame('test_finish_score_breakdown');
+  for (let i = 0; i < 4; i++) {
+    scoreBreakdownGame.addPlayer(`sbp_${i}`, `Oyuncu ${i + 1}`, false, 'female', null, i);
+  }
+  scoreBreakdownGame.startRound(0);
+  scoreBreakdownGame.otherPlayersEverOpened = true;
+  scoreBreakdownGame.players[0].opened = true;
+  scoreBreakdownGame.players[0].openedInThisTurn = false;
+  scoreBreakdownGame.players[0].penaltyPoints = 101;
+  scoreBreakdownGame.players[0].penalties = [
+    { type: 'TEST_PENALTY', points: 101, desc: 'Test cezası (+101)' }
+  ];
+  scoreBreakdownGame.endRound(0, false);
+
+  const finisherBreakdown = scoreBreakdownGame.roundResults.roundScores.sbp_0;
+  const partnerBreakdown = scoreBreakdownGame.roundResults.roundScores.sbp_2;
+  assert.deepStrictEqual(
+    {
+      basePoints: finisherBreakdown.basePoints,
+      penaltyPoints: finisherBreakdown.penaltyPoints,
+      points: finisherBreakdown.points
+    },
+    { basePoints: -101, penaltyPoints: 101, points: 0 }
+  );
+  assert.deepStrictEqual(
+    {
+      basePoints: partnerBreakdown.basePoints,
+      penaltyPoints: partnerBreakdown.penaltyPoints,
+      points: partnerBreakdown.points
+    },
+    { basePoints: 0, penaltyPoints: 0, points: 0 }
+  );
 
   console.log('🎉 ALL PENALTY & REMATCH TESTS PASSED SUCCESSFULLY!');
 });

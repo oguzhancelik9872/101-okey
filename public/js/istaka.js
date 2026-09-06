@@ -725,7 +725,7 @@ class IstakaManager {
 
     // Drag handlers
     el.addEventListener('dragstart', (e) => {
-      if (window.isGameInteractionLocked && window.isGameInteractionLocked()) {
+      if (window.isRackLayoutLocked && window.isRackLayoutLocked()) {
         e.preventDefault();
         return;
       }
@@ -780,7 +780,7 @@ class IstakaManager {
     // table-meld actions for a finger/stylus without breaking mouse drag.
     el.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' || e.button !== 0) return;
-      if (window.isGameInteractionLocked && window.isGameInteractionLocked()) return;
+      if (window.isRackLayoutLocked && window.isRackLayoutLocked()) return;
       this.touchDrag = {
         pointerId: e.pointerId,
         startX: e.clientX,
@@ -814,7 +814,7 @@ class IstakaManager {
       el.releasePointerCapture?.(e.pointerId);
       el.classList.remove('dragging', 'touch-dragging');
       document.querySelectorAll('.mobile-drag-target').forEach(node => node.classList.remove('mobile-drag-target'));
-      if (window.isGameInteractionLocked && window.isGameInteractionLocked()) {
+      if (window.isRackLayoutLocked && window.isRackLayoutLocked()) {
         this.flushPendingHand();
         return;
       }
@@ -879,7 +879,7 @@ class IstakaManager {
     el.addEventListener('drop', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (window.isGameInteractionLocked && window.isGameInteractionLocked()) return;
+      if (window.isRackLayoutLocked && window.isRackLayoutLocked()) return;
       const slot = el.closest('.istaka-slot');
       if (slot) slot.classList.remove('drag-over');
 
@@ -925,7 +925,7 @@ class IstakaManager {
     // Click & Double-Click Handler (Foolproof across all devices and DOM re-renders)
     el.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (window.isGameInteractionLocked && window.isGameInteractionLocked()) return;
+      if (window.isRackLayoutLocked && window.isRackLayoutLocked()) return;
       if (Date.now() < (this.suppressClickUntil || 0)) return;
       const now = Date.now();
       const isDouble = (this.lastClickTileId === tile.id && (now - (this.lastClickTime || 0)) < 350);
@@ -991,7 +991,7 @@ class IstakaManager {
   }
 
   handleSlotClick(e, row, col) {
-    if (window.isGameInteractionLocked && window.isGameInteractionLocked()) return;
+    if (window.isRackLayoutLocked && window.isRackLayoutLocked()) return;
     if (this.activeMeldGroup) {
       const mg = this.activeMeldGroup;
       this.activeMeldGroup = null;

@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastGameState = null;
   let localActionLockUntil = 0;
   let turnFocusRequestId = 0;
+  let viewerRackAnimationLocks = 0;
 
   function isGameInteractionLocked() {
     const anim = window.tileAnimations;
@@ -30,6 +31,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.isGameInteractionLocked = isGameInteractionLocked;
+  window.isRackLayoutLocked = () => viewerRackAnimationLocks > 0;
+
+  function beginViewerRackAnimation() {
+    viewerRackAnimationLocks += 1;
+    document.documentElement.classList.add('viewer-rack-animation-busy');
+  }
+
+  function endViewerRackAnimation() {
+    viewerRackAnimationLocks = Math.max(0, viewerRackAnimationLocks - 1);
+    if (viewerRackAnimationLocks === 0) {
+      document.documentElement.classList.remove('viewer-rack-animation-busy');
+    }
+  }
 
   // Initialize Istaka & Table Managers
   const istaka = new IstakaManager(
@@ -1088,8 +1102,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const seatPos = table.getRelativePosition(playerIndex);
             const isViewer = playerIndex === viewerSeatIndex;
             const openType = playerMelds.every(meld => meld.type === 'pairs') ? 'pairs' : 'seri';
+            if (isViewer) beginViewerRackAnimation();
             anim.animateOpenMelds(seatPos, playerMelds, openType, isViewer, () => {
               if (isViewer && me && me.hand) istaka.setHand(me.hand, true, false);
+              if (isViewer) endViewerRackAnimation();
             });
           });
         }
@@ -1106,7 +1122,10 @@ document.addEventListener('DOMContentLoaded', () => {
               const turnPlayer = (discardedByPlayer !== null) ? discardedByPlayer : state.currentTurn;
               const seatPos = table.getRelativePosition(turnPlayer);
               const isViewer = (turnPlayer === viewerSeatIndex);
-              anim.animateProcessTile(seatPos, addedTile, isViewer);
+              if (isViewer) beginViewerRackAnimation();
+              anim.animateProcessTile(seatPos, addedTile, isViewer, () => {
+                if (isViewer) endViewerRackAnimation();
+              });
               break;
             }
             // Case 2: Tile processed to a pair meld (e.g. replacing Okey Joker in pair)
@@ -1117,7 +1136,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const turnPlayer = (discardedByPlayer !== null) ? discardedByPlayer : state.currentTurn;
                 const seatPos = table.getRelativePosition(turnPlayer);
                 const isViewer = (turnPlayer === viewerSeatIndex);
-                anim.animateProcessTile(seatPos, replacedTile, isViewer);
+                if (isViewer) beginViewerRackAnimation();
+                anim.animateProcessTile(seatPos, replacedTile, isViewer, () => {
+                  if (isViewer) endViewerRackAnimation();
+                });
                 break;
               }
             }
@@ -1421,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnSortRuns) {
     btnSortRuns.addEventListener('click', () => {
-      if (guardAnimationOverlap()) return;
+      if (window.isRackLayoutLocked && window.isRackLayoutLocked()) return;
       const isMyTurn = currentGameState && currentGameState.currentTurn === viewerSeatIndex;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
       istaka.autoSortRuns(requiredId);
@@ -1430,7 +1452,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnSortPairs) {
     btnSortPairs.addEventListener('click', () => {
-      if (guardAnimationOverlap()) return;
+      if (window.isRackLayoutLocked && window.isRackLayoutLocked()) return;
       const isMyTurn = currentGameState && currentGameState.currentTurn === viewerSeatIndex;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
       const viewerPlayer = currentGameState && currentGameState.players ? currentGameState.players[viewerSeatIndex] : null;

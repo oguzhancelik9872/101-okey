@@ -184,11 +184,17 @@ class UIManager {
     const renderHandScore = (playerName) => {
       const entry = Object.values(roundScores).find(player => player.name === playerName) || {};
       const points = Number(entry.points || 0);
+      const basePoints = Number(entry.basePoints || 0);
+      const penaltyPoints = Number(entry.penaltyPoints || 0);
       const pointColor = points <= 0 ? '#2ecc71' : '#f1c40f';
+      const signed = value => `${value > 0 ? '+' : ''}${value}`;
+      const scoreText = penaltyPoints > 0
+        ? `${signed(basePoints)} +${penaltyPoints} = ${signed(points)}`
+        : signed(points);
       return `
         <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; padding:10px 13px; border-radius:12px; border:1px solid rgba(255,255,255,0.11); background:rgba(0,0,0,0.28);">
           <strong style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:13px;">${this.escapeHTML(playerName)}</strong>
-          <span style="flex:0 0 auto; color:${pointColor}; font-size:17px; font-weight:900;">${points > 0 ? '+' : ''}${points}</span>
+          <span style="flex:0 0 auto; color:${pointColor}; font-size:${penaltyPoints > 0 ? '14px' : '17px'}; font-weight:900;">${scoreText}</span>
         </div>
       `;
     };

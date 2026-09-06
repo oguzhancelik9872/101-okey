@@ -3376,12 +3376,15 @@ body.plus-theme {
 }
 
 .game-animation-busy #turn-center-actions,
-.game-animation-busy #player-istaka-container .istaka-slot,
-.game-animation-busy .btn-side-sort,
 .game-animation-busy #btn-return-discard,
 .game-animation-busy #discard-pile-bottom,
 .game-animation-busy #center-deck-pile,
 .game-animation-busy .center-table-zone .meld-row {
+  pointer-events: none !important;
+}
+
+.viewer-rack-animation-busy #player-istaka-container .istaka-slot,
+.viewer-rack-animation-busy .btn-side-sort {
   pointer-events: none !important;
 }
 
