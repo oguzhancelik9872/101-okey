@@ -1124,13 +1124,54 @@ class IstakaManager {
   /**
    * Smart "Çift Diz" (Çiftlere Göre Akıllı Diz)
    */
-  autoSortPairs(requiredTileId = null) {
+  autoSortPairs(requiredTileId = null, indicatorBonusTileId = null) {
     const allTiles = this.getAllTiles();
     if (allTiles.length === 0) return;
 
-    const pairs = ClientValidator.findAllPairs(allTiles, this.indicator, requiredTileId);
+    const props = (tile) => ClientValidator.getTileProps(tile, this.indicator);
+    const tileValue = (tile) => Number(props(tile)?.number || tile.effectiveValue || tile.number || 0);
+    const jokers = allTiles.filter(tile => props(tile)?.isOkey);
+    const reservedIds = new Set(jokers.map(tile => tile.id));
+    if (indicatorBonusTileId) reservedIds.add(indicatorBonusTileId);
+
+    // Önce gerçek çiftleri ayır. Okey ve doğrulanmış gösterge gerçek çiftleri
+    // bozup rastgele düşük bir taşla eşleşmesin diye bu aşamada rezerve edilir.
+    const groups = new Map();
+    allTiles.filter(tile => !reservedIds.has(tile.id)).forEach(tile => {
+      const p = props(tile);
+      const key = `${p.color}:${p.number}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(tile);
+    });
+
+    const pairs = [];
     const usedIds = new Set();
-    pairs.forEach(p => { usedIds.add(p[0].id); usedIds.add(p[1].id); });
+    for (const group of groups.values()) {
+      while (group.length >= 2) {
+        const first = group.shift();
+        const second = group.shift();
+        pairs.push([first, second]);
+        usedIds.add(first.id);
+        usedIds.add(second.id);
+      }
+    }
+
+    const specialTiles = [];
+    const indicatorTile = indicatorBonusTileId ? allTiles.find(tile => tile.id === indicatorBonusTileId) : null;
+    if (indicatorTile) specialTiles.push(indicatorTile);
+    jokers.filter(tile => !indicatorTile || tile.id !== indicatorTile.id).forEach(tile => specialTiles.push(tile));
+
+    for (const specialTile of specialTiles) {
+      if (usedIds.has(specialTile.id)) continue;
+      let candidates = allTiles.filter(tile => tile.id !== specialTile.id && !usedIds.has(tile.id) && !reservedIds.has(tile.id));
+      candidates.sort((a, b) => tileValue(b) - tileValue(a));
+      const requiredCandidate = requiredTileId ? candidates.find(tile => tile.id === requiredTileId) : null;
+      const companion = requiredCandidate || candidates[0];
+      if (!companion) continue;
+      pairs.push([specialTile, companion]);
+      usedIds.add(specialTile.id);
+      usedIds.add(companion.id);
+    }
 
     const leftovers = allTiles.filter(t => !usedIds.has(t.id));
     leftovers.sort((a, b) => (a.effectiveValue || a.number) - (b.effectiveValue || b.number));

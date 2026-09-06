@@ -372,7 +372,10 @@ document.addEventListener('DOMContentLoaded', () => {
             table.update(res.gameState);
             const me = res.gameState.players[res.seatIndex];
             if (me && me.hand) {
-              istaka.setHand(me.hand, true);
+              istaka.setIndicator(res.gameState.indicator);
+              istaka.setHand(me.hand, false, false);
+              istaka.autoSortRuns();
+              roundStartedHandSorted = true;
             }
           }
           ui.showToast('🎯 Masanıza geri bağlandınız!', 'success');
@@ -558,7 +561,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     table.update(res.gameState);
                     const me = res.gameState.players[res.seatIndex];
                     if (me && me.hand) {
-                      istaka.setHand(me.hand, true);
+                      istaka.setIndicator(res.gameState.indicator);
+                      istaka.setHand(me.hand, false, false);
+                      istaka.autoSortRuns();
+                      roundStartedHandSorted = true;
                     }
                   }
                   ui.showToast('🎯 Masanıza geri döndünüz!', 'success');
@@ -1374,7 +1380,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSortPairs.addEventListener('click', () => {
       const isMyTurn = currentGameState && currentGameState.currentTurn === viewerSeatIndex;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
-      istaka.autoSortPairs(requiredId);
+      const viewerPlayer = currentGameState && currentGameState.players ? currentGameState.players[viewerSeatIndex] : null;
+      const indicatorBonusTileId = viewerPlayer && !viewerPlayer.opened && viewerPlayer.indicatorBonusAvailable ? viewerPlayer.indicatorTileId : null;
+      istaka.autoSortPairs(requiredId, indicatorBonusTileId);
     });
   }
 
