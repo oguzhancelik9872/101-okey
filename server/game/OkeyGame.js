@@ -948,6 +948,17 @@ class OkeyGame {
   /**
    * Handles hand finish
    */
+  _calculateHeldTilesPenalty(hand) {
+    return (hand || []).reduce((sum, tile) => {
+      if (!tile) return sum;
+      return sum + (tile.isOkey(this.indicator) ? 101 : tile.getValue(this.indicator));
+    }, 0);
+  }
+
+  _countHeldOkeys(hand) {
+    return (hand || []).filter(tile => tile && tile.isOkey(this.indicator)).length;
+  }
+
   endRound(finishingPlayerIndex, isOkeyDiscard = false) {
     if (this.state === GAME_STATES.GAME_OVER) return;
     this.state = GAME_STATES.GAME_OVER;
@@ -1020,9 +1031,10 @@ class OkeyGame {
         } else {
           pPoints = 202;
         }
+        pPoints += this._countHeldOkeys(p.hand) * 101;
       } else {
         // Player opened: sum of leftover tiles. If opened as pairs, only their own penalty is 2x
-        handSum = p.hand ? p.hand.reduce((sum, t) => sum + (t ? t.getValue(this.indicator) : 0), 0) : 0;
+        handSum = this._calculateHeldTilesPenalty(p.hand);
         pPoints = (p.openType === 'pairs') ? (handSum * 2) : handSum;
       }
 
@@ -1115,9 +1127,9 @@ class OkeyGame {
       let pPoints = 0;
       let handSum = 0;
       if (!p.opened) {
-        pPoints = 202;
+        pPoints = 202 + (this._countHeldOkeys(p.hand) * 101);
       } else {
-        handSum = p.hand ? p.hand.reduce((sum, t) => sum + (t ? t.getValue(this.indicator) : 0), 0) : 0;
+        handSum = this._calculateHeldTilesPenalty(p.hand);
         const playerPairsMultiplier = (p.openType === 'pairs') ? 2 : 1;
         pPoints = handSum * playerPairsMultiplier;
       }
@@ -1291,6 +1303,26 @@ class OkeyGame {
     }
   }
 
+  _findImmediateBotOkeyUse(bot, playedTileId, stolenOkey) {
+    if (!bot || !stolenOkey) return null;
+    const resultingHand = bot.hand.filter(tile => tile.id !== playedTileId).concat(stolenOkey);
+
+    if (bot.openType === 'pairs') {
+      const pair = BotAI.findAllPairs(resultingHand, this.indicator)
+        .find(candidate => candidate.some(tile => tile.id === stolenOkey.id));
+      return pair ? { type: 'pairs', groups: [pair.map(tile => tile.id)] } : null;
+    }
+
+    const candidates = [
+      ...BotAI.findAllRuns(resultingHand, this.indicator),
+      ...BotAI.findAllGroups(resultingHand, this.indicator)
+    ].filter(candidate => candidate.tiles.some(tile => tile.id === stolenOkey.id));
+    candidates.sort((a, b) => b.score - a.score || b.tiles.length - a.tiles.length);
+    return candidates[0]
+      ? { type: 'seri', groups: [candidates[0].tiles.map(tile => tile.id)] }
+      : null;
+  }
+
   /**
    * Phase 2 of Bot Turn: Open melds or process tiles onto table
    */
@@ -1370,10 +1402,25 @@ class OkeyGame {
             for (const tableMeld of this.tableMelds) {
               const check = Validator.canProcessTile(tile, tableMeld, this.indicator);
               if (check.canProcess) {
+                const immediateOkeyUse = check.isOkeySteal
+                  ? this._findImmediateBotOkeyUse(bot, tile.id, check.stolenOkeyTile)
+                  : null;
+                // Bot, aldığı Okey'i aynı turda açamayacaksa sırf rakibe ceza
+                // yazdırmak için Okey'i elinde bekletmez.
+                if (check.isOkeySteal && !immediateOkeyUse) continue;
                 const res = this.processTile(botIndex, tile.id, tableMeld.id);
                 if (res && res.success) {
                   processedAny = true;
                   if (res.finished || this.state !== GAME_STATES.PLAYING) return { finished: true };
+                  if (res.okeyStolen && immediateOkeyUse) {
+                    const useResult = immediateOkeyUse.type === 'pairs'
+                      ? this.openPairs(botIndex, immediateOkeyUse.groups)
+                      : this.openHand(botIndex, immediateOkeyUse.groups);
+                    if (!useResult || !useResult.success) {
+                      console.warn('[BotAI] Stolen Okey immediate-use validation unexpectedly failed.');
+                    }
+                    if (this.state !== GAME_STATES.PLAYING) return { finished: true };
+                  }
                   break;
                 }
               }
