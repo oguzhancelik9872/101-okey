@@ -82,8 +82,8 @@ body.plus-theme {
 
 /* Mobil oyun şimdilik devre dışı. Dokunmatik mobil cihazlarda uygulamanın
    tamamı yerine açık ve erişilebilir bir masaüstü uyarısı gösterilir. */
-@media (pointer: coarse) and (hover: none),
-       (max-width: 600px) {
+@media (pointer: coarse) and (hover: none) and (orientation: portrait),
+       (max-width: 600px) and (orientation: portrait) {
   .mobile-not-supported {
     position: fixed;
     inset: 0;
@@ -101,7 +101,9 @@ body.plus-theme {
   }
 
   .mobile-not-supported-card {
-    width: min(100%, 430px);
+    width: 100%;
+    max-width: 430px;
+    min-width: 0;
     padding: 30px 24px;
     border: 2px solid #d4af37;
     border-radius: 22px;
@@ -119,6 +121,7 @@ body.plus-theme {
     color: #f1c40f;
     font-family: 'Cinzel', serif;
     font-size: clamp(25px, 8vw, 36px);
+    overflow-wrap: anywhere;
   }
 
   .mobile-not-supported p {
@@ -126,6 +129,7 @@ body.plus-theme {
     color: #d5e8dc;
     font-size: 15px;
     line-height: 1.55;
+    overflow-wrap: anywhere;
   }
 
   .mobile-not-supported strong {
@@ -133,6 +137,7 @@ body.plus-theme {
     color: #fff;
     font-size: 15px;
     line-height: 1.5;
+    overflow-wrap: anywhere;
   }
 
   #app-container,
@@ -4238,9 +4243,22 @@ body.plus-theme {
   }
 
   .okey-tile.touch-dragging {
-    opacity: 1;
-    transform: translateY(-5px) scale(1.06) !important;
-    z-index: 100;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .touch-drag-preview {
+    position: fixed !important;
+    z-index: 2147483000 !important;
+    margin: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+    transform: scale(1.08) !important;
+    transform-origin: center bottom !important;
+    transition: none !important;
+    filter: drop-shadow(0 8px 8px rgba(0, 0, 0, .72));
+    will-change: left, top;
   }
 
   .mobile-drag-target {
@@ -4455,20 +4473,176 @@ body.plus-theme {
 @media (pointer: coarse) and (orientation: landscape), (max-height: 540px) and (orientation: landscape) {
   #game-view {
     --rack-side-width: 42px;
-    --rack-slot-height: clamp(30px, 10dvh, 42px);
+    --rack-slot-height: clamp(38px, 11.5dvh, 48px);
   }
 
   .table-felt-mat,
   .my-turn-focus .table-felt-mat {
-    top: 42px !important;
-    bottom: 48px !important;
+    top: 36px !important;
+    bottom: 40px !important;
     width: calc(100% - 138px) !important;
   }
 
   .bar-top { top: 2px; }
   .bar-left, .bar-right { width: 58px; min-height: 64px; }
-  .corner-bottom-left, .corner-bottom-right { bottom: 46px; }
-  .canvas-bottom-strip, .my-turn-focus .canvas-bottom-strip { bottom: 2px !important; padding: 0 64px; }
+  .corner-bottom-left, .corner-bottom-right { bottom: 40px; }
+  .canvas-bottom-strip, .my-turn-focus .canvas-bottom-strip { bottom: 1px !important; padding: 0 64px; }
+
+  .turn-center-actions {
+    width: calc(100% - 4px);
+    gap: 2px;
+    padding: 3px 2px;
+    margin-bottom: 2px;
+    border-radius: 10px;
+  }
+
+  .turn-center-actions .btn-pill-action {
+    width: 100%;
+    height: 23px;
+    min-height: 23px;
+    padding: 1px 3px;
+    border-radius: 8px;
+    font-size: 7px;
+  }
+
+  .center-scoreboard-card {
+    flex: 0 1 auto;
+    min-height: 0;
+  }
+
+  .scoreboard-rounds-list {
+    max-height: 44px;
+    overflow-y: auto;
+  }
+
+  .center-deck-strip {
+    overflow: hidden;
+  }
+
+  .split-target-badge {
+    bottom: -15px;
+    width: 50px;
+    height: 16px;
+    padding: 2px 3px;
+    border-radius: 0 0 9px 9px;
+    font-size: 9px;
+  }
+
+  .felt-watermark,
+  .grid-watermark {
+    display: none;
+  }
+
+  .plus-istaka-section {
+    padding-left: max(5px, env(safe-area-inset-left));
+    padding-right: max(5px, env(safe-area-inset-right));
+  }
+
+  .istaka-slot .okey-tile .tile-number {
+    font-size: clamp(16px, 4.8dvh, 21px) !important;
+  }
+
+  .grid-cell-slot .okey-tile .tile-number {
+    font-size: clamp(10px, 3.5dvh, 15px) !important;
+  }
+
+  .btn-menu-trigger {
+    min-height: 30px;
+    padding: 3px 7px;
+    font-size: 8px;
+  }
+
+  .table-top-actions {
+    top: 3px;
+    right: max(5px, env(safe-area-inset-right));
+  }
+
+  /* Yatay mobil giriş ekranı: 4x2 seçim ızgarası tek ekrana sığar. */
+  #auth-view {
+    padding: 5px max(10px, env(safe-area-inset-right)) 5px max(10px, env(safe-area-inset-left));
+  }
+
+  .name-picker-wrapper {
+    max-width: 760px;
+    height: 100%;
+    justify-content: center;
+  }
+
+  .name-picker-wrapper .plus-logo-box {
+    margin-bottom: 4px !important;
+  }
+
+  .name-picker-wrapper .plus-logo-title {
+    font-size: 24px !important;
+  }
+
+  .name-picker-card {
+    padding: 7px 10px;
+    border-radius: 12px;
+  }
+
+  .name-picker-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .name-card {
+    min-height: 58px;
+    padding: 4px 6px;
+    border-radius: 10px;
+    flex-direction: row;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .name-card-avatar {
+    width: 38px;
+    height: 38px;
+    border-width: 2px;
+  }
+
+  .name-card-title { font-size: 10px; }
+  .name-card-status { font-size: 7px; }
+  .auth-action-box { margin-top: 6px; padding-top: 6px; }
+  .btn-enter-game { min-height: 34px; padding: 6px 18px; font-size: 11px; }
+
+  /* Yatay mobil lobi: dış koltuklar ekran sınırlarının içinde kalır. */
+  .lobby-top-bar {
+    min-height: 42px;
+    padding: 4px max(8px, env(safe-area-inset-right)) 4px max(8px, env(safe-area-inset-left));
+  }
+
+  .lobby-left-panel,
+  .lobby-right-panel { gap: 5px; }
+  .btn-bot-quick-play,
+  .btn-lobby-rules,
+  .btn-lobby-sound,
+  .btn-sm { padding: 5px 7px; border-radius: 8px; font-size: 8px; }
+  .lobby-center-title .plus-logo-title { font-size: 20px; letter-spacing: 1px; }
+  .lobby-center-stage { padding: 28px 72px; min-height: 0; }
+  .lobby-table-wrapper {
+    width: min(72vw, 650px);
+    height: calc(100dvh - 104px);
+    min-height: 0;
+    max-height: 310px;
+  }
+  .lobby-virtual-felt { border-width: 8px; }
+  .lobby-seat-pod.seat-top { top: -25px; }
+  .lobby-seat-pod.seat-bottom { bottom: -25px; }
+  .lobby-seat-pod.seat-left { left: -55px; }
+  .lobby-seat-pod.seat-right { right: -55px; }
+  .lobby-occupied-card { gap: 6px; padding: 4px 8px; border-radius: 15px; }
+  .lobby-occupied-avatar { width: 32px; height: 32px; }
+  .lobby-occupied-name { max-width: 65px; font-size: 9px; }
+  .lobby-occupied-badge { font-size: 7px; }
+  .btn-sit-seat { gap: 5px; padding: 7px 10px; border-radius: 14px; font-size: 9px; }
+  .btn-add-bot-pill,
+  .btn-rejoin-seat-pill { padding: 4px 6px; font-size: 7px; }
+  .table-brand-pill { gap: 5px; padding: 4px 10px; border-width: 1px; }
+  .table-num-tag { font-size: 12px; }
+  .table-status-badge { padding: 2px 5px; font-size: 7px; }
+  .table-instruction { font-size: 8px; }
+  .btn-lobby-fill-bots { padding: 5px 9px; font-size: 8px; margin-top: 1px; }
 }
 
 /* Chat Items & Pills */

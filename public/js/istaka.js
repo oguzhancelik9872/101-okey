@@ -801,6 +801,22 @@ class IstakaManager {
       drag.moved = true;
       e.preventDefault();
       el.classList.add('dragging', 'touch-dragging');
+
+      if (!drag.previewEl) {
+        const rect = el.getBoundingClientRect();
+        const preview = el.cloneNode(true);
+        preview.classList.remove('active-focus', 'selected', 'tile-just-drawn', 'touch-dragging');
+        preview.classList.add('touch-drag-preview');
+        preview.style.width = `${rect.width}px`;
+        preview.style.height = `${rect.height}px`;
+        document.body.appendChild(preview);
+        drag.previewEl = preview;
+        drag.previewWidth = rect.width;
+        drag.previewHeight = rect.height;
+      }
+
+      drag.previewEl.style.left = `${e.clientX - (drag.previewWidth / 2)}px`;
+      drag.previewEl.style.top = `${e.clientY - drag.previewHeight - 12}px`;
       document.querySelectorAll('.mobile-drag-target').forEach(node => node.classList.remove('mobile-drag-target'));
       const target = document.elementFromPoint(e.clientX, e.clientY);
       const dropTarget = target?.closest('.istaka-slot, #discard-pile-bottom, .meld-row, #indicator-tile-slot');
@@ -813,6 +829,7 @@ class IstakaManager {
       this.touchDrag = null;
       el.releasePointerCapture?.(e.pointerId);
       el.classList.remove('dragging', 'touch-dragging');
+      if (drag.previewEl) drag.previewEl.remove();
       document.querySelectorAll('.mobile-drag-target').forEach(node => node.classList.remove('mobile-drag-target'));
       if (window.isRackLayoutLocked && window.isRackLayoutLocked()) {
         this.flushPendingHand();
@@ -853,7 +870,10 @@ class IstakaManager {
 
     el.addEventListener('pointerup', finishTouchDrag);
     el.addEventListener('pointercancel', (e) => {
-      if (this.touchDrag?.pointerId === e.pointerId) this.touchDrag = null;
+      if (this.touchDrag?.pointerId === e.pointerId) {
+        if (this.touchDrag.previewEl) this.touchDrag.previewEl.remove();
+        this.touchDrag = null;
+      }
       el.classList.remove('dragging', 'touch-dragging');
       document.querySelectorAll('.mobile-drag-target').forEach(node => node.classList.remove('mobile-drag-target'));
       this.flushPendingHand();
