@@ -249,11 +249,6 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   const lastTile = new Tile('last_discard', 'red', 1);
 
   eGame.players[0].hand = [...eMeld1, ...eMeld2, ...eMeld3, ...eMeld4, lastTile];
-  // Keep this legacy elden-bitme assertion deterministic; held-Okey scoring
-  // is covered separately in held_okey_and_bot_use.test.js.
-  eGame.players[1].hand = [new Tile('eopp1', 'red', 2)];
-  eGame.players[2].hand = [new Tile('epartner', 'blue', 3)];
-  eGame.players[3].hand = [new Tile('eopp3', 'black', 4)];
   // Open hand
   const eOpenRes = eGame.openHand(0, [
     eMeld1.map(t => t.id),

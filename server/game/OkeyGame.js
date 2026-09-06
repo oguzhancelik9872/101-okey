@@ -100,10 +100,6 @@ class OkeyGame {
       indicatorDeclarationClosed: false,
       indicatorDeclarationPermanentlyClosed: false
     };
-    if (isBot) {
-      const personalitySeed = String(id || name || '').split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-      player.riskTolerance = 0.25 + ((personalitySeed % 51) / 100);
-    }
     this.players[seatIndex] = player;
     return player;
   }
@@ -948,17 +944,6 @@ class OkeyGame {
   /**
    * Handles hand finish
    */
-  _calculateHeldTilesPenalty(hand) {
-    return (hand || []).reduce((sum, tile) => {
-      if (!tile) return sum;
-      return sum + (tile.isOkey(this.indicator) ? 101 : tile.getValue(this.indicator));
-    }, 0);
-  }
-
-  _countHeldOkeys(hand) {
-    return (hand || []).filter(tile => tile && tile.isOkey(this.indicator)).length;
-  }
-
   endRound(finishingPlayerIndex, isOkeyDiscard = false) {
     if (this.state === GAME_STATES.GAME_OVER) return;
     this.state = GAME_STATES.GAME_OVER;
@@ -1031,10 +1016,9 @@ class OkeyGame {
         } else {
           pPoints = 202;
         }
-        pPoints += this._countHeldOkeys(p.hand) * 101;
       } else {
         // Player opened: sum of leftover tiles. If opened as pairs, only their own penalty is 2x
-        handSum = this._calculateHeldTilesPenalty(p.hand);
+        handSum = p.hand ? p.hand.reduce((sum, t) => sum + (t ? t.getValue(this.indicator) : 0), 0) : 0;
         pPoints = (p.openType === 'pairs') ? (handSum * 2) : handSum;
       }
 
@@ -1127,9 +1111,9 @@ class OkeyGame {
       let pPoints = 0;
       let handSum = 0;
       if (!p.opened) {
-        pPoints = 202 + (this._countHeldOkeys(p.hand) * 101);
+        pPoints = 202;
       } else {
-        handSum = this._calculateHeldTilesPenalty(p.hand);
+        handSum = p.hand ? p.hand.reduce((sum, t) => sum + (t ? t.getValue(this.indicator) : 0), 0) : 0;
         const playerPairsMultiplier = (p.openType === 'pairs') ? 2 : 1;
         pPoints = handSum * playerPairsMultiplier;
       }
@@ -1303,26 +1287,6 @@ class OkeyGame {
     }
   }
 
-  _findImmediateBotOkeyUse(bot, playedTileId, stolenOkey) {
-    if (!bot || !stolenOkey) return null;
-    const resultingHand = bot.hand.filter(tile => tile.id !== playedTileId).concat(stolenOkey);
-
-    if (bot.openType === 'pairs') {
-      const pair = BotAI.findAllPairs(resultingHand, this.indicator)
-        .find(candidate => candidate.some(tile => tile.id === stolenOkey.id));
-      return pair ? { type: 'pairs', groups: [pair.map(tile => tile.id)] } : null;
-    }
-
-    const candidates = [
-      ...BotAI.findAllRuns(resultingHand, this.indicator),
-      ...BotAI.findAllGroups(resultingHand, this.indicator)
-    ].filter(candidate => candidate.tiles.some(tile => tile.id === stolenOkey.id));
-    candidates.sort((a, b) => b.score - a.score || b.tiles.length - a.tiles.length);
-    return candidates[0]
-      ? { type: 'seri', groups: [candidates[0].tiles.map(tile => tile.id)] }
-      : null;
-  }
-
   /**
    * Phase 2 of Bot Turn: Open melds or process tiles onto table
    */
@@ -1340,25 +1304,8 @@ class OkeyGame {
         const botReqs = this.getMinOpenRequirements(botIndex);
         const best = BotAI.findBestMelds(bot.hand, this.indicator);
         if (best.score >= botReqs.minScore) {
-          const opponentsOpened = this.players.some((p, index) => p && index % 2 !== botIndex % 2 && p.opened);
-          const opponentHands = this.players.filter((p, index) => p && index % 2 !== botIndex % 2).map(p => p.hand.length);
-          const shouldOpen = BotAI.shouldOpenMelds({
-            hand: bot.hand,
-            melds: best.melds,
-            score: best.score,
-            minScore: botReqs.minScore,
-            indicator: this.indicator,
-            opponentsOpened,
-            deckRemaining: this.deck ? this.deck.remainingCount() : 0,
-            opponentSmallestHand: opponentHands.length ? Math.min(...opponentHands) : 21,
-            riskTolerance: bot.riskTolerance,
-            mustUseSideTile: Boolean(this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === botIndex)
-          });
-
-          if (shouldOpen) {
-            const meldIds = best.melds.map(m => m.map(t => t.id));
-            this.openHand(botIndex, meldIds);
-          }
+          const meldIds = best.melds.map(m => m.map(t => t.id));
+          this.openHand(botIndex, meldIds);
         } else {
           let pairs = BotAI.findAllPairs(bot.hand, this.indicator);
           if (bot.indicatorDeclared && !bot.indicatorBonusUsed && !bot.indicatorBonusExpired) {
@@ -1370,23 +1317,8 @@ class OkeyGame {
             }
           }
           if (pairs.length >= botReqs.minPairs) {
-            const opponentsOpened = this.players.some((p, index) => p && index % 2 !== botIndex % 2 && p.opened);
-            const opponentHands = this.players.filter((p, index) => p && index % 2 !== botIndex % 2).map(p => p.hand.length);
-            const shouldOpen = BotAI.shouldOpenPairs({
-              hand: bot.hand,
-              pairs,
-              minPairs: botReqs.minPairs,
-              indicator: this.indicator,
-              opponentsOpened,
-              deckRemaining: this.deck ? this.deck.remainingCount() : 0,
-              opponentSmallestHand: opponentHands.length ? Math.min(...opponentHands) : 21,
-              riskTolerance: bot.riskTolerance,
-              mustUseSideTile: Boolean(this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === botIndex)
-            });
-            if (shouldOpen) {
-              const pairIds = pairs.map(p => [p[0].id, p[1].id]);
-              this.openPairs(botIndex, pairIds);
-            }
+            const pairIds = pairs.map(p => [p[0].id, p[1].id]);
+            this.openPairs(botIndex, pairIds);
           }
         }
       }
@@ -1402,25 +1334,10 @@ class OkeyGame {
             for (const tableMeld of this.tableMelds) {
               const check = Validator.canProcessTile(tile, tableMeld, this.indicator);
               if (check.canProcess) {
-                const immediateOkeyUse = check.isOkeySteal
-                  ? this._findImmediateBotOkeyUse(bot, tile.id, check.stolenOkeyTile)
-                  : null;
-                // Bot, aldığı Okey'i aynı turda açamayacaksa sırf rakibe ceza
-                // yazdırmak için Okey'i elinde bekletmez.
-                if (check.isOkeySteal && !immediateOkeyUse) continue;
                 const res = this.processTile(botIndex, tile.id, tableMeld.id);
                 if (res && res.success) {
                   processedAny = true;
                   if (res.finished || this.state !== GAME_STATES.PLAYING) return { finished: true };
-                  if (res.okeyStolen && immediateOkeyUse) {
-                    const useResult = immediateOkeyUse.type === 'pairs'
-                      ? this.openPairs(botIndex, immediateOkeyUse.groups)
-                      : this.openHand(botIndex, immediateOkeyUse.groups);
-                    if (!useResult || !useResult.success) {
-                      console.warn('[BotAI] Stolen Okey immediate-use validation unexpectedly failed.');
-                    }
-                    if (this.state !== GAME_STATES.PLAYING) return { finished: true };
-                  }
                   break;
                 }
               }
@@ -1459,11 +1376,7 @@ class OkeyGame {
       if (this.turnState === 'DISCARD' && this.state === GAME_STATES.PLAYING && bot.hand.length > 0) {
         let chosenTile = null;
         try {
-          const nextPlayer = this.players[(botIndex + 1) % 4];
-          chosenTile = BotAI.pickDiscardTile(bot.hand, this.indicator, this.tableMelds, {
-            nextPlayerOpened: Boolean(nextPlayer && nextPlayer.opened),
-            riskTolerance: bot.riskTolerance
-          });
+          chosenTile = BotAI.pickDiscardTile(bot.hand, this.indicator, this.tableMelds);
         } catch (pickErr) {
           console.warn('[BotAI] Error picking discard tile:', pickErr);
         }
