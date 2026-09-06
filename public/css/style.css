@@ -4664,6 +4664,15 @@ body.plus-theme {
   font-size: min(43.333cqh, 59.091cqw) !important;
 }
 
+/* Istakadaki 5/60 yükseklik ve 5/44 genişlik oranını renk noktasında da
+   koru. Böylece normal ve büyümüş oval masada nokta taşla beraber ölçeklenir. */
+.grid-cell-slot .okey-tile .tile-dot,
+.my-turn-focus .grid-cell-slot .okey-tile .tile-dot {
+  width: min(8.333cqh, 11.364cqw) !important;
+  height: min(8.333cqh, 11.364cqw) !important;
+  margin-top: min(3.333cqh, 4.545cqw) !important;
+}
+
 /* Chat Items & Pills */
 .btn-chat-trigger {
   position: relative;
