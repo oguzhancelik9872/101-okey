@@ -2068,7 +2068,7 @@ body.plus-theme {
 }
 
 .bar-top .player-turn-progress-track {
-  order: 2;
+  order: 3;
   position: static;
   width: 74px;
   height: 3px;
@@ -2088,6 +2088,10 @@ body.plus-theme {
   max-width: 100%;
   text-align: center;
   white-space: nowrap;
+}
+
+.bar-top .player-open-status {
+  order: 2;
 }
 
 /* Oyuncunun kendi süresi yalnızca ıstaka üstündeki yeşil çizgide gösterilir. */
