@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastHandSignature = '';
   let lastGameState = null;
   let localActionLockUntil = 0;
-  let lastAnimationLockNotice = 0;
   let turnFocusRequestId = 0;
 
   function isGameInteractionLocked() {
@@ -27,13 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function guardAnimationOverlap() {
-    if (!isGameInteractionLocked()) return false;
-    const now = Date.now();
-    if (now - lastAnimationLockNotice > 1200) {
-      lastAnimationLockNotice = now;
-      ui.showToast('Masa animasyonu tamamlanıyor…', 'info', 1200);
-    }
-    return true;
+    return isGameInteractionLocked();
   }
 
   window.isGameInteractionLocked = isGameInteractionLocked;
