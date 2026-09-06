@@ -283,15 +283,15 @@ class OkeyGame {
     }
   }
 
-  /** Declare the remaining twin of the face-up indicator before the player's first draw/action. */
+  /** Declare the remaining twin of the face-up indicator before the player's first draw. */
   declareIndicator(playerIndex, tileId) {
     if (this.state !== GAME_STATES.PLAYING || !this.indicator) {
       return { success: false, reason: 'Gösterge yalnızca oyun devam ederken doğrulanabilir.' };
     }
     const player = this.players[playerIndex];
     if (!player) return { success: false, reason: 'Oyuncu bulunamadı.' };
-    if (player.indicatorDeclarationClosed || player.opened) {
-      return { success: false, reason: 'Gösterge ilk taş çekilmeden veya ilk hamle yapılmadan önce gösterilmelidir.' };
+    if (player.indicatorDeclarationClosed) {
+      return { success: false, reason: 'Gösterge, oyuncunun ilk taş çekişinden önce doğrulanmalıdır.' };
     }
     if (player.indicatorDeclared) return { success: false, reason: 'Gösterge zaten doğrulandı.' };
 
@@ -304,12 +304,12 @@ class OkeyGame {
     player.indicatorDeclared = true;
     player.indicatorTileId = tile.id;
     player.indicatorBonusUsed = false;
-    player.indicatorBonusExpired = false;
+    player.indicatorBonusExpired = Boolean(player.opened);
     if (this.turnSnapshot && this.turnSnapshot.playerIndex === playerIndex && !this.turnSnapshot.modified) {
       this.turnSnapshot.indicatorDeclared = true;
       this.turnSnapshot.indicatorTileId = tile.id;
       this.turnSnapshot.indicatorBonusUsed = false;
-      this.turnSnapshot.indicatorBonusExpired = false;
+      this.turnSnapshot.indicatorBonusExpired = Boolean(player.opened);
     }
     const message = `🅶 ${player.name} göstergeyi doğruladı!`;
     this.addLog(message);
@@ -554,7 +554,6 @@ class OkeyGame {
     }
 
     if (firstTime) {
-      player.indicatorDeclarationClosed = true;
       if (player.indicatorDeclared && !player.indicatorBonusUsed) player.indicatorBonusExpired = true;
       player.initialOpenScore = validation.score;
       player.initialOpenPairs = 0;
@@ -701,7 +700,6 @@ class OkeyGame {
     }
 
     if (firstTime) {
-      player.indicatorDeclarationClosed = true;
       if (indicatorPairIndex !== -1) {
         player.indicatorBonusUsed = true;
       } else if (player.indicatorDeclared) {
@@ -863,7 +861,6 @@ class OkeyGame {
     }
 
     const tile = player.hand.splice(tileIndex, 1)[0];
-    player.indicatorDeclarationClosed = true;
     if (player.indicatorDeclared && tile.id === player.indicatorTileId && !player.indicatorBonusUsed) {
       player.indicatorBonusExpired = true;
     }
@@ -1629,7 +1626,7 @@ class OkeyGame {
       roundResults: this.roundResults,
       matchHistory: this.matchHistory || [],
       canUndo: Boolean(this.turnSnapshot && this.turnSnapshot.modified && this.turnSnapshot.playerIndex === viewerSeatIndex && this.currentTurn === viewerSeatIndex && this.turnState === 'DISCARD'),
-      canDeclareIndicator: Boolean(this.state === GAME_STATES.PLAYING && this.players[viewerSeatIndex] && !this.players[viewerSeatIndex].indicatorDeclared && !this.players[viewerSeatIndex].indicatorDeclarationClosed && !this.players[viewerSeatIndex].opened && this.indicator && this.players[viewerSeatIndex].hand.some(t => !t.isFake && t.color === this.indicator.color && t.number === this.indicator.number)),
+      canDeclareIndicator: Boolean(this.state === GAME_STATES.PLAYING && this.players[viewerSeatIndex] && !this.players[viewerSeatIndex].indicatorDeclared && !this.players[viewerSeatIndex].indicatorDeclarationClosed && this.indicator && this.players[viewerSeatIndex].hand.some(t => !t.isFake && t.color === this.indicator.color && t.number === this.indicator.number)),
       drawnFromDiscard: this.drawnFromDiscard ? {
         playerIndex: this.drawnFromDiscard.playerIndex,
         tileId: this.drawnFromDiscard.tile.id,

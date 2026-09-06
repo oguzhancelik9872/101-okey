@@ -20,7 +20,7 @@ function preparedGame() {
   return game;
 }
 
-test('indicator twin can be declared before the first action and is public without leaking its id', () => {
+test('indicator twin can be declared before the first draw and is public without leaking its id', () => {
   const game = preparedGame();
   game.players[0].hand = [tile('held-blue-5', 'blue', 5), tile('other', 'red', 1)];
 
@@ -37,6 +37,14 @@ test('wrong or late indicator declaration is rejected', () => {
   assert.equal(game.declareIndicator(0, 'red-5').success, false);
   game.players[0].indicatorDeclarationClosed = true;
   assert.equal(game.declareIndicator(0, 'held-blue-5').success, false);
+});
+
+test('starter may discard before declaring, until their first draw', () => {
+  const game = preparedGame();
+  game.players[0].hand = [tile('held-blue-5', 'blue', 5), tile('first-discard', 'red', 13)];
+  assert.equal(game.discardTile(0, 'first-discard').success, true);
+  assert.equal(game.currentTurn, 1);
+  assert.equal(game.declareIndicator(0, 'held-blue-5').success, true);
 });
 
 test('declared indicator forms exactly one arbitrary pair on the first pairs opening', () => {
