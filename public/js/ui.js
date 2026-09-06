@@ -181,12 +181,6 @@ class UIManager {
     // Her el bağımsız bir maç değildir. Bu pencerede yalnızca o elde
     // oyuncuların aldığı puanlar gösterilir; genel durum orta skor alanındadır.
     const handNumber = Number(results.currentRound || 1);
-    const playerNames = [
-      t1 && t1.players ? t1.players[0] : null,
-      t2 && t2.players ? t2.players[0] : null,
-      t1 && t1.players ? t1.players[1] : null,
-      t2 && t2.players ? t2.players[1] : null
-    ].filter(Boolean);
     const renderHandScore = (playerName) => {
       const entry = Object.values(roundScores).find(player => player.name === playerName) || {};
       const points = Number(entry.points || 0);
@@ -204,8 +198,19 @@ class UIManager {
         <span style="display:block; color:#72c990; font-size:10px; font-weight:900; letter-spacing:2px; margin-bottom:4px;">EL SONU</span>
         <h2 style="font-family:'Cinzel',serif; font-size:23px; font-weight:900; color:#f1c40f; letter-spacing:1.5px; margin:0;">${handNumber}. EL TAMAMLANDI</h2>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;">
-        ${playerNames.map(renderHandScore).join('')}
+      <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;">
+        <section style="padding:12px; border-radius:15px; border:1px solid rgba(46,204,113,0.34); background:rgba(8,50,28,0.34);">
+          <h3 style="margin:0 0 9px; text-align:center; color:#72d99b; font-size:12px; letter-spacing:1px;">TAKIM 1</h3>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${(t1 && t1.players ? t1.players : []).map(renderHandScore).join('')}
+          </div>
+        </section>
+        <section style="padding:12px; border-radius:15px; border:1px solid rgba(52,152,219,0.38); background:rgba(13,52,76,0.34);">
+          <h3 style="margin:0 0 9px; text-align:center; color:#78c8ff; font-size:12px; letter-spacing:1px;">TAKIM 2</h3>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${(t2 && t2.players ? t2.players : []).map(renderHandScore).join('')}
+          </div>
+        </section>
       </div>
       <p style="margin:14px 0 0; text-align:center; color:#91aa9a; font-size:11px;">Biriken puanlar masanın ortasındaki el skorlarında gösterilir.</p>
       <div class="round-result-actions" style="margin-top:16px; display:flex; gap:10px; justify-content:center;">
