@@ -97,7 +97,8 @@ class OkeyGame {
       indicatorTileId: null,
       indicatorBonusUsed: false,
       indicatorBonusExpired: false,
-      indicatorDeclarationClosed: false
+      indicatorDeclarationClosed: false,
+      indicatorDeclarationPermanentlyClosed: false
     };
     if (isBot) {
       const personalitySeed = String(id || name || '').split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
@@ -213,6 +214,7 @@ class OkeyGame {
       this.players[i].indicatorBonusUsed = false;
       this.players[i].indicatorBonusExpired = false;
       this.players[i].indicatorDeclarationClosed = false;
+      this.players[i].indicatorDeclarationPermanentlyClosed = false;
     }
 
     // Bot göstergeleri sıra/draw animasyonundan bağımsız olarak dağıtım biter
@@ -279,6 +281,7 @@ class OkeyGame {
 
       player.hand.push(tile);
       player.indicatorDeclarationClosed = true;
+      player.indicatorDeclarationPermanentlyClosed = true;
       player.hasResetTurnTimerInThisTurn = false;
       this.drawnFromDiscard = null;
       this.turnState = 'DISCARD';
@@ -353,6 +356,9 @@ class OkeyGame {
     this.drawnFromDiscard = null;
     this.turnState = 'DRAW';
     this.turnSnapshot = null;
+    // Yandan alınan taş geri bırakılınca el yeniden dağıtım sonrası durumuna
+    // döner. Daha önce ortadan taş çekilmediyse gösterge hakkı yeniden açılır.
+    player.indicatorDeclarationClosed = Boolean(player.indicatorDeclarationPermanentlyClosed);
 
     this.addLog(`${player.name} yandan aldığı taşı geri bıraktı.`);
     return { success: true };
@@ -380,6 +386,7 @@ class OkeyGame {
       indicatorBonusUsed: Boolean(player.indicatorBonusUsed),
       indicatorBonusExpired: Boolean(player.indicatorBonusExpired),
       indicatorDeclarationClosed: Boolean(player.indicatorDeclarationClosed),
+      indicatorDeclarationPermanentlyClosed: Boolean(player.indicatorDeclarationPermanentlyClosed),
       minOpenScore: this.minOpenScore,
       minOpenPairs: this.minOpenPairs,
       tableMelds: this.tableMelds.map(m => ({
@@ -428,6 +435,7 @@ class OkeyGame {
     player.indicatorBonusUsed = snap.indicatorBonusUsed;
     player.indicatorBonusExpired = snap.indicatorBonusExpired;
     player.indicatorDeclarationClosed = snap.indicatorDeclarationClosed;
+    player.indicatorDeclarationPermanentlyClosed = snap.indicatorDeclarationPermanentlyClosed;
 
     // Restore table minimum open requirements
     this.minOpenScore = snap.minOpenScore || 101;

@@ -47,6 +47,18 @@ test('starter may discard before declaring, until their first draw', () => {
   assert.equal(game.declareIndicator(0, 'held-blue-5').success, true);
 });
 
+test('returning a side-drawn tile restores declaration eligibility before any deck draw', () => {
+  const game = preparedGame();
+  game.turnState = 'DRAW';
+  game.players[0].hand = [tile('held-blue-5', 'blue', 5), tile('base', 'red', 2)];
+  game.discards[3] = [tile('side-tile', 'yellow', 9)];
+
+  assert.equal(game.drawTile(0, 'discard').success, true);
+  assert.equal(game.declareIndicator(0, 'held-blue-5').success, false);
+  assert.equal(game.returnDiscardTile(0).success, true);
+  assert.equal(game.declareIndicator(0, 'held-blue-5').success, true);
+});
+
 test('bot declares a dealt indicator immediately when the round starts', () => {
   const game = preparedGame();
   game.players[2].isBot = true;
