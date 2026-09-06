@@ -2612,11 +2612,11 @@ body.plus-theme {
   height: 22px;
   box-sizing: border-box;
   padding: 3px 5px;
-  border: 1px solid rgba(255, 224, 92, .78);
+  border: 1px solid rgba(170, 132, 63, .72);
   border-radius: 0 0 13px 13px;
-  color: #ffe45c;
-  background: rgba(2, 10, 7, .9);
-  box-shadow: 0 2px 9px rgba(0,0,0,.75), 0 0 9px rgba(241,196,15,.22);
+  color: #d8c08a;
+  background: linear-gradient(180deg, rgba(18, 38, 27, .97), rgba(8, 22, 15, .97));
+  box-shadow: 0 3px 7px rgba(0,0,0,.68), inset 0 1px 0 rgba(255,255,255,.06);
   font: 900 13px/1.1 'Montserrat', sans-serif;
   text-align: center;
   white-space: nowrap;
@@ -2638,9 +2638,9 @@ body.plus-theme {
 @keyframes splitTargetChanged {
   0%, 100% { transform: translateX(-50%) scale(1); }
   38% {
-    transform: translateX(-50%) scale(1.28);
-    color: #fffbd0;
-    box-shadow: 0 2px 10px rgba(0,0,0,.8), 0 0 20px rgba(255,220,45,.85);
+    transform: translateX(-50%) scale(1.14);
+    color: #ead9ad;
+    box-shadow: 0 4px 9px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.08);
   }
 }
 
