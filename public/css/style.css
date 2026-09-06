@@ -2253,17 +2253,25 @@ body.plus-theme {
   transform: none;
   z-index: 120;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 3px 6px;
+  gap: 4px;
+  width: calc(100% - 8px);
+  box-sizing: border-box;
+  padding: 5px 4px;
   border: 1px solid rgba(241, 196, 15, .52);
   border-radius: 20px;
   background: rgba(3, 17, 10, .92);
   box-shadow: 0 5px 15px rgba(0,0,0,.75), 0 0 12px rgba(241,196,15,.2);
   white-space: nowrap;
   flex: 0 0 auto;
-  margin: 1px 0 3px;
+  margin: auto 0 4px;
+}
+
+.turn-center-actions .btn-pill-action {
+  width: 100%;
+  min-width: 0;
 }
 
 .corner-bottom-left #btn-return-discard {
