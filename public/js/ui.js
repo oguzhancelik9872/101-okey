@@ -181,23 +181,50 @@ class UIManager {
     // Her el bağımsız bir maç değildir. Bu pencerede yalnızca o elde
     // oyuncuların aldığı puanlar gösterilir; genel durum orta skor alanındadır.
     const handNumber = Number(results.currentRound || 1);
+    const signed = value => `${value > 0 ? '+' : ''}${value}`;
+    const totalScores = Array.isArray(results.totalScores) ? results.totalScores : [];
+    const getCumulativeScore = playerName => {
+      const scoreEntry = totalScores.find(player => player.name === playerName);
+      return Number(scoreEntry?.score || 0);
+    };
+    const getTeamCumulativeScore = team => (team?.players || [])
+      .reduce((sum, playerName) => sum + getCumulativeScore(playerName), 0);
     const renderHandScore = (playerName) => {
       const entry = Object.values(roundScores).find(player => player.name === playerName) || {};
       const points = Number(entry.points || 0);
       const basePoints = Number(entry.basePoints || 0);
       const penaltyPoints = Number(entry.penaltyPoints || 0);
       const pointColor = points <= 0 ? '#2ecc71' : '#f1c40f';
-      const signed = value => `${value > 0 ? '+' : ''}${value}`;
-      const scoreText = penaltyPoints > 0
-        ? `${signed(basePoints)} +${penaltyPoints} = ${signed(points)}`
-        : signed(points);
       return `
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; padding:10px 13px; border-radius:12px; border:1px solid rgba(255,255,255,0.11); background:rgba(0,0,0,0.28);">
-          <strong style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:13px;">${this.escapeHTML(playerName)}</strong>
-          <span style="flex:0 0 auto; color:${pointColor}; font-size:${penaltyPoints > 0 ? '14px' : '17px'}; font-weight:900;">${scoreText}</span>
+        <div style="padding:10px 11px; border-radius:12px; border:1px solid rgba(255,255,255,0.11); background:rgba(0,0,0,0.28);">
+          <strong style="display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:13px; margin-bottom:8px;">${this.escapeHTML(playerName)}</strong>
+          <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; text-align:center;">
+            <div style="padding:5px 2px; border-radius:7px; background:rgba(255,255,255,0.045);">
+              <small style="display:block; color:#91aa9a; font-size:8px; font-weight:800;">EL PUANI</small>
+              <b style="color:#fff; font-size:13px;">${signed(basePoints)}</b>
+            </div>
+            <div style="padding:5px 2px; border-radius:7px; background:rgba(231,76,60,0.09);">
+              <small style="display:block; color:#dca19d; font-size:8px; font-weight:800;">CEZA</small>
+              <b style="color:${penaltyPoints > 0 ? '#ff7675' : '#b4c2b8'}; font-size:13px;">${signed(penaltyPoints)}</b>
+            </div>
+            <div style="padding:5px 2px; border-radius:7px; background:rgba(241,196,15,0.08);">
+              <small style="display:block; color:#cbbb7d; font-size:8px; font-weight:800;">TOPLAM</small>
+              <b style="color:${pointColor}; font-size:13px;">${signed(points)}</b>
+            </div>
+          </div>
         </div>
       `;
     };
+
+    const renderTeamTotal = (team, color) => `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding:9px 10px 2px; border-top:1px solid rgba(255,255,255,0.13); color:#c9d8ce; font-size:10px; font-weight:900; letter-spacing:.4px;">
+        <span>BU EL TAKIM TOPLAMI</span>
+        <strong style="color:${color}; font-size:17px;">${signed(Number(team?.score || 0))}</strong>
+      </div>
+    `;
+
+    const cumulativeTeam1 = getTeamCumulativeScore(t1);
+    const cumulativeTeam2 = getTeamCumulativeScore(t2);
 
     html = `
       <div class="round-result-header" style="text-align:center; margin-bottom:16px;">
@@ -210,15 +237,22 @@ class UIManager {
           <div style="display:flex; flex-direction:column; gap:8px;">
             ${(t1 && t1.players ? t1.players : []).map(renderHandScore).join('')}
           </div>
+          ${renderTeamTotal(t1, '#72d99b')}
         </section>
         <section style="padding:12px; border-radius:15px; border:1px solid rgba(52,152,219,0.38); background:rgba(13,52,76,0.34);">
           <h3 style="margin:0 0 9px; text-align:center; color:#78c8ff; font-size:12px; letter-spacing:1px;">TAKIM 2</h3>
           <div style="display:flex; flex-direction:column; gap:8px;">
             ${(t2 && t2.players ? t2.players : []).map(renderHandScore).join('')}
           </div>
+          ${renderTeamTotal(t2, '#78c8ff')}
         </section>
       </div>
-      <p style="margin:14px 0 0; text-align:center; color:#91aa9a; font-size:11px;">Biriken puanlar masanın ortasındaki el skorlarında gösterilir.</p>
+      <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin:13px 0 0; padding:10px 12px; border-radius:12px; border:1px solid rgba(241,196,15,.25); background:rgba(0,0,0,.28); font-size:12px; font-weight:900;">
+        <span style="color:#c7b978; letter-spacing:.8px;">TOPLAM SKOR</span>
+        <span style="color:#72d99b;">Takım 1: ${signed(cumulativeTeam1)}</span>
+        <span style="color:#61766a;">•</span>
+        <span style="color:#78c8ff;">Takım 2: ${signed(cumulativeTeam2)}</span>
+      </div>
       <div class="round-result-actions" style="margin-top:16px; display:flex; gap:10px; justify-content:center;">
         <button id="btn-vote-rematch" class="btn-plus-gold" style="flex:2; padding:12px 18px; font-size:14px; font-weight:900;">
           🔄 Sonraki Eli Başlat
