@@ -2579,7 +2579,7 @@ body.plus-theme {
 .split-target-badge {
   position: absolute;
   z-index: 80;
-  top: -25px;
+  top: 7px;
   width: 62px;
   height: 22px;
   box-sizing: border-box;
@@ -2596,8 +2596,8 @@ body.plus-theme {
   transform-origin: center;
 }
 
-.seri-corner-target { left: 0; }
-.pairs-corner-target { right: 0; }
+.seri-corner-target { left: -68px; }
+.pairs-corner-target { right: -68px; }
 
 .split-target-badge.target-value-changed {
   animation: splitTargetChanged .7s cubic-bezier(.2,.8,.25,1);
