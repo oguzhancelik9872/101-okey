@@ -2,6 +2,26 @@
  * Main 101 Okey Client Controller
  */
 document.addEventListener('DOMContentLoaded', () => {
+  // Mobile browser chrome (address/navigation bars) changes the actually
+  // visible height while the page is open. Keep the game inside that visual
+  // viewport so the top profile and bottom rack are never clipped.
+  let viewportSyncFrame = null;
+  const syncVisualViewportHeight = () => {
+    if (viewportSyncFrame) cancelAnimationFrame(viewportSyncFrame);
+    viewportSyncFrame = requestAnimationFrame(() => {
+      viewportSyncFrame = null;
+      const visibleHeight = window.visualViewport?.height || window.innerHeight;
+      document.documentElement.style.setProperty('--app-visible-height', `${Math.round(visibleHeight)}px`);
+    });
+  };
+  syncVisualViewportHeight();
+  window.addEventListener('resize', syncVisualViewportHeight, { passive: true });
+  window.addEventListener('orientationchange', () => {
+    syncVisualViewportHeight();
+    setTimeout(syncVisualViewportHeight, 250);
+  }, { passive: true });
+  window.visualViewport?.addEventListener('resize', syncVisualViewportHeight, { passive: true });
+
   const socket = io();
   const ui = new UIManager();
 
@@ -334,6 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial event binding
   initNamePickerEvents();
+
 
 
 

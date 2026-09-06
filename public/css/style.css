@@ -4139,9 +4139,16 @@ body.plus-theme {
   #app-container,
   #game-view {
     width: 100dvw;
-    height: 100dvh;
-    min-height: 100dvh;
+    height: var(--app-visible-height, 100dvh);
+    min-height: 0;
+    max-height: var(--app-visible-height, 100dvh);
     overscroll-behavior: none;
+  }
+
+  body.plus-theme {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
   }
 
   #game-view {
@@ -4473,13 +4480,13 @@ body.plus-theme {
 @media (pointer: coarse) and (orientation: landscape), (max-height: 540px) and (orientation: landscape) {
   #game-view {
     --rack-side-width: 42px;
-    --rack-slot-height: clamp(44px, calc(var(--rack-slot-width) * 1.36), 58px);
+    --rack-slot-height: clamp(34px, calc((var(--app-visible-height, 100dvh) - 215px) / 2), 58px);
   }
 
   .table-felt-mat,
   .my-turn-focus .table-felt-mat {
-    top: 32px !important;
-    bottom: 28px !important;
+    top: clamp(22px, 8dvh, 32px) !important;
+    bottom: clamp(18px, 7dvh, 28px) !important;
     width: calc(100% - 138px) !important;
   }
 
@@ -4539,7 +4546,7 @@ body.plus-theme {
   }
 
   .istaka-slot .okey-tile .tile-number {
-    font-size: clamp(20px, 6dvh, 24px) !important;
+    font-size: clamp(15px, calc(var(--rack-slot-height) * .4333), 25px) !important;
   }
 
   .grid-cell-slot .okey-tile .tile-number {
@@ -4643,6 +4650,18 @@ body.plus-theme {
   .table-status-badge { padding: 2px 5px; font-size: 7px; }
   .table-instruction { font-size: 8px; }
   .btn-lobby-fill-bots { padding: 5px 9px; font-size: 8px; margin-top: 1px; }
+}
+
+/* Masadaki sayÄ±/taÅŸ oranÄ±, Ä±stakadaki 26/60 oranÄ±nÄ± birebir izler.
+   Container birimleri sayesinde normal ve bÃ¼yÃ¼mÃ¼ÅŸ ovalde ayrÄ± sabit font
+   deÄŸerleri gerekmez; taÅŸla birlikte orantÄ±lÄ± Ã¶lÃ§eklenir. */
+.grid-cell-slot {
+  container-type: size;
+}
+
+.grid-cell-slot .okey-tile .tile-number,
+.my-turn-focus .grid-cell-slot .okey-tile .tile-number {
+  font-size: min(43.333cqh, 59.091cqw) !important;
 }
 
 /* Chat Items & Pills */
