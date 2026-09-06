@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=135">
+  <link rel="stylesheet" href="css/style.css?v=136">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -310,17 +310,6 @@
 
             <!-- Orta/Bölme: Ahşap Gösterge ve Deste Şeridi -->
             <div class="center-deck-strip">
-              <div id="turn-center-actions" class="turn-center-actions hidden">
-                <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled>
-                  <span>Seri Aç</span>
-                </button>
-                <button id="btn-undo-turn" class="btn-pill-action btn-pill-danger hidden" title="Açtığınız perleri ve işlediğiniz taşları geri alın">
-                  <span>↩️ Geri Topla</span>
-                </button>
-                <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled>
-                  <span>Çift Aç</span>
-                </button>
-              </div>
               <!-- 101 Okey Canlı Skor & Ceza Tablosu (Center Scoreboard) -->
               <div id="center-scoreboard-card" class="center-scoreboard-card" title="Takımlar Maç & El Skor Tablosu">
                 <div class="scoreboard-teams-header">
@@ -339,6 +328,12 @@
               </div>
 
               <!-- Plain Target Numbers at Top of Center Strip (Stacked Alt Alta) -->
+
+              <div id="turn-center-actions" class="turn-center-actions hidden">
+                <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled><span>Seri Aç</span></button>
+                <button id="btn-undo-turn" class="btn-pill-action btn-pill-danger hidden" title="Açtığınız perleri ve işlediğiniz taşları geri alın"><span>↩️ Geri Topla</span></button>
+                <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled><span>Çift Aç</span></button>
+              </div>
 
               <!-- Altta Yan Yana: Gösterge ve Deste -->
               <div class="center-deck-side-by-side">
