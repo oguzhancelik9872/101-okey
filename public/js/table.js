@@ -411,15 +411,27 @@ class TableManager {
     // Update Opening Target Requirements Badges
     const seriTargetBadge = document.getElementById('table-seri-target-badge');
     const pairsTargetBadge = document.getElementById('table-pairs-target-badge');
-    const minOpenScore = this.gameState.minOpenScore || 101;
-    const minOpenPairs = this.gameState.minOpenPairs || 5;
+    const minOpenScore = this.gameState.tableMinOpenScore || 101;
+    const minOpenPairs = this.gameState.tableMinOpenPairs || 5;
     const formattedScore = (typeof formatOkeyScore === 'function') ? formatOkeyScore(minOpenScore) : `${minOpenScore}`;
 
     if (seriTargetBadge) {
-      seriTargetBadge.textContent = `SERİ HEDEF: ${formattedScore}`;
+      if (this.lastRenderedSeriTarget !== undefined && this.lastRenderedSeriTarget !== minOpenScore) {
+        seriTargetBadge.classList.remove('target-value-changed');
+        void seriTargetBadge.offsetWidth;
+        seriTargetBadge.classList.add('target-value-changed');
+      }
+      seriTargetBadge.textContent = formattedScore;
+      this.lastRenderedSeriTarget = minOpenScore;
     }
     if (pairsTargetBadge) {
-      pairsTargetBadge.textContent = `ÇİFT HEDEF: ${minOpenPairs} Çift`;
+      if (this.lastRenderedPairsTarget !== undefined && this.lastRenderedPairsTarget !== minOpenPairs) {
+        pairsTargetBadge.classList.remove('target-value-changed');
+        void pairsTargetBadge.offsetWidth;
+        pairsTargetBadge.classList.add('target-value-changed');
+      }
+      pairsTargetBadge.textContent = `${minOpenPairs} Çift`;
+      this.lastRenderedPairsTarget = minOpenPairs;
     }
 
     const melds = this.gameState.tableMelds || [];

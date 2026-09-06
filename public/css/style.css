@@ -2576,6 +2576,40 @@ body.plus-theme {
   flex: 0 0 auto;
 }
 
+.split-target-badge {
+  position: absolute;
+  z-index: 80;
+  top: 7px;
+  min-width: 42px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 224, 92, .78);
+  border-radius: 7px;
+  color: #ffe45c;
+  background: rgba(2, 10, 7, .9);
+  box-shadow: 0 2px 9px rgba(0,0,0,.75), 0 0 9px rgba(241,196,15,.22);
+  font: 900 13px/1.1 'Montserrat', sans-serif;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+.seri-corner-target { left: 7px; }
+.pairs-corner-target { right: 7px; }
+
+.split-target-badge.target-value-changed {
+  animation: splitTargetChanged .7s cubic-bezier(.2,.8,.25,1);
+}
+
+@keyframes splitTargetChanged {
+  0%, 100% { transform: scale(1); }
+  38% {
+    transform: scale(1.28);
+    color: #fffbd0;
+    box-shadow: 0 2px 10px rgba(0,0,0,.8), 0 0 20px rgba(255,220,45,.85);
+  }
+}
+
 .pairs-panel {
   display: flex;
   flex-direction: column;

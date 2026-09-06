@@ -1022,21 +1022,20 @@ document.addEventListener('DOMContentLoaded', () => {
         window.soundEngine.playOpenHand();
 
         if (anim) {
-          for (let p = 0; p < 4; p++) {
-            const lastP = lastGameState.players ? lastGameState.players[p] : null;
-            const newP = state.players ? state.players[p] : null;
-            const justOpened = newP && newP.opened && (!lastP || !lastP.opened);
-            if (justOpened) {
-              const seatPos = table.getRelativePosition(p);
-              const isViewer = (p === viewerSeatIndex);
-              const playerMelds = state.tableMelds.filter(m => m.playerIndex === p);
-              anim.animateOpenMelds(seatPos, playerMelds, newP.openType, isViewer, () => {
-                if (isViewer && me && me.hand) {
-                  istaka.setHand(me.hand, true, false);
-                }
-              });
-            }
-          }
+          const newlyOpenedMelds = state.tableMelds.slice(lastMeldsCount);
+          const meldsByPlayer = new Map();
+          newlyOpenedMelds.forEach(meld => {
+            if (!meldsByPlayer.has(meld.playerIndex)) meldsByPlayer.set(meld.playerIndex, []);
+            meldsByPlayer.get(meld.playerIndex).push(meld);
+          });
+          meldsByPlayer.forEach((playerMelds, playerIndex) => {
+            const seatPos = table.getRelativePosition(playerIndex);
+            const isViewer = playerIndex === viewerSeatIndex;
+            const openType = playerMelds.every(meld => meld.type === 'pairs') ? 'pairs' : 'seri';
+            anim.animateOpenMelds(seatPos, playerMelds, openType, isViewer, () => {
+              if (isViewer && me && me.hand) istaka.setHand(me.hand, true, false);
+            });
+          });
         }
       } else if (lastGameState.tableMelds && state.tableMelds && anim) {
         // Check for tile processed into existing melds (İşleme - Seri veya Çifte Taş İşleme)
@@ -1697,6 +1696,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!istaka.hasTurnSnapshot()) {
       istaka.saveTurnSnapshot();
+    }
+
+    const tileElement = document.querySelector(`.istaka-slot .okey-tile[data-id="${tileId}"]`);
+    if (tileElement) {
+      const rect = tileElement.getBoundingClientRect();
+      window.lastKnownRackCoords = window.lastKnownRackCoords || {};
+      window.lastKnownRackCoords[tileId] = {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+        width: rect.width,
+        height: rect.height
+      };
     }
 
     socket.emit('processTile', { roomId, tileId, targetMeldId }, (res) => {
