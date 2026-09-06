@@ -215,6 +215,12 @@ class OkeyGame {
       this.players[i].indicatorDeclarationClosed = false;
     }
 
+    // Bot göstergeleri sıra/draw animasyonundan bağımsız olarak dağıtım biter
+    // bitmez doğrular. Böylece sonradan çekilmiş gibi bir görüntü oluşmaz.
+    for (let i = 0; i < 4; i++) {
+      if (this.players[i] && this.players[i].isBot) this._declareBotIndicatorIfHeld(i);
+    }
+
     // First player starts directly in DISCARD state because they hold 22 tiles
     this.turnState = 'DISCARD';
     this.turnStartTime = Date.now();

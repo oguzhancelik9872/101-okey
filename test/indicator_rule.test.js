@@ -47,6 +47,17 @@ test('starter may discard before declaring, until their first draw', () => {
   assert.equal(game.declareIndicator(0, 'held-blue-5').success, true);
 });
 
+test('bot declares a dealt indicator immediately when the round starts', () => {
+  const game = preparedGame();
+  game.players[2].isBot = true;
+  game.players[2].hand = [tile('bot-blue-5', 'blue', 5)];
+  game.players[2].indicatorDeclared = false;
+  game.players[2].indicatorDeclarationClosed = false;
+  game._declareBotIndicatorIfHeld(2);
+  assert.equal(game.players[2].indicatorDeclared, true);
+  assert.equal(game.players[2].indicatorTileId, 'bot-blue-5');
+});
+
 test('declared indicator forms exactly one arbitrary pair on the first pairs opening', () => {
   const game = preparedGame();
   game.players[0].hand = [
