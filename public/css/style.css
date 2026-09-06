@@ -1659,6 +1659,7 @@ body.plus-theme {
 
 .player-outer-bar {
   position: absolute;
+  box-sizing: border-box;
   background: linear-gradient(135deg, rgba(8, 28, 16, 0.95), rgba(4, 15, 8, 0.95));
   border: 1.5px solid rgba(241, 196, 15, 0.35);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75);
@@ -1676,9 +1677,8 @@ body.plus-theme {
   gap: 10px;
   padding: 4px 14px 4px 6px;
   border-radius: 28px;
-  width: auto;
-  min-width: 170px;
-  max-width: 220px;
+  width: 190px;
+  height: 60px;
   justify-content: center;
 }
 
@@ -1693,7 +1693,8 @@ body.plus-theme {
   gap: 5px;
   padding: 10px 8px;
   border-radius: 18px;
-  width: 105px;
+  width: 123px;
+  height: 120px;
   text-align: center;
 }
 
@@ -1707,7 +1708,8 @@ body.plus-theme {
   gap: 5px;
   padding: 10px 8px;
   border-radius: 18px;
-  width: 105px;
+  width: 123px;
+  height: 120px;
   text-align: center;
 }
 
@@ -1810,6 +1812,7 @@ body.plus-theme {
 /* Avatar Ring & Active Turn Timer */
 .avatar-ring-container {
   position: relative;
+  flex: 0 0 48px;
   width: 48px;
   height: 48px;
 }
@@ -3021,9 +3024,8 @@ body.plus-theme {
   gap: 10px;
   padding: 4px 16px 4px 8px;
   border-radius: 28px;
-  width: auto;
-  min-width: 175px;
-  max-width: 230px;
+  width: 190px;
+  height: 60px;
   justify-content: center;
 }
 
@@ -4088,19 +4090,25 @@ body.plus-theme {
     height: 34px;
   }
 
+  .player-outer-bar .avatar-ring-container {
+    flex-basis: 34px;
+  }
+
   .player-outer-bar .pod-avatar {
     font-size: 15px;
   }
 
   .bar-top {
     top: 4px;
-    min-width: 125px;
+    width: 140px;
+    height: 44px;
     padding: 3px 8px 3px 4px;
   }
 
   .bar-left,
   .bar-right {
-    width: 62px;
+    width: 70px;
+    height: 82px;
     padding: 5px 3px;
     gap: 2px;
     z-index: 32;
@@ -4269,7 +4277,7 @@ body.plus-theme {
   }
 
   .bar-top { top: 2px; }
-  .bar-left, .bar-right { width: 58px; }
+  .bar-left, .bar-right { width: 66px; height: 78px; }
   .corner-bottom-left, .corner-bottom-right { bottom: 46px; }
   .canvas-bottom-strip, .my-turn-focus .canvas-bottom-strip { bottom: 2px !important; padding: 0 64px; }
 }
