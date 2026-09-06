@@ -1772,8 +1772,8 @@ body.plus-theme {
 }
 
 .my-turn-focus .table-felt-mat {
-  top: 18px !important;
-  bottom: 4px !important;
+  top: 4px !important;
+  bottom: 24px !important;
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%) !important;
@@ -1986,7 +1986,7 @@ body.plus-theme {
 .player-turn-progress-fill {
   height: 100%;
   width: 100%;
-  background: linear-gradient(90deg, #2ecc71 0%, #f1c40f 60%, #e74c3c 100%);
+  background: #c6a15b;
   border-radius: 4px;
   transform-origin: left center;
   transition: width 0.25s linear;
@@ -3195,6 +3195,7 @@ body.plus-theme {
 
 /* 3D 2-Shelf Wooden Istaka Board */
 .plus-istaka-board {
+  --turn-progress: 100%;
   width: auto;
   max-width: fit-content;
   margin: 0 auto;
@@ -3210,6 +3211,26 @@ body.plus-theme {
   gap: 3px;
   box-shadow: inset 0 4px 10px rgba(0,0,0,0.9), 0 8px 24px rgba(0,0,0,0.8);
   position: relative;
+}
+
+.plus-istaka-board::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  z-index: 25;
+  padding: 4px;
+  border-radius: 15px;
+  pointer-events: none;
+  opacity: 0;
+  background: conic-gradient(from -90deg, #c6a15b var(--turn-progress), transparent 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: opacity .2s ease;
+}
+
+.plus-istaka-board.rack-timer-active::after {
+  opacity: 1;
 }
 
 .istaka-brass-corner {

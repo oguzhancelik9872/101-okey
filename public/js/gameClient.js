@@ -1275,21 +1275,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
 
-      // Full-Width Top Screen Turn Timer Progress Bar (Active on Viewer Turn)
-      const topTimerBar = document.getElementById('top-turn-timer-bar');
-      const topTimerFill = document.getElementById('top-turn-timer-fill');
-      if (topTimerBar && topTimerFill) {
-        if (isMyTurn) {
-          topTimerBar.classList.remove('hidden');
-          topTimerFill.style.width = (remainingRatio * 100) + '%';
-          if (remainingSeconds <= 5) {
-            topTimerFill.classList.add('urgent-pulse');
-          } else {
-            topTimerFill.classList.remove('urgent-pulse');
-          }
-        } else {
-          topTimerBar.classList.add('hidden');
-        }
+      const rackBoard = document.querySelector('.plus-istaka-board');
+      if (rackBoard) {
+        rackBoard.classList.toggle('rack-timer-active', isMyTurn);
+        rackBoard.style.setProperty('--turn-progress', `${remainingRatio * 100}%`);
       }
 
       // Süre azalırken farkındalık artıran nazik tik-tak ve son saniyelerde hızlanan uyarı tınısı
