@@ -4148,7 +4148,7 @@ body.plus-theme {
     --rack-side-width: clamp(32px, 9vw, 46px);
     --rack-gap: 3px;
     --rack-slot-width: calc((100dvw - (var(--rack-side-width) * 2) - 24px - (var(--rack-gap) * 2)) / 16);
-    --rack-slot-height: clamp(28px, calc(var(--rack-slot-width) * 1.36), 48px);
+    --rack-slot-height: clamp(40px, calc(var(--rack-slot-width) * 1.36), 58px);
   }
 
   .plus-table-canvas {
@@ -4201,7 +4201,7 @@ body.plus-theme {
   }
 
   .istaka-slot .okey-tile .tile-number {
-    font-size: clamp(13px, 5vw, 21px) !important;
+    font-size: clamp(18px, 5vw, 24px) !important;
   }
 
   .istaka-slot .okey-tile .tile-dot {
@@ -4370,22 +4370,22 @@ body.plus-theme {
 
   /* Mobilde boş 1-13 kılavuz hücrelerini kaldır. Açılmış perler
      bitişik durur ve satır yüksekliğinin tamamını kullanır. */
-  .table-grid-row .grid-cell-slot:not(.has-tile) { display: none; }
-  .table-grid-row { justify-content: center; gap: 1px; overflow: visible; }
-  .table-grid-row .grid-cell-slot.has-tile {
-    flex: 0 1 auto;
-    width: auto;
+  .table-grid-row .grid-cell-slot:not(.has-tile) { display: flex; }
+  .table-grid-row { justify-content: flex-start; gap: 0; overflow: hidden; }
+  .table-grid-row .grid-cell-slot {
+    flex: 1 1 0;
+    width: 0;
     height: 100%;
-    aspect-ratio: 44 / 60;
+    aspect-ratio: auto;
     min-width: 0;
-    border-width: 0;
   }
-  .grid-cell-slot .okey-tile .tile-number { font-size: clamp(12px, 3.1vw, 17px) !important; }
-  .grid-cell-slot .okey-tile .tile-dot { width: 4px !important; height: 4px !important; }
+  .grid-cell-slot .okey-tile .tile-number { font-size: clamp(9px, 3.1vw, 14px) !important; }
+  .grid-cell-slot .okey-tile .tile-dot { width: 3px !important; height: 3px !important; }
 
   .pairs-section-wrapper {
-    flex: 0 1 44px;
-    min-width: 28px;
+    flex: 0 0 84px;
+    width: 84px;
+    min-width: 84px;
     border-width: 1px;
     border-radius: 6px;
   }
@@ -4393,10 +4393,10 @@ body.plus-theme {
   .pairs-panel { flex: 1 1 33.333%; min-width: 0; width: 33.333%; padding: 1px; }
   .table-pairs-row { justify-content: center; gap: 1px; }
   .table-pairs-row .grid-cell-slot {
-    flex: 0 1 auto;
-    width: auto;
+    flex: 1 1 0;
+    width: 0;
     height: 100%;
-    aspect-ratio: 44 / 60;
+    aspect-ratio: auto;
   }
 
   .center-deck-strip {
@@ -4473,19 +4473,19 @@ body.plus-theme {
 @media (pointer: coarse) and (orientation: landscape), (max-height: 540px) and (orientation: landscape) {
   #game-view {
     --rack-side-width: 42px;
-    --rack-slot-height: clamp(38px, 11.5dvh, 48px);
+    --rack-slot-height: clamp(44px, calc(var(--rack-slot-width) * 1.36), 58px);
   }
 
   .table-felt-mat,
   .my-turn-focus .table-felt-mat {
-    top: 36px !important;
-    bottom: 40px !important;
+    top: 32px !important;
+    bottom: 28px !important;
     width: calc(100% - 138px) !important;
   }
 
   .bar-top { top: 2px; }
   .bar-left, .bar-right { width: 58px; min-height: 64px; }
-  .corner-bottom-left, .corner-bottom-right { bottom: 40px; }
+  .corner-bottom-left, .corner-bottom-right { bottom: 30px; }
   .canvas-bottom-strip, .my-turn-focus .canvas-bottom-strip { bottom: 1px !important; padding: 0 64px; }
 
   .turn-center-actions {
@@ -4520,7 +4520,7 @@ body.plus-theme {
   }
 
   .split-target-badge {
-    bottom: -15px;
+    bottom: 0;
     width: 50px;
     height: 16px;
     padding: 2px 3px;
@@ -4539,11 +4539,11 @@ body.plus-theme {
   }
 
   .istaka-slot .okey-tile .tile-number {
-    font-size: clamp(16px, 4.8dvh, 21px) !important;
+    font-size: clamp(20px, 6dvh, 24px) !important;
   }
 
   .grid-cell-slot .okey-tile .tile-number {
-    font-size: clamp(10px, 3.5dvh, 15px) !important;
+    font-size: clamp(9px, 3.2dvh, 13px) !important;
   }
 
   .btn-menu-trigger {

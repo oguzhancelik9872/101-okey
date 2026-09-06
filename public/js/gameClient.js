@@ -336,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNamePickerEvents();
 
 
+
   function showLobby() {
     stopTurnTimerLoop();
     closeAllDrawers();
