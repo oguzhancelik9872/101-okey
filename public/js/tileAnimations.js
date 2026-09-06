@@ -13,6 +13,7 @@ class TileAnimationEngine {
     this.queue = [];
     this.isProcessingQueue = false;
     this.isAnimating = false;
+    this.idleCallbacks = [];
     this.ensureOverlay();
   }
 
@@ -31,7 +32,22 @@ class TileAnimationEngine {
 
   enqueue(animFn) {
     this.queue.push(animFn);
+    this.isAnimating = true;
+    document.documentElement.classList.add('game-animation-busy');
     this.processQueue();
+  }
+
+  isBusy() {
+    return this.isAnimating || this.isProcessingQueue || this.queue.length > 0;
+  }
+
+  whenIdle(callback) {
+    if (typeof callback !== 'function') return;
+    if (!this.isBusy()) {
+      requestAnimationFrame(callback);
+      return;
+    }
+    this.idleCallbacks.push(callback);
   }
 
   processQueue() {
@@ -47,6 +63,9 @@ class TileAnimationEngine {
         setTimeout(() => this.processQueue(), 30);
       } else {
         this.isAnimating = false;
+        document.documentElement.classList.remove('game-animation-busy');
+        const callbacks = this.idleCallbacks.splice(0);
+        requestAnimationFrame(() => callbacks.forEach(callback => callback()));
       }
     });
   }
@@ -433,6 +452,7 @@ class TileAnimationEngine {
         const tileStartCoords = (isViewer && (tile._rackCoords || (window.lastKnownRackCoords && window.lastKnownRackCoords[tile.id]))) || defaultStartCoords;
 
         if (!endCoords) {
+          if (window.pendingMeldTileIds) window.pendingMeldTileIds.delete(tile.id);
           completedCount++;
           if (completedCount >= tileEntries.length) {
             if (typeof onDone === 'function') onDone();
@@ -457,9 +477,11 @@ class TileAnimationEngine {
             isClosed: false,
             duration: 330,
             onComplete: () => {
-              if (destEl) {
-                destEl.style.opacity = '1';
-                const parentSlot = destEl.closest('.grid-cell-slot');
+              if (window.pendingMeldTileIds) window.pendingMeldTileIds.delete(tile.id);
+              const landedEl = document.querySelector(`.center-table-zone .okey-tile[data-id="${tile.id}"]`) || document.querySelector(`.center-table-zone [data-id="${tile.id}"]`);
+              if (landedEl) {
+                landedEl.style.opacity = '1';
+                const parentSlot = landedEl.closest('.grid-cell-slot');
                 if (parentSlot) {
                   parentSlot.classList.add('has-tile');
                 }

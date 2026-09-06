@@ -1607,7 +1607,8 @@ body.plus-theme {
   justify-content: center;
   padding: 4px 10px;
   box-sizing: border-box;
-  transition: top .38s cubic-bezier(.2,.8,.2,1), bottom .38s cubic-bezier(.2,.8,.2,1), width .38s cubic-bezier(.2,.8,.2,1), border-radius .38s ease, opacity .2s ease;
+  will-change: top, bottom, border-radius;
+  transition: top .52s cubic-bezier(.22,1,.36,1), bottom .52s cubic-bezier(.22,1,.36,1), border-radius .46s cubic-bezier(.22,1,.36,1), opacity .22s ease;
 }
 
 .felt-watermark {
@@ -1714,11 +1715,11 @@ body.plus-theme {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 14px 4px 6px;
+  padding: 4px 16px 4px 8px;
   border-radius: 28px;
   width: auto;
-  min-width: 170px;
-  max-width: 220px;
+  min-width: 175px;
+  max-width: 230px;
   justify-content: center;
 }
 
@@ -2038,11 +2039,18 @@ body.plus-theme {
 .player-turn-progress-fill {
   height: 100%;
   width: 100%;
-  background: #c6a15b;
+  background: #48d597;
   border-radius: 4px;
   transform-origin: left center;
-  transition: width 0.25s linear;
+  transform: scaleX(1);
+  will-change: transform;
+  transition: none;
 }
+
+#seat-left .player-turn-progress-fill { background: #35a7ff; }
+#seat-right .player-turn-progress-fill { background: #cc6cff; }
+#seat-top .player-turn-progress-fill { background: #ff9f43; }
+#seat-bottom .player-turn-progress-fill { background: #48d597; }
 
 /* Karşı oyuncuda süre, avatarın altına uzamaz; sağdaki isim alanında akar. */
 .bar-top .bar-player-info {
@@ -2060,8 +2068,14 @@ body.plus-theme {
 .bar-top .player-turn-progress-track {
   order: 2;
   position: static;
-  width: 100%;
+  width: 74px;
+  height: 3px;
+  align-self: flex-end;
   margin-top: 3px;
+}
+
+.bar-top .player-turn-progress-fill {
+  background: #ff9f43;
 }
 
 .bar-top .player-open-status {
@@ -3311,7 +3325,7 @@ body.plus-theme {
 
 /* 3D 2-Shelf Wooden Istaka Board */
 .plus-istaka-board {
-  --turn-progress: 100%;
+  --turn-scale: 1;
   width: auto;
   max-width: fit-content;
   margin: 0 auto;
@@ -3341,9 +3355,22 @@ body.plus-theme {
   border-radius: 4px;
   pointer-events: none;
   opacity: 0;
-  background: linear-gradient(to right, #c6a15b var(--turn-progress), rgba(32,18,9,.72) var(--turn-progress));
-  box-shadow: 0 1px 5px rgba(0,0,0,.7);
+  background: #48d597;
+  box-shadow: 0 0 7px rgba(72,213,151,.42), 0 1px 4px rgba(0,0,0,.7);
+  transform: scaleX(var(--turn-scale));
+  transform-origin: left center;
+  will-change: transform;
   transition: opacity .2s ease;
+}
+
+.game-animation-busy #turn-center-actions,
+.game-animation-busy #player-istaka-container .istaka-slot,
+.game-animation-busy .btn-side-sort,
+.game-animation-busy #btn-return-discard,
+.game-animation-busy #discard-pile-bottom,
+.game-animation-busy #center-deck-pile,
+.game-animation-busy .center-table-zone .meld-row {
+  pointer-events: none !important;
 }
 
 .plus-istaka-board.rack-timer-active::after {

@@ -13,6 +13,30 @@ document.addEventListener('DOMContentLoaded', () => {
   let roundStartedHandSorted = false;
   let lastHandSignature = '';
   let lastGameState = null;
+  let localActionLockUntil = 0;
+  let lastAnimationLockNotice = 0;
+  let turnFocusRequestId = 0;
+
+  function isGameInteractionLocked() {
+    const anim = window.tileAnimations;
+    return Date.now() < localActionLockUntil || Boolean(anim && typeof anim.isBusy === 'function' && anim.isBusy());
+  }
+
+  function lockGameInteraction(duration = 650) {
+    localActionLockUntil = Math.max(localActionLockUntil, Date.now() + duration);
+  }
+
+  function guardAnimationOverlap() {
+    if (!isGameInteractionLocked()) return false;
+    const now = Date.now();
+    if (now - lastAnimationLockNotice > 1200) {
+      lastAnimationLockNotice = now;
+      ui.showToast('Masa animasyonu tamamlanıyor…', 'info', 1200);
+    }
+    return true;
+  }
+
+  window.isGameInteractionLocked = isGameInteractionLocked;
 
   // Initialize Istaka & Table Managers
   const istaka = new IstakaManager(
@@ -36,6 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function requestIndicatorDeclaration(tileId) {
     if (!tileId || !currentGameState) return;
+    if (guardAnimationOverlap()) return;
+    lockGameInteraction();
     socket.emit('declareIndicator', { roomId, tileId }, (res) => {
       if (res && res.success) ui.showToast('Gösterge doğrulandı. Çift açılışında özel çift olarak kullanabilirsin.', 'success', 3500);
       else ui.showToast((res && res.reason) || 'Gösterge doğrulanamadı.', 'error', 3500);
@@ -118,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function stopTurnTimerLoop() {
     if (turnTimerLoop) {
-      clearInterval(turnTimerLoop);
+      cancelAnimationFrame(turnTimerLoop);
       turnTimerLoop = null;
     }
     lastTickedSecond = null;
@@ -944,8 +970,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Detect pending discard and meld tiles before updating table DOM to prevent 1-frame pre-render flash
-    window.pendingMeldTileIds = new Set();
-    window.flyingDiscardSeatPos = null;
+    if (!(window.pendingMeldTileIds instanceof Set)) window.pendingMeldTileIds = new Set();
+    if (typeof window.flyingDiscardSeatPos === 'undefined') window.flyingDiscardSeatPos = null;
 
     if (lastGameState && lastGameState.state === 'PLAYING' && state.state === 'PLAYING') {
       const countDiscards = (s) => (s && s.discards) ? s.discards.reduce((acc, p) => acc + (p ? p.length : 0), 0) : 0;
@@ -993,6 +1019,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const isNewRoundStarting = (!lastGameState || lastGameState.state !== 'PLAYING' || lastGameState.currentRound !== state.currentRound);
     if (isNewRoundStarting && state.state === 'PLAYING') {
       roundStartedHandSorted = false;
+      if (window.pendingMeldTileIds instanceof Set) window.pendingMeldTileIds.clear();
+      window.flyingDiscardSeatPos = null;
     }
 
     if (state.state !== 'PLAYING') {
@@ -1294,7 +1322,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function startTurnTimerLoop() {
     if (turnTimerLoop) return;
     lastTickedSecond = null;
-    turnTimerLoop = setInterval(() => {
+    const renderTimerFrame = () => {
+      turnTimerLoop = null;
       if (!currentGameState || currentGameState.state !== 'PLAYING') {
         const topTimerBar = document.getElementById('top-turn-timer-bar');
         if (topTimerBar) topTimerBar.classList.add('hidden');
@@ -1313,7 +1342,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const rackBoard = document.querySelector('.plus-istaka-board');
       if (rackBoard) {
         rackBoard.classList.toggle('rack-timer-active', isMyTurn);
-        rackBoard.style.setProperty('--turn-progress', `${remainingRatio * 100}%`);
+        rackBoard.style.setProperty('--turn-scale', remainingRatio.toFixed(4));
       }
 
       // Süre azalırken farkındalık artıran nazik tik-tak ve son saniyelerde hızlanan uyarı tınısı
@@ -1334,17 +1363,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!fillEl) return;
 
         if (seatEl.classList.contains('active-turn')) {
-          fillEl.style.width = (remainingRatio * 100) + '%';
+          fillEl.style.transform = `scaleX(${remainingRatio.toFixed(4)})`;
         } else {
-          fillEl.style.width = '100%';
+          fillEl.style.transform = 'scaleX(1)';
         }
       });
-    }, 100);
+      turnTimerLoop = requestAnimationFrame(renderTimerFrame);
+    };
+    turnTimerLoop = requestAnimationFrame(renderTimerFrame);
   }
 
   function stopTurnTimerLoop() {
     if (turnTimerLoop) {
-      clearInterval(turnTimerLoop);
+      cancelAnimationFrame(turnTimerLoop);
       turnTimerLoop = null;
     }
     const topTimerBar = document.getElementById('top-turn-timer-bar');
@@ -1363,6 +1394,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnReturnDiscard) {
     btnReturnDiscard.addEventListener('click', () => {
       if (!currentGameState) return;
+      if (guardAnimationOverlap()) return;
+      lockGameInteraction();
       socket.emit('returnDiscardTile', { roomId }, (res) => {
         if (res.success) {
           ui.showToast('Yandan alınan taş geri bırakıldı. Şimdi desteden taş çekebilirsiniz.', 'info');
@@ -1379,6 +1412,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnUndoTurn) {
     btnUndoTurn.addEventListener('click', () => {
       if (!roomId) return;
+      if (guardAnimationOverlap()) return;
+      lockGameInteraction();
       socket.emit('undoTurn', { roomId }, (res) => {
         if (res.success) {
           isUndoingTurn = true;
@@ -1393,6 +1428,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnSortRuns) {
     btnSortRuns.addEventListener('click', () => {
+      if (guardAnimationOverlap()) return;
       const isMyTurn = currentGameState && currentGameState.currentTurn === viewerSeatIndex;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
       istaka.autoSortRuns(requiredId);
@@ -1401,6 +1437,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnSortPairs) {
     btnSortPairs.addEventListener('click', () => {
+      if (guardAnimationOverlap()) return;
       const isMyTurn = currentGameState && currentGameState.currentTurn === viewerSeatIndex;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
       const viewerPlayer = currentGameState && currentGameState.players ? currentGameState.players[viewerSeatIndex] : null;
@@ -1458,6 +1495,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnOpenHand) {
     btnOpenHand.addEventListener('click', () => {
       if (!currentGameState || btnOpenHand.disabled) return;
+      if (guardAnimationOverlap()) return;
 
       const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
       if (!isMyTurn) {
@@ -1525,6 +1563,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
+      lockGameInteraction(800);
       socket.emit('openHand', { roomId, melds: meldIdArrays }, (res) => {
         if (res.success) {
           window.soundEngine.playOpenHand();
@@ -1540,6 +1579,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnOpenPairs) {
     btnOpenPairs.addEventListener('click', () => {
       if (!currentGameState || btnOpenPairs.disabled) return;
+      if (guardAnimationOverlap()) return;
 
       const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
       const viewerPlayer = currentGameState.players[viewerSeatIndex];
@@ -1591,6 +1631,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
+      lockGameInteraction(800);
       socket.emit('openPairs', { roomId, pairs: pairIdArrays }, (res) => {
         if (res.success) {
           window.soundEngine.playOpenHand();
@@ -1604,11 +1645,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleDrawDeck() {
     if (!currentGameState) return;
+    if (guardAnimationOverlap()) return;
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
     if (!isMyTurn) {
       ui.showToast('Sıra sizde değilken taş çekemezsiniz.', 'error');
       return;
     }
+    lockGameInteraction();
     socket.emit('drawTile', { roomId, source: 'deck' }, (res) => {
       if (res.success) {
         if (res.tile && res.tile.id) {
@@ -1622,11 +1665,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleDrawDiscard() {
     if (!currentGameState) return;
+    if (guardAnimationOverlap()) return;
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
     if (!isMyTurn) {
       ui.showToast('Sıra sizde değilken taş çekemezsiniz.', 'error');
       return;
     }
+    lockGameInteraction();
     socket.emit('drawTile', { roomId, source: 'discard' }, (res) => {
       if (res.success) {
         if (res.tile && res.tile.id) {
@@ -1640,6 +1685,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleDiscardTile() {
     if (!currentGameState) return;
+    if (guardAnimationOverlap()) return;
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
     if (!isMyTurn) {
       ui.showToast('Sıra sizde değilken taş atamazsınız.', 'error');
@@ -1663,6 +1709,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     istaka.setDrawnTileId(null);
     istaka.clearTurnSnapshot();
+    lockGameInteraction();
     socket.emit('discardTile', { roomId, tileId: activeTile.id }, (res) => {
       if (res.success) {
         istaka.clearSelection();
@@ -1674,6 +1721,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleQuickDiscard(tile) {
     if (!currentGameState) return;
+    if (guardAnimationOverlap()) return;
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
     if (!isMyTurn) {
       ui.showToast('Sıra sizde değilken taş atamazsınız.', 'error');
@@ -1692,6 +1740,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     istaka.setDrawnTileId(null);
     istaka.clearTurnSnapshot();
+    lockGameInteraction();
     socket.emit('discardTile', { roomId, tileId: tile.id }, (res) => {
       if (res.success) {
         istaka.clearSelection();
@@ -1703,6 +1752,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleProcessTileById(tileId, targetMeldId) {
     if (!currentGameState) return;
+    if (guardAnimationOverlap()) return;
     const isMyTurn = currentGameState.currentTurn === viewerSeatIndex;
     if (!isMyTurn) {
       ui.showToast('Sıra sizde değilken taş işleyemezsiniz.', 'error');
@@ -1734,6 +1784,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
 
+    lockGameInteraction(700);
     socket.emit('processTile', { roomId, tileId, targetMeldId }, (res) => {
       if (res.success) {
         if (res.okeyStolen) {
@@ -1769,14 +1820,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableCanvas = document.querySelector('.plus-table-canvas');
     if (tableCanvas) {
       const shouldFocus = Boolean(isMyTurn && isPlayingGame);
+      const focusRequest = ++turnFocusRequestId;
       if (shouldFocus) {
-        const isAnimActive = window.tileAnimations && (window.tileAnimations.isAnimating || (window.tileAnimations.queue && window.tileAnimations.queue.length > 0));
-        const delay = isAnimActive ? 500 : 0;
-        setTimeout(() => {
-          if (currentGameState && currentGameState.currentTurn === viewerSeatIndex && currentGameState.state === 'PLAYING') {
+        const revealMyTurn = () => {
+          if (focusRequest === turnFocusRequestId && currentGameState && currentGameState.currentTurn === viewerSeatIndex && currentGameState.state === 'PLAYING') {
             tableCanvas.classList.add('my-turn-focus');
           }
-        }, delay);
+        };
+        const anim = window.tileAnimations;
+        if (anim && typeof anim.whenIdle === 'function' && anim.isBusy()) {
+          anim.whenIdle(revealMyTurn);
+        } else {
+          requestAnimationFrame(() => requestAnimationFrame(revealMyTurn));
+        }
       } else {
         tableCanvas.classList.remove('my-turn-focus');
       }
