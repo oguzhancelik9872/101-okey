@@ -2072,7 +2072,7 @@ body.plus-theme {
   position: static;
   width: 74px;
   height: 3px;
-  align-self: flex-end;
+  align-self: center;
   margin-top: 3px;
 }
 
@@ -2084,6 +2084,15 @@ body.plus-theme {
 .bar-bottom .player-open-status {
   order: 3;
   align-self: center;
+  box-sizing: border-box;
+  max-width: 100%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Oyuncunun kendi süresi yalnızca ıstaka üstündeki yeşil çizgide gösterilir. */
+#seat-bottom .player-turn-progress-track {
+  display: none !important;
 }
 
 /* Red Penalty Badge displayed as corner badge on pods (+101, +202) */
