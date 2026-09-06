@@ -1816,8 +1816,6 @@ body.plus-theme {
 
 .player-indicator-g-badge {
   position: absolute;
-  right: -15px;
-  top: 2px;
   z-index: 12;
   width: 20px;
   height: 20px;
@@ -1829,6 +1827,23 @@ body.plus-theme {
   border: 2px solid #fffbd6;
   box-shadow: 0 2px 8px rgba(0,0,0,.65), 0 0 10px rgba(241,196,15,.55);
   font: 900 11px/1 Arial, sans-serif;
+}
+
+/* Rozet avatarın dış çerçevesine oturur ve her koltukta ekranın içine bakar. */
+.player-indicator-g-badge.indicator-pos-bottom,
+.player-indicator-g-badge.indicator-pos-left {
+  right: -8px;
+  top: -8px;
+}
+
+.player-indicator-g-badge.indicator-pos-right {
+  left: -8px;
+  top: -8px;
+}
+
+.player-indicator-g-badge.indicator-pos-top {
+  right: -8px;
+  bottom: -8px;
 }
 
 #indicator-tile-slot.can-declare-indicator {

@@ -156,10 +156,10 @@ class TableManager {
         if (player.indicatorDeclared) {
           if (!indicatorBadge) {
             indicatorBadge = document.createElement('span');
-            indicatorBadge.className = 'player-indicator-g-badge';
             indicatorBadge.textContent = 'G';
             (seatEl.querySelector('.avatar-ring-container') || seatEl).appendChild(indicatorBadge);
           }
+          indicatorBadge.className = `player-indicator-g-badge indicator-pos-${pos}`;
           indicatorBadge.classList.remove('hidden');
         } else if (indicatorBadge) {
           indicatorBadge.remove();
