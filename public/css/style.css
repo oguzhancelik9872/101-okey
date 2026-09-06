@@ -2579,13 +2579,14 @@ body.plus-theme {
 .split-target-badge {
   position: absolute;
   z-index: 80;
-  top: 7px;
+  top: auto;
+  bottom: -21px;
   width: 62px;
   height: 22px;
   box-sizing: border-box;
   padding: 3px 5px;
   border: 1px solid rgba(255, 224, 92, .78);
-  border-radius: 7px;
+  border-radius: 0 0 13px 13px;
   color: #ffe45c;
   background: rgba(2, 10, 7, .9);
   box-shadow: 0 2px 9px rgba(0,0,0,.75), 0 0 9px rgba(241,196,15,.22);
@@ -2593,20 +2594,24 @@ body.plus-theme {
   text-align: center;
   white-space: nowrap;
   pointer-events: none;
-  transform-origin: center;
+  transform: translateX(-50%);
+  transform-origin: center top;
 }
 
-.seri-corner-target { left: -68px; }
-.pairs-corner-target { right: -68px; }
+.seri-corner-target,
+.pairs-corner-target {
+  left: 50%;
+  right: auto;
+}
 
 .split-target-badge.target-value-changed {
   animation: splitTargetChanged .7s cubic-bezier(.2,.8,.25,1);
 }
 
 @keyframes splitTargetChanged {
-  0%, 100% { transform: scale(1); }
+  0%, 100% { transform: translateX(-50%) scale(1); }
   38% {
-    transform: scale(1.28);
+    transform: translateX(-50%) scale(1.28);
     color: #fffbd0;
     box-shadow: 0 2px 10px rgba(0,0,0,.8), 0 0 20px rgba(255,220,45,.85);
   }
