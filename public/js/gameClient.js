@@ -1824,6 +1824,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (btnOpenHand) {
+      btnOpenHand.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
       btnOpenHand.disabled = !canActuallyOpenSeri;
       btnOpenHand.title = cannotOpenSeri
         ? 'Çift açtığınız için seri açamazsınız'
@@ -1832,6 +1833,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : (canAttemptOpen ? `Seri açmak için ıstakanıza en az ${minOpenScore} puanlık geçerli per dizmelisiniz` : 'Taş çektikten sonra el açabilirsiniz'));
     }
     if (btnOpenPairs) {
+      btnOpenPairs.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
       btnOpenPairs.disabled = !canActuallyOpenPairs;
       btnOpenPairs.title = cannotOpenPairs
         ? 'Masada çift açmış bir oyuncu olmadığı için çift açamazsınız'
@@ -1851,6 +1853,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnUndoTurn) {
       const canUndo = Boolean(currentGameState.canUndo && isMyTurn && turnState === 'DISCARD');
       btnUndoTurn.classList.toggle('hidden', !canUndo);
+    }
+
+    const turnCenterActions = document.getElementById('turn-center-actions');
+    if (turnCenterActions) {
+      turnCenterActions.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
     }
   }
 

@@ -1777,8 +1777,8 @@ body.plus-theme {
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%) !important;
-  width: fit-content !important;
-  max-width: 98% !important;
+  width: calc(100% - 24px) !important;
+  max-width: none !important;
   border-radius: 36px !important;
   box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.9), 0 16px 45px rgba(0, 0, 0, 0.95), 0 0 0 3px rgba(241, 196, 15, 0.6) !important;
 }
@@ -2243,6 +2243,33 @@ body.plus-theme {
   align-self: stretch;
   margin-top: 0;
   box-sizing: border-box;
+  position: relative;
+}
+
+.turn-center-actions {
+  position: absolute;
+  left: 50%;
+  top: -39px;
+  transform: translateX(-50%);
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 4px 7px;
+  border: 1px solid rgba(241, 196, 15, .52);
+  border-radius: 20px;
+  background: rgba(3, 17, 10, .92);
+  box-shadow: 0 5px 15px rgba(0,0,0,.75), 0 0 12px rgba(241,196,15,.2);
+  white-space: nowrap;
+}
+
+.corner-bottom-left #btn-return-discard {
+  position: absolute;
+  left: calc(100% + 7px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 90;
 }
 
 /* Live 101 Okey Scoreboard Card in Center Strip */
