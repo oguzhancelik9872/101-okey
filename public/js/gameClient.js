@@ -691,6 +691,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const btnBotQuickPlay = document.getElementById('btn-bot-quick-play');
+  if (btnBotQuickPlay) {
+    btnBotQuickPlay.addEventListener('click', () => {
+      if (btnBotQuickPlay.disabled) return;
+      btnBotQuickPlay.disabled = true;
+      const originalText = btnBotQuickPlay.innerHTML;
+      btnBotQuickPlay.innerHTML = '<span>⏳ Maç hazırlanıyor...</span>';
+      const user = currentUser || {};
+
+      const createQuickBotRoom = () => {
+        socket.emit('createBotRoom', {
+          playerName: getPlayerName(),
+          userId: getUserId(),
+          gender: user.gender,
+          avatarIndex: user.avatarIndex
+        }, (res) => {
+          btnBotQuickPlay.disabled = false;
+          btnBotQuickPlay.innerHTML = originalText;
+          if (res && res.success) {
+            mySeatedIndex = null;
+            setupGameRoom(res.roomId, res.seatIndex, res.isHost);
+          } else {
+            ui.showToast((res && res.reason) || 'Bot maçı başlatılamadı.', 'error');
+          }
+        });
+      };
+
+      if (mySeatedIndex !== null) {
+        socket.emit('lobby:leaveSeat', { userId: getUserId() }, createQuickBotRoom);
+      } else {
+        createQuickBotRoom();
+      }
+    });
+  }
+
   // Create Room Modal
   const btnOpenCreate = document.getElementById('btn-open-create-room');
   if (btnOpenCreate) {
@@ -1881,6 +1916,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const masterVolumeValue = document.getElementById('master-volume-value');
   const drawerInGameActions = document.getElementById('drawer-in-game-actions');
   const btnDrawerLeaveTable = document.getElementById('btn-drawer-leave-table');
+  const rulesModal = document.getElementById('rules-modal');
+  const btnLobbyRules = document.getElementById('btn-lobby-rules');
+  const btnSettingsRules = document.getElementById('btn-settings-rules');
+  const btnCloseRules = document.getElementById('btn-close-rules');
 
   function openDrawer(drawer) {
     if (!drawer) return;
@@ -1910,10 +1949,28 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnTableSettings) btnTableSettings.addEventListener('click', () => openDrawer(settingsDrawer));
   if (btnCloseSettingsDrawer) btnCloseSettingsDrawer.addEventListener('click', closeAllDrawers);
 
+  const openRules = () => {
+    closeAllDrawers();
+    ui.showModal('rules-modal');
+  };
+  const closeRules = () => ui.hideModal('rules-modal');
+
+  if (btnLobbyRules) btnLobbyRules.addEventListener('click', openRules);
+  if (btnSettingsRules) btnSettingsRules.addEventListener('click', openRules);
+  if (btnCloseRules) btnCloseRules.addEventListener('click', closeRules);
+  if (rulesModal) {
+    rulesModal.addEventListener('click', (e) => {
+      if (e.target === rulesModal) closeRules();
+    });
+  }
+
   if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeAllDrawers);
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeAllDrawers();
+    if (e.key === 'Escape') {
+      closeAllDrawers();
+      closeRules();
+    }
   });
 
   // --- Live Chat Message Handling (In-Game Only) ---
