@@ -2005,6 +2005,31 @@ body.plus-theme {
   transition: width 0.25s linear;
 }
 
+/* Karşı oyuncuda süre, avatarın altına uzamaz; sağdaki isim alanında akar. */
+.bar-top .bar-player-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.bar-top .player-name {
+  order: 1;
+  max-width: none;
+  text-align: center;
+}
+
+.bar-top .player-turn-progress-track {
+  order: 2;
+  position: static;
+  width: 100%;
+  margin-top: 3px;
+}
+
+.bar-top .player-open-status {
+  order: 3;
+  align-self: center;
+}
+
 /* Red Penalty Badge displayed as corner badge on pods (+101, +202) */
 .player-penalty-pill {
   position: absolute;
