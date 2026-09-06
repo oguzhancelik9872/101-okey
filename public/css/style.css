@@ -2053,13 +2053,15 @@ body.plus-theme {
 #seat-bottom .player-turn-progress-fill { background: #48d597; }
 
 /* Karşı oyuncuda süre, avatarın altına uzamaz; sağdaki isim alanında akar. */
-.bar-top .bar-player-info {
+.bar-top .bar-player-info,
+.bar-bottom .bar-player-info {
   flex: 1 1 auto;
   min-width: 0;
   align-items: stretch;
 }
 
-.bar-top .player-name {
+.bar-top .player-name,
+.bar-bottom .player-name {
   order: 1;
   max-width: none;
   text-align: center;
@@ -2078,7 +2080,8 @@ body.plus-theme {
   background: #ff9f43;
 }
 
-.bar-top .player-open-status {
+.bar-top .player-open-status,
+.bar-bottom .player-open-status {
   order: 3;
   align-self: center;
 }
