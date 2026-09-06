@@ -92,7 +92,12 @@ class OkeyGame {
       score: 0,           // Total penalty score across rounds (lower is better)
       roundScore: 0,      // Score in current round
       penaltyPoints: 0,   // Accumulated penalty points in current round (+101, +202 etc)
-      penalties: []
+      penalties: [],
+      indicatorDeclared: false,
+      indicatorTileId: null,
+      indicatorBonusUsed: false,
+      indicatorBonusExpired: false,
+      indicatorDeclarationClosed: false
     };
     if (isBot) {
       const personalitySeed = String(id || name || '').split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
@@ -203,6 +208,11 @@ class OkeyGame {
       this.players[i].roundScore = 0;
       this.players[i].penaltyPoints = 0;
       this.players[i].penalties = [];
+      this.players[i].indicatorDeclared = false;
+      this.players[i].indicatorTileId = null;
+      this.players[i].indicatorBonusUsed = false;
+      this.players[i].indicatorBonusExpired = false;
+      this.players[i].indicatorDeclarationClosed = false;
     }
 
     // First player starts directly in DISCARD state because they hold 22 tiles
@@ -240,6 +250,7 @@ class OkeyGame {
 
       const tile = leftDiscardPile.pop();
       player.hand.push(tile);
+      player.indicatorDeclarationClosed = true;
       player.hasResetTurnTimerInThisTurn = false;
       this.drawnFromDiscard = { playerIndex, tile };
       this.turnState = 'DISCARD';
@@ -261,6 +272,7 @@ class OkeyGame {
       }
 
       player.hand.push(tile);
+      player.indicatorDeclarationClosed = true;
       player.hasResetTurnTimerInThisTurn = false;
       this.drawnFromDiscard = null;
       this.turnState = 'DISCARD';
@@ -269,6 +281,40 @@ class OkeyGame {
       this.addLog(`${player.name} desteden taş çekti.`);
       return { success: true, tile, source: 'deck' };
     }
+  }
+
+  /** Declare the remaining twin of the face-up indicator before the player's first draw/action. */
+  declareIndicator(playerIndex, tileId) {
+    if (this.state !== GAME_STATES.PLAYING || !this.indicator) {
+      return { success: false, reason: 'Gösterge yalnızca oyun devam ederken doğrulanabilir.' };
+    }
+    const player = this.players[playerIndex];
+    if (!player) return { success: false, reason: 'Oyuncu bulunamadı.' };
+    if (player.indicatorDeclarationClosed || player.opened) {
+      return { success: false, reason: 'Gösterge ilk taş çekilmeden veya ilk hamle yapılmadan önce gösterilmelidir.' };
+    }
+    if (player.indicatorDeclared) return { success: false, reason: 'Gösterge zaten doğrulandı.' };
+
+    const tile = player.hand.find(candidate => candidate.id === tileId);
+    const isIndicatorTwin = tile && !tile.isFake && tile.color === this.indicator.color && tile.number === this.indicator.number;
+    if (!isIndicatorTwin) {
+      return { success: false, reason: 'Sürüklenen taş açık göstergenin diğer eşi değil.' };
+    }
+
+    player.indicatorDeclared = true;
+    player.indicatorTileId = tile.id;
+    player.indicatorBonusUsed = false;
+    player.indicatorBonusExpired = false;
+    if (this.turnSnapshot && this.turnSnapshot.playerIndex === playerIndex && !this.turnSnapshot.modified) {
+      this.turnSnapshot.indicatorDeclared = true;
+      this.turnSnapshot.indicatorTileId = tile.id;
+      this.turnSnapshot.indicatorBonusUsed = false;
+      this.turnSnapshot.indicatorBonusExpired = false;
+    }
+    const message = `🅶 ${player.name} göstergeyi doğruladı!`;
+    this.addLog(message);
+    this._emitSystemMessage(message);
+    return { success: true, tileId: tile.id };
   }
 
   /**
@@ -323,6 +369,11 @@ class OkeyGame {
       hasResetTurnTimerInThisTurn: player.hasResetTurnTimerInThisTurn || false,
       initialOpenScore: player.initialOpenScore || 0,
       initialOpenPairs: player.initialOpenPairs || 0,
+      indicatorDeclared: Boolean(player.indicatorDeclared),
+      indicatorTileId: player.indicatorTileId || null,
+      indicatorBonusUsed: Boolean(player.indicatorBonusUsed),
+      indicatorBonusExpired: Boolean(player.indicatorBonusExpired),
+      indicatorDeclarationClosed: Boolean(player.indicatorDeclarationClosed),
       minOpenScore: this.minOpenScore,
       minOpenPairs: this.minOpenPairs,
       tableMelds: this.tableMelds.map(m => ({
@@ -331,6 +382,7 @@ class OkeyGame {
         type: m.type,
         tiles: m.tiles.map(t => new Tile(t.id, t.color, t.number, t.isFake)),
         score: m.score
+        ,isIndicatorPair: Boolean(m.isIndicatorPair)
       })),
       tableMeldCounter: this.tableMeldCounter,
       penalties: this.players.map(p => ({
@@ -365,6 +417,11 @@ class OkeyGame {
     player.hasResetTurnTimerInThisTurn = true; // Prevent timer reset abuse within the same turn
     player.initialOpenScore = snap.initialOpenScore;
     player.initialOpenPairs = snap.initialOpenPairs;
+    player.indicatorDeclared = snap.indicatorDeclared;
+    player.indicatorTileId = snap.indicatorTileId;
+    player.indicatorBonusUsed = snap.indicatorBonusUsed;
+    player.indicatorBonusExpired = snap.indicatorBonusExpired;
+    player.indicatorDeclarationClosed = snap.indicatorDeclarationClosed;
 
     // Restore table minimum open requirements
     this.minOpenScore = snap.minOpenScore || 101;
@@ -377,6 +434,7 @@ class OkeyGame {
       type: m.type,
       tiles: m.tiles.map(t => new Tile(t.id, t.color, t.number, t.isFake)),
       score: m.score
+      ,isIndicatorPair: Boolean(m.isIndicatorPair)
     }));
     this.tableMeldCounter = snap.tableMeldCounter;
 
@@ -496,6 +554,8 @@ class OkeyGame {
     }
 
     if (firstTime) {
+      player.indicatorDeclarationClosed = true;
+      if (player.indicatorDeclared && !player.indicatorBonusUsed) player.indicatorBonusExpired = true;
       player.initialOpenScore = validation.score;
       player.initialOpenPairs = 0;
       player.openedInThisTurn = true;
@@ -567,6 +627,7 @@ class OkeyGame {
     if (this.turnState !== 'DISCARD') return { success: false, reason: 'Önce taş çekmelisiniz.' };
 
     const player = this.players[playerIndex];
+    const firstTime = !player.opened;
 
     // Seri açan oyuncu, masada çift açan başka bir oyuncu yoksa çift açamaz
     if (player.opened && player.openType === 'seri') {
@@ -603,32 +664,49 @@ class OkeyGame {
 
     const reqs = this.getMinOpenRequirements(playerIndex);
     const minRequired = player.opened ? 0 : reqs.minPairs;
-    const validation = Validator.validatePairsOpening(pairs, this.indicator, minRequired);
-
-    if (!validation.valid) {
-      return { success: false, reason: validation.reason };
+    const canUseIndicatorBonus = firstTime && player.indicatorDeclared &&
+      !player.indicatorBonusUsed && !player.indicatorBonusExpired &&
+      player.hand.some(t => t.id === player.indicatorTileId);
+    let indicatorPairIndex = -1;
+    for (let i = 0; i < pairs.length; i++) {
+      const pair = pairs[i];
+      if (pair.length !== 2) return { success: false, reason: 'Her çift tam olarak iki taştan oluşmalıdır.' };
+      if (Validator.isPair(pair[0], pair[1], this.indicator)) continue;
+      const containsDeclaredIndicator = pair.some(t => t.id === player.indicatorTileId);
+      if (!canUseIndicatorBonus || !containsDeclaredIndicator || indicatorPairIndex !== -1) {
+        return { success: false, reason: 'Geçersiz çift bulundu. Gösterge yalnızca ilk çift açılışında tek bir özel çiftte kullanılabilir.' };
+      }
+      indicatorPairIndex = i;
     }
+    if (pairs.length < minRequired) return { success: false, reason: `En az ${minRequired} çift açmalısınız.` };
 
     player.hand = player.hand.filter(t => !usedTileIds.has(t.id));
 
-    for (const pair of pairs) {
+    for (let pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
+      const pair = pairs[pairIndex];
       const tableMeld = {
         id: `meld_${this.tableMeldCounter++}`,
         playerIndex,
         type: 'pairs',
         tiles: pair,
-        score: pair[0].getValue(this.indicator) * 2
+        score: pair.reduce((sum, tile) => sum + tile.getValue(this.indicator), 0),
+        isIndicatorPair: pairIndex === indicatorPairIndex
       };
       this.tableMelds.push(tableMeld);
       player.openedMelds.push(tableMeld);
     }
 
-    const firstTime = !player.opened;
     if (this.players.some((p, idx) => idx !== playerIndex && p.opened)) {
       this.otherPlayersEverOpened = true;
     }
 
     if (firstTime) {
+      player.indicatorDeclarationClosed = true;
+      if (indicatorPairIndex !== -1) {
+        player.indicatorBonusUsed = true;
+      } else if (player.indicatorDeclared) {
+        player.indicatorBonusExpired = true;
+      }
       player.initialOpenScore = 0;
       player.initialOpenPairs = pairs.length;
       player.openedInThisTurn = true;
@@ -687,7 +765,7 @@ class OkeyGame {
     }
     if (this.turnSnapshot) this.turnSnapshot.modified = true;
 
-    const openingMessage = `${player.name} ${pairs.length} çift açtı!`;
+    const openingMessage = `${player.name} ${pairs.length} çift açtı${indicatorPairIndex !== -1 ? ' (Gösterge dahil)' : ''}!`;
     this.addLog(openingMessage);
     if (firstTime) this._emitSystemMessage(openingMessage);
     return { success: true, count: pairs.length, remainingTilesCount: player.hand.length };
@@ -785,6 +863,10 @@ class OkeyGame {
     }
 
     const tile = player.hand.splice(tileIndex, 1)[0];
+    player.indicatorDeclarationClosed = true;
+    if (player.indicatorDeclared && tile.id === player.indicatorTileId && !player.indicatorBonusUsed) {
+      player.indicatorBonusExpired = true;
+    }
 
     // Place into player's discard pile
     this.discards[playerIndex].push(tile);
@@ -1143,12 +1225,20 @@ class OkeyGame {
   /**
    * Phase 1 of Bot Turn: Draw from discard or deck
    */
+  _declareBotIndicatorIfHeld(botIndex) {
+    const bot = this.players[botIndex];
+    if (!bot || !bot.isBot || bot.indicatorDeclared || bot.indicatorDeclarationClosed || !this.indicator) return;
+    const tile = bot.hand.find(t => !t.isFake && t.color === this.indicator.color && t.number === this.indicator.number);
+    if (tile) this.declareIndicator(botIndex, tile.id);
+  }
+
   executeBotDraw(botIndex) {
     if (this.state !== GAME_STATES.PLAYING || this.currentTurn !== botIndex || this.turnState !== 'DRAW') {
       return null;
     }
     const bot = this.players[botIndex];
     if (!bot || !bot.isBot) return null;
+    this._declareBotIndicatorIfHeld(botIndex);
 
     try {
       let drawnFromDiscard = false;
@@ -1199,6 +1289,7 @@ class OkeyGame {
     }
     const bot = this.players[botIndex];
     if (!bot || !bot.isBot) return null;
+    this._declareBotIndicatorIfHeld(botIndex);
 
     try {
       // Step 2: Open hand if possible
@@ -1226,7 +1317,15 @@ class OkeyGame {
             this.openHand(botIndex, meldIds);
           }
         } else {
-          const pairs = BotAI.findAllPairs(bot.hand, this.indicator);
+          let pairs = BotAI.findAllPairs(bot.hand, this.indicator);
+          if (bot.indicatorDeclared && !bot.indicatorBonusUsed && !bot.indicatorBonusExpired) {
+            const indicatorTile = bot.hand.find(t => t.id === bot.indicatorTileId);
+            const usedIds = new Set(pairs.flat().map(t => t.id));
+            if (indicatorTile && !usedIds.has(indicatorTile.id) && pairs.length < botReqs.minPairs) {
+              const companion = bot.hand.find(t => t.id !== indicatorTile.id && !usedIds.has(t.id));
+              if (companion) pairs = [...pairs, [indicatorTile, companion]];
+            }
+          }
           if (pairs.length >= botReqs.minPairs) {
             const opponentsOpened = this.players.some((p, index) => p && index % 2 !== botIndex % 2 && p.opened);
             const opponentHands = this.players.filter((p, index) => p && index % 2 !== botIndex % 2).map(p => p.hand.length);
@@ -1484,6 +1583,7 @@ class OkeyGame {
         playerIndex: m.playerIndex,
         type: m.type,
         score: m.score,
+        isIndicatorPair: Boolean(m.isIndicatorPair),
         tiles: m.tiles.map(t => ({
           ...t.toJSON(),
           effectiveColor: t.getColor(this.indicator),
@@ -1514,6 +1614,10 @@ class OkeyGame {
         roundScore: p.roundScore || 0,
         penaltyPoints: p.penaltyPoints || 0,
         penalties: p.penalties || [],
+        indicatorDeclared: Boolean(p.indicatorDeclared),
+        indicatorBonusAvailable: Boolean(p.indicatorDeclared && !p.indicatorBonusUsed && !p.indicatorBonusExpired && p.hand && p.hand.some(t => t.id === p.indicatorTileId)),
+        indicatorTileId: idx === viewerSeatIndex ? (p.indicatorTileId || null) : null,
+        indicatorDeclarationClosed: idx === viewerSeatIndex ? Boolean(p.indicatorDeclarationClosed) : undefined,
         // Only provide full hand details to the viewer
         hand: (idx === viewerSeatIndex && p.hand) ? p.hand.map(t => ({
           ...t.toJSON(),
@@ -1525,6 +1629,7 @@ class OkeyGame {
       roundResults: this.roundResults,
       matchHistory: this.matchHistory || [],
       canUndo: Boolean(this.turnSnapshot && this.turnSnapshot.modified && this.turnSnapshot.playerIndex === viewerSeatIndex && this.currentTurn === viewerSeatIndex && this.turnState === 'DISCARD'),
+      canDeclareIndicator: Boolean(this.state === GAME_STATES.PLAYING && this.players[viewerSeatIndex] && !this.players[viewerSeatIndex].indicatorDeclared && !this.players[viewerSeatIndex].indicatorDeclarationClosed && !this.players[viewerSeatIndex].opened && this.indicator && this.players[viewerSeatIndex].hand.some(t => !t.isFake && t.color === this.indicator.color && t.number === this.indicator.number)),
       drawnFromDiscard: this.drawnFromDiscard ? {
         playerIndex: this.drawnFromDiscard.playerIndex,
         tileId: this.drawnFromDiscard.tile.id,

@@ -798,7 +798,7 @@ class IstakaManager {
       el.classList.add('dragging', 'touch-dragging');
       document.querySelectorAll('.mobile-drag-target').forEach(node => node.classList.remove('mobile-drag-target'));
       const target = document.elementFromPoint(e.clientX, e.clientY);
-      const dropTarget = target?.closest('.istaka-slot, #discard-pile-bottom, .meld-row');
+      const dropTarget = target?.closest('.istaka-slot, #discard-pile-bottom, .meld-row, #indicator-tile-slot');
       if (dropTarget && !dropTarget.contains(el)) dropTarget.classList.add('mobile-drag-target');
     });
 
@@ -817,6 +817,7 @@ class IstakaManager {
       const targetSlot = target?.closest('.istaka-slot');
       const targetMeld = target?.closest('.meld-row[data-meld-id]');
       const targetDiscard = target?.closest('#discard-pile-bottom');
+      const targetIndicator = target?.closest('#indicator-tile-slot');
 
       if (targetSlot) {
         const targetRow = Number(targetSlot.dataset.row);
@@ -827,6 +828,8 @@ class IstakaManager {
           this.activeMeldGroup = null;
           this.render();
         }
+      } else if (targetIndicator) {
+        document.dispatchEvent(new CustomEvent('okey:declareIndicator', { detail: { tileId: tile.id } }));
       } else if (targetDiscard && this.onTileDoubleClicked) {
         window.lastManualDragTime = Date.now();
         window.lastActionWasManualDrag = true;
@@ -1194,7 +1197,7 @@ class IstakaManager {
   /**
    * Analyzes contiguous 2-tile pair segments currently arranged on the rack
    */
-  analyzeRackPairs() {
+  analyzeRackPairs(indicatorBonusTileId = null) {
     const validPairs = [];
     const invalidSegments = [];
     const validTileIds = new Set();
@@ -1208,14 +1211,14 @@ class IstakaManager {
           currentSegment.push(t);
         } else {
           if (currentSegment.length > 0) {
-            this._evaluatePairSegment(currentSegment, validPairs, invalidSegments, validTileIds);
+            this._evaluatePairSegment(currentSegment, validPairs, invalidSegments, validTileIds, indicatorBonusTileId);
             currentSegment = [];
           }
         }
       }
 
       if (currentSegment.length > 0) {
-        this._evaluatePairSegment(currentSegment, validPairs, invalidSegments, validTileIds);
+        this._evaluatePairSegment(currentSegment, validPairs, invalidSegments, validTileIds, indicatorBonusTileId);
       }
     }
 
@@ -1227,9 +1230,10 @@ class IstakaManager {
     };
   }
 
-  _evaluatePairSegment(segment, validPairs, invalidSegments, validTileIds) {
+  _evaluatePairSegment(segment, validPairs, invalidSegments, validTileIds, indicatorBonusTileId = null) {
     if (segment.length === 2) {
-      if (ClientValidator.isPair(segment[0], segment[1], this.indicator)) {
+      if (ClientValidator.isPair(segment[0], segment[1], this.indicator) ||
+          (indicatorBonusTileId && segment.some(tile => tile.id === indicatorBonusTileId))) {
         validPairs.push(segment);
         validTileIds.add(segment[0].id);
         validTileIds.add(segment[1].id);

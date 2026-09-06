@@ -1814,6 +1814,41 @@ body.plus-theme {
   height: 48px;
 }
 
+.player-indicator-g-badge {
+  position: absolute;
+  right: -5px;
+  top: -5px;
+  z-index: 12;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #12351f;
+  background: linear-gradient(145deg, #fff5a8, #f1c40f);
+  border: 2px solid #fffbd6;
+  box-shadow: 0 2px 8px rgba(0,0,0,.65), 0 0 10px rgba(241,196,15,.55);
+  font: 900 12px/1 Arial, sans-serif;
+}
+
+#indicator-tile-slot.can-declare-indicator {
+  cursor: copy;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px rgba(255,224,92,.75), 0 0 18px rgba(255,208,0,.55);
+  animation: indicatorDeclarePulse 1.35s ease-in-out infinite;
+}
+
+#indicator-tile-slot.indicator-drag-over,
+#indicator-tile-slot.mobile-drag-target {
+  transform: scale(1.12);
+  outline: 3px solid #fff3a0;
+  outline-offset: 3px;
+}
+
+@keyframes indicatorDeclarePulse {
+  50% { box-shadow: 0 0 0 3px rgba(255,224,92,.9), 0 0 25px rgba(255,208,0,.8); }
+}
+
 .pod-avatar {
   width: 48px;
   height: 48px;

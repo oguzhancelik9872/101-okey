@@ -152,6 +152,19 @@ class TableManager {
           avatarEl.innerHTML = getPlayerAvatarHTML(player.name, player.gender, player.avatarIndex, player.isBot, player.avatarFile);
         }
 
+        let indicatorBadge = seatEl.querySelector('.player-indicator-g-badge');
+        if (player.indicatorDeclared) {
+          if (!indicatorBadge) {
+            indicatorBadge = document.createElement('span');
+            indicatorBadge.className = 'player-indicator-g-badge';
+            indicatorBadge.textContent = 'G';
+            (seatEl.querySelector('.avatar-ring-container') || seatEl).appendChild(indicatorBadge);
+          }
+          indicatorBadge.classList.remove('hidden');
+        } else if (indicatorBadge) {
+          indicatorBadge.remove();
+        }
+
         const scoreEl = seatEl.querySelector('.player-score');
         if (scoreEl) scoreEl.textContent = '';
 
@@ -257,6 +270,8 @@ class TableManager {
 
     const indicatorSlot = document.getElementById('indicator-tile-slot');
     if (indicatorSlot && this.gameState.indicator) {
+      indicatorSlot.classList.toggle('can-declare-indicator', Boolean(this.gameState.canDeclareIndicator));
+      indicatorSlot.title = this.gameState.canDeclareIndicator ? 'Elindeki gösterge eşini buraya sürükle' : 'Gösterge';
       indicatorSlot.innerHTML = '';
       const indTile = this.gameState.indicator;
       const tileEl = this.createTileDOM(indTile, true);

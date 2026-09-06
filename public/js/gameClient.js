@@ -34,6 +34,30 @@ document.addEventListener('DOMContentLoaded', () => {
   window.tableManager = table;
   window.istakaManager = istaka;
 
+  function requestIndicatorDeclaration(tileId) {
+    if (!tileId || !currentGameState) return;
+    socket.emit('declareIndicator', { roomId, tileId }, (res) => {
+      if (res && res.success) ui.showToast('Gösterge doğrulandı. Çift açılışında özel çift olarak kullanabilirsin.', 'success', 3500);
+      else ui.showToast((res && res.reason) || 'Gösterge doğrulanamadı.', 'error', 3500);
+    });
+  }
+
+  document.addEventListener('okey:declareIndicator', (event) => requestIndicatorDeclaration(event.detail && event.detail.tileId));
+  const indicatorDropTarget = document.getElementById('indicator-tile-slot');
+  if (indicatorDropTarget) {
+    indicatorDropTarget.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      indicatorDropTarget.classList.add('indicator-drag-over');
+    });
+    indicatorDropTarget.addEventListener('dragleave', () => indicatorDropTarget.classList.remove('indicator-drag-over'));
+    indicatorDropTarget.addEventListener('drop', (event) => {
+      event.preventDefault();
+      indicatorDropTarget.classList.remove('indicator-drag-over');
+      const tileId = event.dataTransfer?.getData('text/plain') || window.draggedTileId;
+      if (tileId && !String(tileId).startsWith('ACTION:')) requestIndicatorDeclaration(tileId);
+    });
+  }
+
   // --- Dynamic Title, LocalStorage & Global UI State ---
   let currentActivePlayerName = 'Oyuncu';
   let titleBlinkInterval = null;
@@ -1499,7 +1523,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const requiredId = (isMyTurn && isFirstOpen && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
 
       // 1. Analyze 2-tile pair groups currently arranged on the istaka rack
-      const rackPairs = istaka.analyzeRackPairs();
+      const indicatorBonusTileId = isFirstOpen && viewerPlayer && viewerPlayer.indicatorBonusAvailable ? viewerPlayer.indicatorTileId : null;
+      const rackPairs = istaka.analyzeRackPairs(indicatorBonusTileId);
 
       if (rackPairs.validPairs.length < minPairs) {
         ui.showToast(`Çift açmak için ıstakanızda en az ${minPairs} çift dizili olmalıdır (Şu an: ${rackPairs.validPairs.length} çift).`, 'error', 3000);
@@ -1767,7 +1792,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (canAttemptOpen && !cannotOpenPairs && typeof istaka !== 'undefined') {
-      const rackPairs = istaka.analyzeRackPairs();
+      const indicatorBonusTileId = isFirstOpen && viewerPlayer && viewerPlayer.indicatorBonusAvailable ? viewerPlayer.indicatorTileId : null;
+      const rackPairs = istaka.analyzeRackPairs(indicatorBonusTileId);
       const requiredId = hasDrawnFromDiscard ? currentGameState.drawnFromDiscard.tileId : null;
       const containsRequired = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
 
