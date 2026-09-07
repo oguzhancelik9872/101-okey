@@ -129,6 +129,25 @@ class TableManager {
       turnBadge.classList.toggle('hidden', !isMyTurn);
     }
 
+    // The live remaining-hand penalty is private and belongs to the rack, not
+    // the public player profile cards.
+    const viewerPlayer = this.gameState.players[this.viewerSeatIndex];
+    let rackRemainingEl = istakaBoardEl ? istakaBoardEl.querySelector('.rack-remaining-hand-penalty') : null;
+    if (istakaBoardEl && viewerPlayer && viewerPlayer.opened && Number.isFinite(Number(viewerPlayer.remainingHandPenalty))) {
+      if (!rackRemainingEl) {
+        rackRemainingEl = document.createElement('span');
+        rackRemainingEl.className = 'rack-remaining-hand-penalty';
+        istakaBoardEl.appendChild(rackRemainingEl);
+      }
+      rackRemainingEl.textContent = `${Number(viewerPlayer.remainingHandPenalty)} kaldı`;
+      rackRemainingEl.classList.remove('hidden');
+    } else if (rackRemainingEl) {
+      rackRemainingEl.classList.add('hidden');
+      rackRemainingEl.textContent = '';
+    }
+
+    document.querySelectorAll('.player-remaining-hand-penalty').forEach(element => element.remove());
+
     positions.forEach((pos) => {
       const seatEl = document.getElementById('seat-' + pos);
       if (!seatEl) return;
@@ -191,20 +210,6 @@ class TableManager {
           }
         }
 
-        let remainingEl = seatEl.querySelector('.player-remaining-hand-penalty');
-        if (player.opened && Number.isFinite(Number(player.remainingHandPenalty))) {
-          if (!remainingEl) {
-            remainingEl = document.createElement('span');
-            remainingEl.className = 'player-remaining-hand-penalty';
-            (seatEl.querySelector('.bar-player-info') || seatEl).appendChild(remainingEl);
-          }
-          remainingEl.textContent = `${Number(player.remainingHandPenalty)} kaldı`;
-          remainingEl.classList.remove('hidden');
-        } else if (remainingEl) {
-          remainingEl.classList.add('hidden');
-          remainingEl.textContent = '';
-        }
-
         // Red Penalty Pill e.g. +101, +202
         let penaltyBadge = seatEl.querySelector('.player-penalty-pill');
         if (player.penaltyPoints && player.penaltyPoints > 0) {
@@ -243,11 +248,6 @@ class TableManager {
           statusEl.textContent = 'Boş Koltuk';
         }
 
-        const remainingEl = seatEl.querySelector('.player-remaining-hand-penalty');
-        if (remainingEl) {
-          remainingEl.classList.add('hidden');
-          remainingEl.textContent = '';
-        }
       }
     });
   }

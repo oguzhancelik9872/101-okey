@@ -1584,9 +1584,9 @@ class OkeyGame {
         tileCount: p.hand ? p.hand.length : 0,
         opened: p.opened || false,
         openType: p.openType || null,
-        // Public only after opening: this is the exact hand penalty that would
-        // currently be written at round end (pairs are doubled automatically).
-        remainingHandPenalty: p.opened && p.hand
+        // Private to the viewer: never reveal another player's live hand sum.
+        // This is the exact penalty that would currently be written at round end.
+        remainingHandPenalty: idx === viewerSeatIndex && p.opened && p.hand
           ? p.hand.reduce((sum, tile) => sum + (tile ? tile.getValue(this.indicator) : 0), 0) * (p.openType === 'pairs' ? 2 : 1)
           : null,
         openedScore: p.initialOpenScore || (p.openedMelds ? p.openedMelds.reduce((sum, m) => sum + (m.score || 0), 0) : 0),

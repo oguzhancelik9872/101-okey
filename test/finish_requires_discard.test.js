@@ -126,8 +126,15 @@ test('açan oyuncuların kalan cezası seri için normal, çift için iki kat ya
   game.players[1].openType = 'pairs';
   game.players[1].hand = tiles('pairs');
 
-  const clientState = game.getClientState(3);
-  assert.equal(clientState.players[0].remainingHandPenalty, 24);
-  assert.equal(clientState.players[1].remainingHandPenalty, 48);
-  assert.equal(clientState.players[2].remainingHandPenalty, null);
+  const seriPlayerState = game.getClientState(0);
+  assert.equal(seriPlayerState.players[0].remainingHandPenalty, 24);
+  assert.equal(seriPlayerState.players[1].remainingHandPenalty, null);
+
+  const pairsPlayerState = game.getClientState(1);
+  assert.equal(pairsPlayerState.players[0].remainingHandPenalty, null);
+  assert.equal(pairsPlayerState.players[1].remainingHandPenalty, 48);
+
+  const otherPlayerState = game.getClientState(3);
+  assert.equal(otherPlayerState.players[0].remainingHandPenalty, null);
+  assert.equal(otherPlayerState.players[1].remainingHandPenalty, null);
 });
