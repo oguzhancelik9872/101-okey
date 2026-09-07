@@ -2025,9 +2025,9 @@ body.plus-theme {
   justify-content: center;
   width: fit-content;
   padding: 3px 8px;
-  border: 1px solid rgba(255, 118, 118, 0.34);
+  border: 1px solid rgba(255, 128, 128, 0.48);
   border-radius: 8px;
-  background: rgba(126, 28, 28, 0.2);
+  background: rgba(58, 10, 14, 0.78);
   color: rgba(255, 145, 145, 0.92);
   font-size: 10px;
   font-weight: 800;
@@ -2035,7 +2035,7 @@ body.plus-theme {
   letter-spacing: 0.15px;
   white-space: nowrap;
   pointer-events: none;
-  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 2px 9px rgba(0, 0, 0, 0.68);
 }
 
 /* Other Players Turn Progress Bar */
