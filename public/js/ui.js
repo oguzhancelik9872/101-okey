@@ -263,6 +263,13 @@ class UIManager {
       </div>
     `;
 
+    if (results.isTeamGame === false) {
+      const soloPlayers = Object.values(roundScores).sort((a, b) => Number(a.points || 0) - Number(b.points || 0));
+      html = `
+        <div class="round-result-header" style="text-align:center; margin-bottom:16px;"><span style="display:block;color:#72c990;font-size:10px;font-weight:900;letter-spacing:2px;">EL SONU · EŞSİZ</span><h2 style="color:#f1c40f;margin:5px 0 0;">${handNumber}. EL TAMAMLANDI</h2></div>
+        <div style="display:flex;flex-direction:column;gap:8px;">${soloPlayers.map(player => renderHandScore(player.name)).join('')}</div>
+        <div class="round-result-actions" style="margin-top:16px;display:flex;gap:10px;"><button id="btn-vote-rematch" class="btn-plus-gold" style="flex:2;padding:12px;">🔄 Sonraki Eli Başlat</button><button id="btn-result-leave" class="btn-danger-action" style="flex:1;">Masadan Ayrıl</button></div>`;
+    }
     content.innerHTML = html;
     modal.classList.remove('hidden');
 

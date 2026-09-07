@@ -89,7 +89,7 @@ io.on('connection', (socket) => {
         socket.leave(socket.roomId);
         socket.roomId = null;
       } else {
-        roomManager.leaveSeat(socket.id, userId);
+        if (socket.roomId) roomManager.leaveSeat(socket.roomId, socket.id, userId);
       }
       db.logout(userId, socket.id);
       socket.userId = null;
@@ -149,6 +149,11 @@ io.on('connection', (socket) => {
   socket.on('createRoom', (data, callback) => {
     try {
       const userId = socket.userId;
+      if (socket.roomId) {
+        roomManager.leaveSeat(socket.roomId, socket.id, userId);
+        socket.leave(socket.roomId);
+        socket.roomId = null;
+      }
       const room = roomManager.createRoom({
         hostId: socket.id,
         hostName: data.playerName || 'Oyuncu',
@@ -160,6 +165,7 @@ io.on('connection', (socket) => {
         mode: data.mode || 'standard',
         targetRounds: data.targetRounds || 3,
         vsBots: data.vsBots === true
+        ,rules: data.rules || {}
       });
 
       socket.leave('lobby');
@@ -187,12 +193,18 @@ io.on('connection', (socket) => {
   socket.on('createBotRoom', (data, callback) => {
     try {
       const userId = socket.userId;
+      if (socket.roomId) {
+        roomManager.leaveSeat(socket.roomId, socket.id, userId);
+        socket.leave(socket.roomId);
+        socket.roomId = null;
+      }
       const room = roomManager.createBotRoom({
         hostId: socket.id,
         hostName: data.playerName || 'Oyuncu',
         userId,
         gender: data.gender,
         avatarIndex: data.avatarIndex
+        ,rules: data.rules || {}
       });
 
       socket.leave('lobby');
@@ -221,6 +233,11 @@ io.on('connection', (socket) => {
     try {
       const { roomId, playerName, userId, seatIndex, gender, avatarIndex } = data;
       const uId = socket.userId;
+      if (socket.roomId && socket.roomId !== roomId.toUpperCase()) {
+        roomManager.leaveSeat(socket.roomId, socket.id, uId);
+        socket.leave(socket.roomId);
+        socket.roomId = null;
+      }
       const result = roomManager.joinRoom(
         roomId.toUpperCase(),
         socket.id,
@@ -264,7 +281,7 @@ io.on('connection', (socket) => {
   socket.on('lobby:switchSeat', (data, callback) => {
     try {
       const uId = socket.userId;
-      const res = roomManager.switchSeat(socket.id, data.targetSeatIndex, uId);
+      const res = roomManager.switchSeat(data.roomId || socket.roomId, socket.id, data.targetSeatIndex, uId);
       if (callback) callback(res);
     } catch (err) {
       if (callback) callback({ success: false, reason: err.message });
@@ -276,7 +293,13 @@ io.on('connection', (socket) => {
     const cb = typeof data === 'function' ? data : callback;
     const uId = socket.userId;
     try {
-      const res = roomManager.leaveSeat(socket.id, uId);
+      const targetRoomId = (data && data.roomId) || socket.roomId;
+      const res = roomManager.leaveSeat(targetRoomId, socket.id, uId);
+      if (res.success && targetRoomId) {
+        socket.leave(targetRoomId);
+        socket.roomId = null;
+        socket.join('lobby');
+      }
       if (uId) db.updateActiveRoom(uId, null);
       if (cb) cb(res);
     } catch (err) {
@@ -288,7 +311,7 @@ io.on('connection', (socket) => {
   socket.on('lobby:addBot', (data, callback) => {
     try {
       const uId = socket.userId;
-      const res = roomManager.addBotToSeat(socket.id, data.seatIndex, uId);
+      const res = roomManager.addBotToSeat(data.roomId || socket.roomId, socket.id, data.seatIndex, uId);
       if (callback) callback(res);
     } catch (err) {
       if (callback) callback({ success: false, reason: err.message });
@@ -299,7 +322,7 @@ io.on('connection', (socket) => {
   socket.on('lobby:removeBot', (data, callback) => {
     try {
       const uId = socket.userId;
-      const res = roomManager.removeBotFromSeat(socket.id, data.seatIndex, uId);
+      const res = roomManager.removeBotFromSeat(data.roomId || socket.roomId, socket.id, data.seatIndex, uId);
       if (callback) callback(res);
     } catch (err) {
       if (callback) callback({ success: false, reason: err.message });
@@ -311,7 +334,7 @@ io.on('connection', (socket) => {
     const cb = typeof data === 'function' ? data : callback;
     try {
       const uId = socket.userId;
-      const res = roomManager.fillAllBots(socket.id, uId);
+      const res = roomManager.fillAllBots((data && data.roomId) || socket.roomId, socket.id, uId);
       if (cb) cb(res);
     } catch (err) {
       if (cb) cb({ success: false, reason: err.message });

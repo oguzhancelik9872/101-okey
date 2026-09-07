@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=162">
+  <link rel="stylesheet" href="css/style.css?v=163">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -80,11 +80,9 @@
       <header class="lobby-top-bar">
         <!-- Left Panel: Spacer / Brand accent -->
         <div class="lobby-left-panel">
+          <button id="btn-open-table-rules" class="btn-bot-quick-play" title="Yeni masa oluştur"><span>➕ Masa Aç</span></button>
           <button id="btn-bot-quick-play" class="btn-bot-quick-play" title="Üç botla hemen yeni bir maç başlat">
             <span>🤖 Botlarla Hemen Başlat</span>
-          </button>
-          <button id="btn-lobby-rules" class="btn-lobby-rules" title="101 Okey kurallarını aç">
-            <span>📖 Kural Kitabı</span>
           </button>
         </div>
 
@@ -116,6 +114,13 @@
 
       <!-- Center Virtual 4-Player Casino Table -->
       <main class="lobby-center-stage">
+        <section id="lobby-browser" class="lobby-browser">
+          <div class="lobby-browser-heading"><div><span class="rules-kicker">AÇIK MASALAR</span><h2>Oynamak istediğin masayı seç</h2></div><span id="lobby-table-count" class="lobby-table-count">0 masa</span></div>
+          <div id="lobby-table-list" class="lobby-table-list"></div>
+          <div id="lobby-empty-state" class="lobby-empty-state"><span>🎲</span><strong>Henüz açık masa yok</strong><p>Kendi kurallarınla ilk masayı sen aç.</p></div>
+        </section>
+        <section id="lobby-table-detail" class="lobby-table-detail hidden">
+          <div class="lobby-detail-bar"><button id="btn-back-table-list" class="btn-back-table-list">← Masalara Dön</button><div id="lobby-detail-rules" class="lobby-detail-rules"></div></div>
         <div class="lobby-table-wrapper">
           <div class="lobby-virtual-felt">
             
@@ -178,7 +183,24 @@
 
           </div>
         </div>
+        </section>
       </main>
+    </div>
+
+    <div id="table-rules-modal" class="modal-backdrop hidden">
+      <div class="plus-modal-card table-rules-card" role="dialog" aria-modal="true" aria-labelledby="table-rules-title">
+        <div class="modal-header"><div><span class="rules-kicker">YENİ MASA</span><h3 id="table-rules-title">Masa Kuralları</h3></div><button id="btn-close-table-rules" class="btn-close-modal">✕</button></div>
+        <p class="table-rules-intro">Her masa kendi kurallarıyla oynanır. İstediğin seçenekleri belirle.</p>
+        <div class="table-rule-grid">
+          <label class="table-rule-option"><span><b>Katlamalı oyun</b><small>Rakibin açtığının bir üstü gerekir</small></span><input id="rule-folded" type="checkbox"><i></i></label>
+          <label class="table-rule-option"><span><b>Yardım sistemi</b><small>Seri diz ve çift diz kullanılabilir</small></span><input id="rule-assistance" type="checkbox" checked><i></i></label>
+          <label class="table-rule-option"><span><b>Seri/çift toplamı</b><small>Eldeki açılış hesabı gösterilir</small></span><input id="rule-rack-totals" type="checkbox" checked><i></i></label>
+          <label class="table-rule-option"><span><b>İşlek taşları göster</b><small>Masaya işlenebilen taşlar belirtilir</small></span><input id="rule-playable" type="checkbox" checked><i></i></label>
+          <label class="table-rule-option"><span><b>Yandan alma cezası</b><small>Yandan alınan taşla açtırana ceza yazılır</small></span><input id="rule-discard-penalty" type="checkbox" checked><i></i></label>
+          <label class="table-rule-option"><span><b>Eşli oyun</b><small>Karşılıklı oyuncular takım olur</small></span><input id="rule-teams" type="checkbox" checked><i></i></label>
+        </div>
+        <div class="table-rules-actions"><button id="btn-cancel-table-rules" class="btn-back-table-list">Vazgeç</button><button id="btn-confirm-table-rules" class="btn-bot-quick-play">Masayı Oluştur</button></div>
+      </div>
     </div>
 
     <!-- ================= 101 OKEY GAME TABLE VIEW ================= -->
@@ -529,39 +551,8 @@
           </button>
         </div>
 
-        <div class="drawer-section-card">
-          <div class="drawer-setting-info">
-            <span class="drawer-setting-title">📖 Kural Kitabı</span>
-            <span class="drawer-setting-desc">Açma, gösterge, işleme, bitiş ve ceza kuralları</span>
-          </div>
-          <button id="btn-settings-rules" class="btn-open-rules">
-            <span>Kuralları Görüntüle</span>
-          </button>
-        </div>
       </div>
     </aside>
-
-    <!-- Shared Rule Book (Lobby + In-game Settings) -->
-    <div id="rules-modal" class="modal-backdrop hidden">
-      <div class="plus-modal-card rules-modal-card" role="dialog" aria-modal="true" aria-labelledby="rules-modal-title">
-        <div class="modal-header">
-          <div>
-            <span class="rules-kicker">101 OKEY</span>
-            <h3 id="rules-modal-title">Kural Kitabı</h3>
-          </div>
-          <button id="btn-close-rules" class="btn-close-modal" title="Kapat">✕</button>
-        </div>
-        <div class="rules-book-content">
-          <section><h4>Oyunun amacı</h4><p>Taşlarını geçerli seriler veya gruplar hâlinde açıp elindeki son taşı atarak bitmek. Eşli oyunda karşılıklı oturan oyuncular aynı takımdadır.</p></section>
-          <section><h4>Seri açma</h4><p>Aynı renkte ardışık en az üç taş veya aynı sayının farklı renklerinden en az üç taş perdir. İlk seri açılışı en az <strong>101</strong> olmalıdır. Puan gösterimi üçe bölüm ve kalan biçiminde, örneğin <strong>33/2</strong>, gösterilir.</p></section>
-          <section><h4>Çift açma</h4><p>Aynı renk ve sayıdaki iki taş bir çifttir. İlk açılış için en az <strong>5 çift</strong> gerekir. Seri açan oyuncu çift, çift açan oyuncu seri açılışına geçemez.</p></section>
-          <section><h4>Gösterge hakkı</h4><p>El ilk dağıtıldığı hâlden beri ortadan yeni taş çekmediysen, elindeki gösterge eşini masadaki göstergeye sürükleyerek doğrulayabilirsin. Önceden taş atmış olman hakkı bozmaz; yandan aldığın taşı geri bırakırsan hak devam eder. Doğrulanan gösterge, yalnızca ilk çift açılışında yanına istenen tek taş konularak bir özel çift sayılabilir.</p></section>
-          <section><h4>Yandan taş alma ve işleme</h4><p>Yandan alınan taş aynı turda açılışta veya geçerli bir işlemde kullanılmalıdır; kullanılamıyorsa geri bırakılıp ortadan taş çekilir. El açtıktan sonra masadaki uygun perlere taş işleyebilirsin.</p></section>
-          <section><h4>Okey ve bitiş</h4><p>Okey, geçerli bir per içinde ihtiyaç duyulan taşın yerine kullanılabilir. Son taşını atarak bitersin. Elde kalan okey, eşin bitmediyse <strong>101 ceza</strong> değerindedir; eşin biterse elin sıfırlanır.</p></section>
-          <section><h4>Ceza ve skor</h4><p>Açmadan yakalanma, hatalı/işlek taş atma, okey atma ve özel bitişler oyun kurallarına göre ek ceza doğurur. El sonlarında bütün cezalar ve takım toplamları skor tablosunda gösterilir.</p></section>
-        </div>
-      </div>
-    </div>
 
     <!-- Round Result Modal -->
     <div id="round-result-modal" class="modal-backdrop hidden">
@@ -591,7 +582,7 @@
   <script src="js/tileAnimations.js?v=115"></script>
   <script src="js/istaka.js?v=121"></script>
   <script src="js/table.js?v=121"></script>
-  <script src="js/ui.js?v=124"></script>
-  <script src="js/gameClient.js?v=134"></script>
+  <script src="js/ui.js?v=125"></script>
+  <script src="js/gameClient.js?v=135"></script>
 </body>
 </html>

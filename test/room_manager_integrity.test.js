@@ -63,3 +63,32 @@ test('reconnecting human loses the temporary bot label', () => {
   assert.equal(player.isBot, false);
   assert.equal(player.name, 'Efe');
 });
+
+test('public lobby lists multiple independent tables with their own rules', () => {
+  const manager = new RoomManager(makeIo());
+  const folded = manager.createRoom({ hostId: 's1', hostName: 'Efe', userId: 'u1', isPrivate: false, rules: { folded: true, assistance: false, teams: true } });
+  const solo = manager.createRoom({ hostId: 's2', hostName: 'Oğuz', userId: 'u2', isPrivate: false, rules: { folded: false, assistance: true, teams: false } });
+
+  manager.joinRoom(folded.id, 's3', 'Can', 'u3', 1);
+  const state = manager.getLobbyState();
+  assert.equal(state.tables.length, 2);
+  assert.equal(state.tables.find(t => t.id === folded.id).playerCount, 2);
+  assert.equal(state.tables.find(t => t.id === folded.id).rules.assistance, false);
+  assert.equal(state.tables.find(t => t.id === solo.id).playerCount, 1);
+  assert.equal(state.tables.find(t => t.id === solo.id).rules.teams, false);
+  assert.equal(folded.game.rules.folded, true);
+  assert.equal(solo.game.rules.folded, false);
+});
+
+test('lobby seat operations target only the selected table', () => {
+  const manager = new RoomManager(makeIo());
+  const first = manager.createRoom({ hostId: 'host-a', hostName: 'A', userId: 'ua', isPrivate: false });
+  const second = manager.createRoom({ hostId: 'host-b', hostName: 'B', userId: 'ub', isPrivate: false });
+
+  assert.equal(manager.addBotToSeat(first.id, 'host-a', 1, 'ua').success, true);
+  assert.equal(first.game.players.filter(Boolean).length, 2);
+  assert.equal(second.game.players.filter(Boolean).length, 1);
+  assert.equal(manager.switchSeat(second.id, 'host-b', 3, 'ub').success, true);
+  assert.equal(second.game.players[3].name, 'B');
+  assert.equal(first.game.players[0].name, 'A');
+});

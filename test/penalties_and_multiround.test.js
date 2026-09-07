@@ -8,7 +8,7 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   console.log('--- Testing 101 Okey Penalties and Multi-Round Rotation ---');
 
   // 1. Initialise game with 4 players and default 3 rounds
-  const game = new OkeyGame('test_room', { targetRounds: 3 });
+  const game = new OkeyGame('test_room', { targetRounds: 3, mode: 'folded', rules: { folded: true } });
   assert.strictEqual(game.targetRounds, 3);
   assert.strictEqual(game.currentRound, 1);
 

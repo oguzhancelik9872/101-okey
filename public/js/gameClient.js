@@ -504,13 +504,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Interactive Virtual Lobby Table & Seat Selection ---
-  let currentLobbyTableId = 'MASA-101';
+  let currentLobbyTableId = null;
+  let latestLobbyTables = [];
   let mySeatedIndex = null;
 
-  function updateLobbyVirtualTable(lobbyState) {
-    if (!lobbyState || !lobbyState.publicTable) return;
-    const tableData = lobbyState.publicTable;
-    currentLobbyTableId = tableData.id || 'MASA-101';
+  function updateLobbyVirtualTable(tableData) {
+    if (!tableData || !tableData.id) return;
+    currentLobbyTableId = tableData.id;
 
     // Find if current user is seated
     const currentUserId = getUserId();
@@ -598,7 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (btnLeaveSeat) {
             btnLeaveSeat.addEventListener('click', (e) => {
               e.stopPropagation();
-              socket.emit('lobby:leaveSeat', { userId: getUserId() }, (res) => {
+              socket.emit('lobby:leaveSeat', { roomId: currentLobbyTableId, userId: getUserId() }, (res) => {
                 if (res.success) {
                   mySeatedIndex = null;
                   roomId = null;
@@ -640,7 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (btnRemoveBot) {
             btnRemoveBot.addEventListener('click', (e) => {
               e.stopPropagation();
-              socket.emit('lobby:removeBot', { seatIndex: seatIdx, userId: getUserId() }, (res) => {
+              socket.emit('lobby:removeBot', { roomId: currentLobbyTableId, seatIndex: seatIdx, userId: getUserId() }, (res) => {
                 if (!res.success) {
                   ui.showToast(res.reason, 'error');
                 }
@@ -672,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const btnSit = podEl.querySelector('.btn-sit-seat');
           if (btnSit) {
             btnSit.addEventListener('click', () => {
-              socket.emit('lobby:switchSeat', { targetSeatIndex: seatIdx, userId: getUserId() }, (res) => {
+              socket.emit('lobby:switchSeat', { roomId: currentLobbyTableId, targetSeatIndex: seatIdx, userId: getUserId() }, (res) => {
                 if (res.success) {
                   mySeatedIndex = res.seatIndex;
                 } else {
@@ -684,7 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const btnAddBot = podEl.querySelector('.btn-add-bot-pill');
           if (btnAddBot) {
             btnAddBot.addEventListener('click', () => {
-              socket.emit('lobby:addBot', { seatIndex: seatIdx, userId: getUserId() }, (res) => {
+              socket.emit('lobby:addBot', { roomId: currentLobbyTableId, seatIndex: seatIdx, userId: getUserId() }, (res) => {
                 if (!res.success) {
                   ui.showToast(res.reason, 'error');
                 }
@@ -735,14 +735,54 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  socket.on('lobby:stateUpdate', (data) => {
-    updateLobbyVirtualTable(data);
+  function lobbyRuleLabels(rules = {}) {
+    return [rules.folded ? 'Katlamalı' : 'Katlamasız', rules.assistance !== false ? 'Yardım açık' : 'Yardım kapalı', rules.rackTotals !== false ? 'Toplam açık' : 'Toplam kapalı', rules.showPlayableTiles !== false ? 'İşlek görünür' : 'İşlek gizli', rules.discardDrawPenalty !== false ? 'Yandan ceza var' : 'Yandan ceza yok', rules.teams !== false ? 'Eşli' : 'Eşsiz'];
+  }
+
+  function openLobbyTable(tableId) {
+    const tableData = latestLobbyTables.find(table => table.id === tableId);
+    if (!tableData) return;
+    document.getElementById('lobby-browser')?.classList.add('hidden');
+    document.getElementById('lobby-table-detail')?.classList.remove('hidden');
+    const ruleBox = document.getElementById('lobby-detail-rules');
+    if (ruleBox) ruleBox.innerHTML = lobbyRuleLabels(tableData.rules).map(label => `<span>${label}</span>`).join('');
+    updateLobbyVirtualTable(tableData);
+  }
+
+  function renderLobbyTables(tables) {
+    latestLobbyTables = Array.isArray(tables) ? tables : [];
+    const list = document.getElementById('lobby-table-list');
+    document.getElementById('lobby-empty-state')?.classList.toggle('hidden', latestLobbyTables.length > 0);
+    const count = document.getElementById('lobby-table-count');
+    if (count) count.textContent = `${latestLobbyTables.length} masa`;
+    if (list) {
+      list.innerHTML = latestLobbyTables.map(tableData => {
+        const waiting = tableData.state === 'WAITING';
+        const safeHost = String(tableData.hostName || 'Oyuncu').replace(/[<>]/g, '');
+        return `<article class="lobby-room-card ${waiting ? '' : 'is-playing'}" data-room-id="${tableData.id}"><div class="lobby-room-card-head"><div><small>MASA</small><strong>${tableData.id}</strong></div><span>${waiting ? `${tableData.playerCount}/4` : 'Oyunda'}</span></div><div class="lobby-room-host">👑 ${safeHost}</div><div class="lobby-room-rules">${lobbyRuleLabels(tableData.rules).map(label => `<span>${label}</span>`).join('')}</div><button class="btn-enter-lobby-room" ${waiting ? '' : 'disabled'}>${waiting ? 'Masayı Aç' : 'Oyun Sürüyor'}</button></article>`;
+      }).join('');
+      list.querySelectorAll('.btn-enter-lobby-room:not([disabled])').forEach(button => button.addEventListener('click', () => openLobbyTable(button.closest('[data-room-id]').dataset.roomId)));
+    }
+    const selected = latestLobbyTables.find(table => table.id === currentLobbyTableId);
+    if (selected && !document.getElementById('lobby-table-detail')?.classList.contains('hidden')) updateLobbyVirtualTable(selected);
+    if (currentLobbyTableId && !selected) {
+      currentLobbyTableId = null;
+      document.getElementById('lobby-table-detail')?.classList.add('hidden');
+      document.getElementById('lobby-browser')?.classList.remove('hidden');
+    }
+  }
+
+  document.getElementById('btn-back-table-list')?.addEventListener('click', () => {
+    document.getElementById('lobby-table-detail')?.classList.add('hidden');
+    document.getElementById('lobby-browser')?.classList.remove('hidden');
   });
+
+  socket.on('lobby:stateUpdate', (data) => renderLobbyTables((data && data.tables) || []));
 
   const btnLobbyFillBots = document.getElementById('btn-lobby-fill-bots');
   if (btnLobbyFillBots) {
     btnLobbyFillBots.addEventListener('click', () => {
-      socket.emit('lobby:fillAllBots', { userId: getUserId() }, (res) => {
+      socket.emit('lobby:fillAllBots', { roomId: currentLobbyTableId, userId: getUserId() }, (res) => {
         if (res && !res.success) {
           ui.showToast(res.reason || 'Botlar eklenemedi.', 'error');
         }
@@ -751,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const btnBotQuickPlay = document.getElementById('btn-bot-quick-play');
-  if (btnBotQuickPlay) {
+  if (false && btnBotQuickPlay) {
     btnBotQuickPlay.addEventListener('click', () => {
       if (btnBotQuickPlay.disabled) return;
       btnBotQuickPlay.disabled = true;
@@ -784,6 +824,45 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  let tableRulesForBots = false;
+  const showTableRules = (forBots) => {
+    tableRulesForBots = forBots;
+    document.getElementById('table-rules-title').textContent = forBots ? 'Bot Maçı Kuralları' : 'Masa Kuralları';
+    document.getElementById('btn-confirm-table-rules').textContent = forBots ? 'Maçı Başlat' : 'Masayı Oluştur';
+    ui.showModal('table-rules-modal');
+  };
+  document.getElementById('btn-open-table-rules')?.addEventListener('click', () => showTableRules(false));
+  btnBotQuickPlay?.addEventListener('click', () => showTableRules(true));
+  const closeTableRules = () => ui.hideModal('table-rules-modal');
+  document.getElementById('btn-close-table-rules')?.addEventListener('click', closeTableRules);
+  document.getElementById('btn-cancel-table-rules')?.addEventListener('click', closeTableRules);
+  document.getElementById('btn-confirm-table-rules')?.addEventListener('click', () => {
+    const rules = {
+      folded: document.getElementById('rule-folded').checked,
+      assistance: document.getElementById('rule-assistance').checked,
+      rackTotals: document.getElementById('rule-rack-totals').checked,
+      showPlayableTiles: document.getElementById('rule-playable').checked,
+      discardDrawPenalty: document.getElementById('rule-discard-penalty').checked,
+      teams: document.getElementById('rule-teams').checked
+    };
+    const user = currentUser || {};
+    socket.emit(tableRulesForBots ? 'createBotRoom' : 'createRoom', { playerName: getPlayerName(), userId: getUserId(), gender: user.gender, avatarIndex: user.avatarIndex, isPrivate: tableRulesForBots, targetRounds: 1, rules }, (res) => {
+      if (!res?.success) return ui.showToast(res?.reason || 'Masa oluşturulamadı.', 'error');
+      closeTableRules();
+      roomId = res.roomId;
+      currentLobbyTableId = res.roomId;
+      viewerSeatIndex = res.seatIndex;
+      mySeatedIndex = res.seatIndex;
+      isHost = res.isHost;
+      if (tableRulesForBots) setupGameRoom(res.roomId, res.seatIndex, res.isHost);
+      else {
+        socket.emit('lobby:join');
+        setTimeout(() => openLobbyTable(res.roomId), 80);
+        ui.showToast('Masan hazır. Oyuncular bekleniyor.', 'success');
+      }
+    });
+  });
 
   // Create Room Modal
   const btnOpenCreate = document.getElementById('btn-open-create-room');
@@ -989,6 +1068,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     currentGameState = state;
+    const assistanceEnabled = state.rules?.assistance !== false;
+    document.getElementById('btn-sort-runs')?.classList.toggle('rule-disabled', !assistanceEnabled);
+    document.getElementById('btn-sort-pairs')?.classList.toggle('rule-disabled', !assistanceEnabled);
+    document.getElementById('table-seri-target-badge')?.classList.toggle('rule-disabled', state.rules?.rackTotals === false);
+    document.getElementById('table-pairs-target-badge')?.classList.toggle('rule-disabled', state.rules?.rackTotals === false);
+    document.getElementById('center-scoreboard-card')?.classList.toggle('rule-disabled', state.rules?.teams === false);
     table.setViewerSeatIndex(viewerSeatIndex);
     istaka.setIndicator(state.indicator);
     istaka.setTableMelds(state.tableMelds || []);
@@ -1108,7 +1193,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (curPile.length > lastPile.length) {
             discardedByPlayer = p;
             discardedTile = curPile[curPile.length - 1];
-            if (discardedTile && window.ClientValidator && window.ClientValidator.isPlayableToTable(discardedTile, state.tableMelds || [], state.indicator)) {
+            if (state.rules?.showPlayableTiles !== false && discardedTile && window.ClientValidator && window.ClientValidator.isPlayableToTable(discardedTile, state.tableMelds || [], state.indicator)) {
               islekDiscarded = true;
             }
             break;
@@ -1493,6 +1578,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnSortRuns) {
     btnSortRuns.addEventListener('click', () => {
+      if (currentGameState?.rules?.assistance === false) return ui.showToast('Bu masada yardım sistemi kapalı.', 'info');
       if (window.isRackLayoutLocked && window.isRackLayoutLocked()) return;
       const isMyTurn = currentGameState && currentGameState.currentTurn === viewerSeatIndex;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
@@ -1502,6 +1588,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnSortPairs) {
     btnSortPairs.addEventListener('click', () => {
+      if (currentGameState?.rules?.assistance === false) return ui.showToast('Bu masada yardım sistemi kapalı.', 'info');
       if (window.isRackLayoutLocked && window.isRackLayoutLocked()) return;
       const isMyTurn = currentGameState && currentGameState.currentTurn === viewerSeatIndex;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
@@ -2037,10 +2124,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const masterVolumeValue = document.getElementById('master-volume-value');
   const drawerInGameActions = document.getElementById('drawer-in-game-actions');
   const btnDrawerLeaveTable = document.getElementById('btn-drawer-leave-table');
-  const rulesModal = document.getElementById('rules-modal');
-  const btnLobbyRules = document.getElementById('btn-lobby-rules');
-  const btnSettingsRules = document.getElementById('btn-settings-rules');
-  const btnCloseRules = document.getElementById('btn-close-rules');
   const btnResetShortcuts = document.getElementById('btn-reset-shortcuts');
   const shortcutButtons = Array.from(document.querySelectorAll('.shortcut-key-button[data-shortcut-action]'));
 
@@ -2134,20 +2217,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnTableSettings) btnTableSettings.addEventListener('click', () => openDrawer(settingsDrawer));
   if (btnCloseSettingsDrawer) btnCloseSettingsDrawer.addEventListener('click', closeAllDrawers);
 
-  const openRules = () => {
-    closeAllDrawers();
-    ui.showModal('rules-modal');
-  };
-  const closeRules = () => ui.hideModal('rules-modal');
-
-  if (btnLobbyRules) btnLobbyRules.addEventListener('click', openRules);
-  if (btnSettingsRules) btnSettingsRules.addEventListener('click', openRules);
-  if (btnCloseRules) btnCloseRules.addEventListener('click', closeRules);
-  if (rulesModal) {
-    rulesModal.addEventListener('click', (e) => {
-      if (e.target === rulesModal) closeRules();
-    });
-  }
 
   if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeAllDrawers);
 
@@ -2220,7 +2289,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isGameVisible = gameView && !gameView.classList.contains('hidden');
     if (!isGameVisible || !currentGameState || currentGameState.state !== 'PLAYING') return;
     if ((chatDrawer && chatDrawer.classList.contains('open')) || (settingsDrawer && settingsDrawer.classList.contains('open')) ||
-        (rulesModal && !rulesModal.classList.contains('hidden'))) return;
+        !document.getElementById('table-rules-modal')?.classList.contains('hidden')) return;
 
     e.preventDefault();
     if (action === 'drawDeck') handleDrawDeck();

@@ -7,6 +7,17 @@ class RoomManager {
     this.rooms = new Map(); // roomId -> { id, hostId, game, isPrivate, targetRounds, mode, timer, botInterval }
   }
 
+  normalizeRules(rules = {}) {
+    return {
+      folded: rules.folded === true,
+      assistance: rules.assistance !== false,
+      rackTotals: rules.rackTotals !== false,
+      showPlayableTiles: rules.showPlayableTiles !== false,
+      discardDrawPenalty: rules.discardDrawPenalty !== false,
+      teams: rules.teams !== false
+    };
+  }
+
   generateRoomCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
@@ -57,34 +68,18 @@ class RoomManager {
   }
 
   getLobbyState() {
-    const publicRoom = this.getOrCreatePublicRoom();
-    const game = publicRoom.game;
-    const seats = [0, 1, 2, 3].map(idx => {
-      const p = game.players[idx];
-      if (!p) return null;
+    return { tables: this.getPublicRooms().map(table => {
+      const room = this.rooms.get(table.id);
       return {
-        id: p.id,
-        userId: p.userId,
-        name: p.name,
-        gender: p.gender || 'male',
-        avatarIndex: p.avatarIndex,
-        avatarFile: p.avatarFile || null,
-        seatIndex: idx,
-        isHost: publicRoom.hostId === p.id,
-        isBot: p.isBot
+        ...table,
+        countdown: room.countdownSeconds ?? null,
+        hostId: room.hostId,
+        seats: [0, 1, 2, 3].map(idx => {
+          const p = room.game.players[idx];
+          return p ? { id: p.id, userId: p.userId, name: p.name, gender: p.gender || 'male', avatarIndex: p.avatarIndex, avatarFile: p.avatarFile || null, seatIndex: idx, isHost: room.hostId === p.id, isBot: p.isBot } : null;
+        })
       };
-    });
-
-    return {
-      publicTable: {
-        id: publicRoom.id,
-        state: game.state,
-        playerCount: game.players.filter(Boolean).length,
-        countdown: (publicRoom.countdownSeconds !== undefined && publicRoom.countdownSeconds !== null) ? publicRoom.countdownSeconds : null,
-        seats,
-        hostId: publicRoom.hostId
-      }
-    };
+    }) };
   }
 
   startLobbyCountdown(room) {
@@ -132,13 +127,15 @@ class RoomManager {
     }
   }
 
-  createRoom({ hostId, hostName, userId = null, targetSeatIndex = null, gender = null, avatarIndex = null, isPrivate = false, mode = 'standard', targetRounds = 3, vsBots = false }) {
+  createRoom({ hostId, hostName, userId = null, targetSeatIndex = null, gender = null, avatarIndex = null, isPrivate = false, mode = 'standard', targetRounds = 1, vsBots = false, rules = {} }) {
     let roomId = this.generateRoomCode();
     while (this.rooms.has(roomId)) {
       roomId = this.generateRoomCode();
     }
 
-    const game = new OkeyGame(roomId, { mode, targetRounds });
+    const normalizedRules = this.normalizeRules({ ...rules, folded: rules.folded ?? mode === 'folded' });
+    mode = normalizedRules.folded ? 'folded' : 'standard';
+    const game = new OkeyGame(roomId, { mode, targetRounds, rules: normalizedRules });
     game.onSystemMessage = (text) => {
       if (this.io) {
         this.io.to(roomId).emit('chatMessage', {
@@ -164,6 +161,7 @@ class RoomManager {
       mode,
       targetRounds,
       vsBots,
+      rules: normalizedRules,
       createdAt: Date.now(),
       botLoopActive: false
     };
@@ -179,7 +177,7 @@ class RoomManager {
     return room;
   }
 
-  createBotRoom({ hostId, hostName, userId = null, gender = null, avatarIndex = null }) {
+  createBotRoom({ hostId, hostName, userId = null, gender = null, avatarIndex = null, rules = {} }) {
     return this.createRoom({
       hostId,
       hostName: hostName || 'Oyuncu',
@@ -187,17 +185,15 @@ class RoomManager {
       gender,
       avatarIndex,
       isPrivate: true,
-      mode: 'standard',
+      mode: rules.folded ? 'folded' : 'standard',
       targetRounds: 1,
-      vsBots: true
+      vsBots: true,
+      rules
     });
   }
 
   joinRoom(roomId, playerId, playerName, userId = null, targetSeatIndex = null, gender = null, avatarIndex = null) {
     let room = this.rooms.get(roomId);
-    if (!room && (roomId === 'MASA-101' || !roomId)) {
-      room = this.getOrCreatePublicRoom();
-    }
     if (!room) return { success: false, reason: 'Oda bulunamadı.' };
 
     const game = room.game;
@@ -246,8 +242,9 @@ class RoomManager {
     return { success: true, room, player };
   }
 
-  switchSeat(socketId, newSeatIndex, userId = null) {
-    const publicRoom = this.getOrCreatePublicRoom();
+  switchSeat(roomId, socketId, newSeatIndex, userId = null) {
+    const publicRoom = this.rooms.get(roomId);
+    if (!publicRoom) return { success: false, reason: 'Masa bulunamadı.' };
     const game = publicRoom.game;
     if (game.state !== GAME_STATES.WAITING) {
       return { success: false, reason: 'Oyun başladıktan sonra koltuk değiştirilemez.' };
@@ -274,8 +271,9 @@ class RoomManager {
     return { success: true, seatIndex: newSeatIndex };
   }
 
-  leaveSeat(socketId, userId = null) {
-    const publicRoom = this.getOrCreatePublicRoom();
+  leaveSeat(roomId, socketId, userId = null) {
+    const publicRoom = this.rooms.get(roomId);
+    if (!publicRoom) return { success: false, reason: 'Masa bulunamadı.' };
     const game = publicRoom.game;
     if (game.state !== GAME_STATES.WAITING) {
       return { success: false, reason: 'Oyun başladıktan sonra ayrılamazsınız.' };
@@ -293,8 +291,7 @@ class RoomManager {
       // If no human players remain at the table, remove all bots and completely reset!
       const remainingHumans = game.players.filter(p => p && !p.isBot);
       if (remainingHumans.length === 0) {
-        game.players = [null, null, null, null];
-        publicRoom.hostId = null;
+        this.rooms.delete(publicRoom.id);
       }
       this.broadcastLobbyState();
       return { success: true };
@@ -302,8 +299,9 @@ class RoomManager {
     return { success: false, reason: 'Masada oturmuyorsunuz.' };
   }
 
-  addBotToSeat(socketId, seatIndex, userId = null) {
-    const publicRoom = this.getOrCreatePublicRoom();
+  addBotToSeat(roomId, socketId, seatIndex, userId = null) {
+    const publicRoom = this.rooms.get(roomId);
+    if (!publicRoom) return { success: false, reason: 'Masa bulunamadı.' };
     const game = publicRoom.game;
     if (game.state !== GAME_STATES.WAITING) {
       return { success: false, reason: 'Oyun başladıktan sonra bot eklenemez.' };
@@ -332,8 +330,9 @@ class RoomManager {
     return { success: true, bot };
   }
 
-  fillAllBots(socketId, userId = null) {
-    const publicRoom = this.getOrCreatePublicRoom();
+  fillAllBots(roomId, socketId, userId = null) {
+    const publicRoom = this.rooms.get(roomId);
+    if (!publicRoom) return { success: false, reason: 'Masa bulunamadı.' };
     const game = publicRoom.game;
     if (game.state !== GAME_STATES.WAITING) {
       return { success: false, reason: 'Oyun başladıktan sonra bot eklenemez.' };
@@ -359,8 +358,9 @@ class RoomManager {
     return { success: true };
   }
 
-  removeBotFromSeat(socketId, seatIndex, userId = null) {
-    const publicRoom = this.getOrCreatePublicRoom();
+  removeBotFromSeat(roomId, socketId, seatIndex, userId = null) {
+    const publicRoom = this.rooms.get(roomId);
+    if (!publicRoom) return { success: false, reason: 'Masa bulunamadı.' };
     const game = publicRoom.game;
     if (game.state !== GAME_STATES.WAITING) {
       return { success: false, reason: 'Oyun başladıktan sonra bot kaldırılamaz.' };
@@ -712,7 +712,9 @@ class RoomManager {
           playerCount: room.game.players.filter(Boolean).length,
           state: room.game.state,
           mode: room.mode,
-          targetRounds: room.targetRounds
+          targetRounds: room.targetRounds,
+          rules: room.rules || this.normalizeRules(),
+          createdAt: room.createdAt
         });
       }
     }

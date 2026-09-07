@@ -8,6 +8,14 @@ class OkeyGame {
   constructor(id, options = {}) {
     this.id = id;
     this.mode = options.mode || GAME_MODES.STANDARD; // standard | folded
+    this.rules = {
+      folded: options.rules?.folded === true || this.mode === GAME_MODES.FOLDED,
+      assistance: options.rules?.assistance !== false,
+      rackTotals: options.rules?.rackTotals !== false,
+      showPlayableTiles: options.rules?.showPlayableTiles !== false,
+      discardDrawPenalty: options.rules?.discardDrawPenalty !== false,
+      teams: options.rules?.teams !== false
+    };
     this.targetRounds = options.targetRounds || 1;
     this.currentRound = 1;
     this.state = GAME_STATES.WAITING;
@@ -483,7 +491,11 @@ class OkeyGame {
     const player = this.players[playerIndex];
     if (!player) return { minScore: 101, minPairs: 5 };
 
-    const opponentIndices = playerIndex % 2 === 0 ? [1, 3] : [0, 2];
+    if (!this.rules.folded) return { minScore: 101, minPairs: 5 };
+
+    const opponentIndices = this.rules.teams
+      ? (playerIndex % 2 === 0 ? [1, 3] : [0, 2])
+      : [0, 1, 2, 3].filter(index => index !== playerIndex);
     let maxOpponentScore = 0;
     let maxOpponentPairs = 0;
     for (const opponentIndex of opponentIndices) {
@@ -588,7 +600,7 @@ class OkeyGame {
       player.openedInThisTurn = true;
 
       // Penalty Rule: If opened using drawn discard tile for the first time AND tile is 5+ -> Discarder gets 10x tile value
-      if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
+      if (this.rules.discardDrawPenalty && this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
         const discardTile = this.drawnFromDiscard.tile;
         const leftPlayerSeat = (playerIndex + 3) % 4;
         const discarder = this.players[leftPlayerSeat];
@@ -610,7 +622,7 @@ class OkeyGame {
       }
     }
 
-    if (validation.score >= (this.minOpenScore || 101)) {
+    if (this.rules.folded && validation.score >= (this.minOpenScore || 101)) {
       this.minOpenScore = validation.score + 1;
     }
 
@@ -745,12 +757,12 @@ class OkeyGame {
       player.opened = true;
       player.openType = 'pairs';
 
-      if (pairs.length >= (this.minOpenPairs || 5)) {
+      if (this.rules.folded && pairs.length >= (this.minOpenPairs || 5)) {
         this.minOpenPairs = pairs.length + 1;
       }
 
       // Penalty Rule: If opened pairs using drawn discard tile for the first time AND tile is 5+ -> Discarder gets 20x tile value
-      if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
+      if (this.rules.discardDrawPenalty && this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
         const discardTile = this.drawnFromDiscard.tile;
         const leftPlayerSeat = (playerIndex + 3) % 4;
         const discarder = this.players[leftPlayerSeat];
@@ -1012,7 +1024,7 @@ class OkeyGame {
         continue;
       }
 
-      if (i === partnerIndex) {
+      if (this.rules.teams && i === partnerIndex) {
         // Partner of finisher gets 0 penalty from hand + any in-game penalties
         p.roundScore = 0 + (p.penaltyPoints || 0);
         p.score = (p.score || 0) + p.roundScore;
@@ -1072,6 +1084,7 @@ class OkeyGame {
     const isTeam2Winner = !isDraw && (team2Score < team1Score);
 
     this.roundResults = {
+      isTeamGame: this.rules.teams,
       currentRound: this.currentRound,
       targetRounds: this.targetRounds,
       hasNextRound: false,
@@ -1163,6 +1176,7 @@ class OkeyGame {
     const isTeam2Winner = !isDraw && (team2Score < team1Score);
 
     this.roundResults = {
+      isTeamGame: this.rules.teams,
       currentRound: this.currentRound,
       targetRounds: this.targetRounds,
       hasNextRound: false,
@@ -1548,6 +1562,7 @@ class OkeyGame {
       gameId: this.id,
       state: this.state,
       mode: this.mode,
+      rules: { ...this.rules },
       currentRound: this.currentRound,
       targetRounds: this.targetRounds,
       currentTurn: this.currentTurn,
@@ -1565,7 +1580,7 @@ class OkeyGame {
       minOpenPairs: viewerReqs.minPairs,
       tableMinOpenScore: this.minOpenScore || 101,
       tableMinOpenPairs: this.minOpenPairs || 5,
-      partnerOpened: Boolean(this.players[(viewerSeatIndex + 2) % 4] && this.players[(viewerSeatIndex + 2) % 4].opened),
+      partnerOpened: this.rules.teams && Boolean(this.players[(viewerSeatIndex + 2) % 4] && this.players[(viewerSeatIndex + 2) % 4].opened),
       tableMelds: this.tableMelds.map(m => ({
         id: m.id,
         playerIndex: m.playerIndex,
