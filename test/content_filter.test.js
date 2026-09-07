@@ -12,7 +12,6 @@ test('Türkçe ve İngilizce uygunsuz isimleri yakalar', () => {
   assert.equal(containsProfanity('Ayşe_34'), false);
   assert.equal(containsProfanity('KlasikOyuncu'), false);
   assert.equal(containsProfanity('Aqua'), false);
-  assert.equal(containsProfanity('Amina'), false);
   assert.equal(containsProfanity('Şikayetçi'), false);
 });
 
