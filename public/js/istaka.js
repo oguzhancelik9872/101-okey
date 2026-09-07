@@ -686,6 +686,7 @@ class IstakaManager {
       this.onStateChange({
         selectedTiles: [],
         rackAnalysis: rackAnalysis,
+        rackPairs: this.analyzeRackPairs(),
         bestHandMelds: this.getBestHandMelds()
       });
     }

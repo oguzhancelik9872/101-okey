@@ -140,9 +140,12 @@ class TableManager {
         istakaBoardEl.appendChild(rackRemainingEl);
       }
       rackRemainingEl.textContent = String(Number(viewerPlayer.remainingHandPenalty));
+      rackRemainingEl.classList.add('is-penalty');
+      rackRemainingEl.classList.remove('is-rack-helper');
       rackRemainingEl.classList.remove('hidden');
     } else if (rackRemainingEl) {
       rackRemainingEl.classList.add('hidden');
+      rackRemainingEl.classList.remove('is-penalty', 'is-rack-helper');
       rackRemainingEl.textContent = '';
     }
 

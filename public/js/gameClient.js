@@ -2099,6 +2099,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleIstakaStateChange(data) {
     updateActionBarUI();
+    const viewerPlayer = currentGameState?.players?.[viewerSeatIndex];
+    const rackBoard = document.querySelector('.plus-istaka-board');
+    if (!rackBoard || !viewerPlayer || viewerPlayer.opened) return;
+
+    let helperEl = rackBoard.querySelector('.rack-remaining-hand-penalty');
+    if (currentGameState.rules?.rackTotals === false) {
+      if (helperEl && !helperEl.classList.contains('is-penalty')) {
+        helperEl.classList.add('hidden');
+        helperEl.textContent = '';
+      }
+      return;
+    }
+
+    if (!helperEl) {
+      helperEl = document.createElement('span');
+      helperEl.className = 'rack-remaining-hand-penalty';
+      rackBoard.appendChild(helperEl);
+    }
+    const runScore = Number(data?.rackAnalysis?.totalScore || 0);
+    const pairCount = Number(data?.rackPairs?.count || 0);
+    const runText = window.formatOkeyScore ? window.formatOkeyScore(runScore) : String(runScore);
+    helperEl.textContent = pairCount > 0 ? `${runText} · ${pairCount} çift` : runText;
+    helperEl.classList.add('is-rack-helper');
+    helperEl.classList.remove('is-penalty', 'hidden');
   }
 
   // =========================================================
