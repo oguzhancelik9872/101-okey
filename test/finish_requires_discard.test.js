@@ -138,3 +138,28 @@ test('açan oyuncuların kalan cezası seri için normal, çift için iki kat ya
   assert.equal(otherPlayerState.players[0].remainingHandPenalty, null);
   assert.equal(otherPlayerState.players[1].remainingHandPenalty, null);
 });
+
+test('açtıktan sonra elde bekleyen gerçek Okey 101 ceza sayılır', () => {
+  const game = createPlayingGame('remaining-okey-penalty');
+  const openedPlayer = game.players[0];
+  openedPlayer.opened = true;
+  openedPlayer.openType = 'seri';
+  openedPlayer.hand = [
+    new Tile('r4', 'red', 4),
+    new Tile('b5', 'blue', 5),
+    new Tile('real-okey', 'yellow', 2)
+  ];
+
+  const liveState = game.getClientState(0);
+  assert.equal(liveState.players[0].remainingHandPenalty, 110);
+
+  const finisher = game.players[1];
+  finisher.opened = true;
+  finisher.openType = 'seri';
+  finisher.hand = [];
+  game.endRound(1, false);
+
+  const score = game.roundResults.roundScores[openedPlayer.id];
+  assert.equal(score.handSum, 110);
+  assert.equal(score.basePoints, 110);
+});

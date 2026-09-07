@@ -465,6 +465,18 @@ class OkeyGame {
   }
 
   /**
+   * Sums an opened player's remaining hand for penalties. A real Okey left
+   * in hand is always worth 101, regardless of the number printed on it.
+   */
+  getHandPenaltySum(player) {
+    if (!player || !Array.isArray(player.hand)) return 0;
+    return player.hand.reduce((sum, tile) => {
+      if (!tile) return sum;
+      return sum + (tile.isOkey(this.indicator) ? 101 : tile.getValue(this.indicator));
+    }, 0);
+  }
+
+  /**
    * Calculates minimum open requirements for a player based on opponent team openings (Katlamalı Sistem)
    */
   getMinOpenRequirements(playerIndex) {
@@ -1031,7 +1043,7 @@ class OkeyGame {
         }
       } else {
         // Player opened: sum of leftover tiles. If opened as pairs, only their own penalty is 2x
-        handSum = p.hand ? p.hand.reduce((sum, t) => sum + (t ? t.getValue(this.indicator) : 0), 0) : 0;
+        handSum = this.getHandPenaltySum(p);
         pPoints = (p.openType === 'pairs') ? (handSum * 2) : handSum;
       }
 
@@ -1122,7 +1134,7 @@ class OkeyGame {
       if (!p.opened) {
         pPoints = 202;
       } else {
-        handSum = p.hand ? p.hand.reduce((sum, t) => sum + (t ? t.getValue(this.indicator) : 0), 0) : 0;
+        handSum = this.getHandPenaltySum(p);
         const playerPairsMultiplier = (p.openType === 'pairs') ? 2 : 1;
         pPoints = handSum * playerPairsMultiplier;
       }
@@ -1587,7 +1599,7 @@ class OkeyGame {
         // Private to the viewer: never reveal another player's live hand sum.
         // This is the exact penalty that would currently be written at round end.
         remainingHandPenalty: idx === viewerSeatIndex && p.opened && p.hand
-          ? p.hand.reduce((sum, tile) => sum + (tile ? tile.getValue(this.indicator) : 0), 0) * (p.openType === 'pairs' ? 2 : 1)
+          ? this.getHandPenaltySum(p) * (p.openType === 'pairs' ? 2 : 1)
           : null,
         openedScore: p.initialOpenScore || (p.openedMelds ? p.openedMelds.reduce((sum, m) => sum + (m.score || 0), 0) : 0),
         openedMeldsCount: p.initialOpenPairs || (p.openedMelds ? p.openedMelds.length : 0),

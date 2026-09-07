@@ -139,7 +139,7 @@ class TableManager {
         rackRemainingEl.className = 'rack-remaining-hand-penalty';
         istakaBoardEl.appendChild(rackRemainingEl);
       }
-      rackRemainingEl.textContent = `${Number(viewerPlayer.remainingHandPenalty)} kaldı`;
+      rackRemainingEl.textContent = String(Number(viewerPlayer.remainingHandPenalty));
       rackRemainingEl.classList.remove('hidden');
     } else if (rackRemainingEl) {
       rackRemainingEl.classList.add('hidden');
