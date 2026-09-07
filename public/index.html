@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=165">
+  <link rel="stylesheet" href="css/style.css?v=166">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -115,12 +115,15 @@
       <!-- Center Virtual 4-Player Casino Table -->
       <main class="lobby-center-stage">
         <section id="lobby-browser" class="lobby-browser">
-          <div class="lobby-browser-heading"><div><span class="rules-kicker">AÇIK MASALAR</span><h2>Oynamak istediğin masayı seç</h2></div><span id="lobby-table-count" class="lobby-table-count">0 masa</span></div>
-          <div id="lobby-table-list" class="lobby-table-list"></div>
           <div id="lobby-empty-state" class="lobby-empty-state"><span>🎲</span><strong>Henüz açık masa yok</strong><p>Kendi kurallarınla ilk masayı sen aç.</p></div>
         </section>
         <section id="lobby-table-detail" class="lobby-table-detail hidden">
-          <div class="lobby-detail-bar"><button id="btn-back-table-list" class="btn-back-table-list">← Masalara Dön</button><div id="lobby-detail-rules" class="lobby-detail-rules"></div></div>
+          <div class="lobby-catalog-nav">
+            <button id="btn-prev-lobby-table" class="lobby-catalog-arrow" aria-label="Önceki masa">‹</button>
+            <div class="lobby-catalog-meta"><span id="lobby-catalog-title">MASA</span><strong id="lobby-catalog-page">1 / 1</strong></div>
+            <button id="btn-next-lobby-table" class="lobby-catalog-arrow" aria-label="Sonraki masa">›</button>
+          </div>
+          <div id="lobby-detail-rules" class="lobby-detail-rules lobby-catalog-rules"></div>
         <div class="lobby-table-wrapper">
           <div class="lobby-virtual-felt">
             
@@ -583,6 +586,6 @@
   <script src="js/istaka.js?v=123"></script>
   <script src="js/table.js?v=122"></script>
   <script src="js/ui.js?v=125"></script>
-  <script src="js/gameClient.js?v=137"></script>
+  <script src="js/gameClient.js?v=138"></script>
 </body>
 </html>

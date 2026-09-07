@@ -3710,6 +3710,12 @@ body.plus-theme {
 .lobby-empty-state { min-height:250px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#aebdb4; text-align:center; }
 .lobby-empty-state>span { font-size:52px; }.lobby-empty-state strong { color:#ead79e; font-size:20px; margin-top:8px; }.lobby-empty-state p { margin:6px 0; }
 .lobby-table-detail .lobby-table-wrapper { margin-top:0; }
+.lobby-catalog-nav { display:flex; align-items:center; justify-content:center; gap:18px; margin:0 auto 8px; }
+.lobby-catalog-arrow { width:42px; height:42px; display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(218,185,99,.5); border-radius:50%; color:#ead99f; background:rgba(5,35,23,.9); font-family:Georgia,serif; font-size:31px; line-height:1; cursor:pointer; box-shadow:0 5px 14px rgba(0,0,0,.3); transition:transform .16s ease,background .16s ease; }
+.lobby-catalog-arrow:hover { transform:scale(1.08); background:rgba(15,65,41,.96); }
+.lobby-catalog-meta { min-width:150px; display:flex; flex-direction:column; align-items:center; gap:2px; color:#dfc87f; }
+.lobby-catalog-meta span { font-size:12px; font-weight:900; letter-spacing:1.4px; }.lobby-catalog-meta strong { color:#93a99c; font-size:10px; letter-spacing:2px; }
+.lobby-catalog-rules { justify-content:center; margin:0 auto 8px; max-width:760px; }
 .btn-back-table-list { border:1px solid rgba(218,185,99,.42); color:#e5d39f; background:rgba(5,29,20,.82); border-radius:9px; padding:9px 13px; cursor:pointer; font-weight:800; }
 .table-rules-card { max-width:760px !important; }
 .table-rules-intro { color:#9fb2a7; margin:0 0 14px; }

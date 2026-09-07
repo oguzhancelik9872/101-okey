@@ -742,40 +742,41 @@ document.addEventListener('DOMContentLoaded', () => {
   function openLobbyTable(tableId) {
     const tableData = latestLobbyTables.find(table => table.id === tableId);
     if (!tableData) return;
+    const tableIndex = latestLobbyTables.indexOf(tableData);
     document.getElementById('lobby-browser')?.classList.add('hidden');
     document.getElementById('lobby-table-detail')?.classList.remove('hidden');
     const ruleBox = document.getElementById('lobby-detail-rules');
     if (ruleBox) ruleBox.innerHTML = lobbyRuleLabels(tableData.rules).map(label => `<span>${label}</span>`).join('');
+    const title = document.getElementById('lobby-catalog-title');
+    const page = document.getElementById('lobby-catalog-page');
+    if (title) title.textContent = `MASA ${tableData.id}`;
+    if (page) page.textContent = `${tableIndex + 1} / ${latestLobbyTables.length}`;
+    const hasMultipleTables = latestLobbyTables.length > 1;
+    document.getElementById('btn-prev-lobby-table')?.classList.toggle('hidden', !hasMultipleTables);
+    document.getElementById('btn-next-lobby-table')?.classList.toggle('hidden', !hasMultipleTables);
     updateLobbyVirtualTable(tableData);
   }
 
   function renderLobbyTables(tables) {
     latestLobbyTables = Array.isArray(tables) ? tables : [];
-    const list = document.getElementById('lobby-table-list');
-    document.getElementById('lobby-empty-state')?.classList.toggle('hidden', latestLobbyTables.length > 0);
-    const count = document.getElementById('lobby-table-count');
-    if (count) count.textContent = `${latestLobbyTables.length} masa`;
-    if (list) {
-      list.innerHTML = latestLobbyTables.map(tableData => {
-        const waiting = tableData.state === 'WAITING';
-        const safeHost = String(tableData.hostName || 'Oyuncu').replace(/[<>]/g, '');
-        return `<article class="lobby-room-card ${waiting ? '' : 'is-playing'}" data-room-id="${tableData.id}"><div class="lobby-room-card-head"><div><small>MASA</small><strong>${tableData.id}</strong></div><span>${waiting ? `${tableData.playerCount}/4` : 'Oyunda'}</span></div><div class="lobby-room-host">👑 ${safeHost}</div><div class="lobby-room-rules">${lobbyRuleLabels(tableData.rules).map(label => `<span>${label}</span>`).join('')}</div><button class="btn-enter-lobby-room" ${waiting ? '' : 'disabled'}>${waiting ? 'Masayı Aç' : 'Oyun Sürüyor'}</button></article>`;
-      }).join('');
-      list.querySelectorAll('.btn-enter-lobby-room:not([disabled])').forEach(button => button.addEventListener('click', () => openLobbyTable(button.closest('[data-room-id]').dataset.roomId)));
-    }
-    const selected = latestLobbyTables.find(table => table.id === currentLobbyTableId);
-    if (selected && !document.getElementById('lobby-table-detail')?.classList.contains('hidden')) updateLobbyVirtualTable(selected);
-    if (currentLobbyTableId && !selected) {
+    if (latestLobbyTables.length === 0) {
       currentLobbyTableId = null;
       document.getElementById('lobby-table-detail')?.classList.add('hidden');
       document.getElementById('lobby-browser')?.classList.remove('hidden');
+      return;
     }
+    const selected = latestLobbyTables.find(table => table.id === currentLobbyTableId) || latestLobbyTables[0];
+    openLobbyTable(selected.id);
   }
 
-  document.getElementById('btn-back-table-list')?.addEventListener('click', () => {
-    document.getElementById('lobby-table-detail')?.classList.add('hidden');
-    document.getElementById('lobby-browser')?.classList.remove('hidden');
-  });
+  function stepLobbyCatalog(direction) {
+    if (latestLobbyTables.length < 2) return;
+    const currentIndex = Math.max(0, latestLobbyTables.findIndex(table => table.id === currentLobbyTableId));
+    const nextIndex = (currentIndex + direction + latestLobbyTables.length) % latestLobbyTables.length;
+    openLobbyTable(latestLobbyTables[nextIndex].id);
+  }
+  document.getElementById('btn-prev-lobby-table')?.addEventListener('click', () => stepLobbyCatalog(-1));
+  document.getElementById('btn-next-lobby-table')?.addEventListener('click', () => stepLobbyCatalog(1));
 
   socket.on('lobby:stateUpdate', (data) => renderLobbyTables((data && data.tables) || []));
 
