@@ -1074,6 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('center-scoreboard-card')?.classList.toggle('rule-disabled', state.rules?.teams === false);
     table.setViewerSeatIndex(viewerSeatIndex);
     istaka.setIndicator(state.indicator);
+    istaka.setPlayableHintsEnabled(state.rules?.showPlayableTiles !== false);
     istaka.setTableMelds(state.tableMelds || []);
 
     // Waiting lobby overlay

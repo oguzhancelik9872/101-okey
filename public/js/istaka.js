@@ -25,6 +25,7 @@ class IstakaManager {
     this.activeTile = null;
     this.activeMeldGroup = null; // { row, startCol, count, tiles }
     this.tableMelds = [];
+    this.showPlayableHints = true;
     this.viewerOpened = false;
     this.lastDrawnTileId = null;
     this.drawnDiscardTileId = null;
@@ -387,6 +388,19 @@ class IstakaManager {
     this.tableMelds = tableMelds || [];
   }
 
+  setPlayableHintsEnabled(enabled) {
+    this.showPlayableHints = enabled !== false;
+  }
+
+  isTilePlayableToTable(tile) {
+    if (!this.showPlayableHints || !tile || !this.tableMelds.length || typeof ClientValidator === 'undefined') return false;
+    try {
+      return ClientValidator.isPlayableToTable(tile, this.tableMelds, this.indicator);
+    } catch (error) {
+      return false;
+    }
+  }
+
   setViewerOpened(opened) {
     this.viewerOpened = !!opened;
   }
@@ -689,6 +703,10 @@ class IstakaManager {
     if (tile.isOkey) el.classList.add('is-okey-joker');
     if (tile.isFake) el.classList.add('is-fake-okey');
     if (this.activeTile && this.activeTile.id === tile.id) el.classList.add('active-focus');
+    if (this.isTilePlayableToTable(tile)) {
+      el.classList.add('is-playable-hint');
+      el.title = 'İşlek taş — masadaki bir pere işlenebilir';
+    }
 
     const isJustDrawn = (this.lastDrawnTileId && this.lastDrawnTileId === tile.id) || (this.drawnDiscardTileId && this.drawnDiscardTileId === tile.id);
     if (isJustDrawn) {
