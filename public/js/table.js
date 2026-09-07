@@ -222,16 +222,18 @@ class TableManager {
 
         // Red Penalty Pill e.g. +101, +202
         let penaltyBadge = seatEl.querySelector('.player-penalty-pill');
-        if (player.penaltyPoints && player.penaltyPoints > 0) {
+        if (player.penaltyPoints && player.penaltyPoints !== 0) {
           if (!penaltyBadge) {
             penaltyBadge = document.createElement('span');
             penaltyBadge.className = 'player-penalty-pill';
             seatEl.appendChild(penaltyBadge);
           }
-          penaltyBadge.textContent = `+${player.penaltyPoints}`;
+          penaltyBadge.textContent = `${player.penaltyPoints > 0 ? '+' : ''}${player.penaltyPoints}`;
+          penaltyBadge.classList.toggle('is-bonus', player.penaltyPoints < 0);
           penaltyBadge.classList.remove('hidden');
         } else if (penaltyBadge) {
           penaltyBadge.classList.add('hidden');
+          penaltyBadge.classList.remove('is-bonus');
         }
       } else {
         // Empty seat waiting for player

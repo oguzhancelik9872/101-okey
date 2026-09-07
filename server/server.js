@@ -471,7 +471,7 @@ io.on('connection', (socket) => {
 
       const result = room.game.openHand(playerIdx, data.melds);
       if (callback) callback(result);
-      if (result.success) {
+      if (result.success || result.penaltyApplied) {
         roomManager.broadcastGameState(roomId);
       }
     } catch (err) {
@@ -491,7 +491,7 @@ io.on('connection', (socket) => {
 
       const result = room.game.openPairs(playerIdx, data.pairs);
       if (callback) callback(result);
-      if (result.success) {
+      if (result.success || result.penaltyApplied) {
         roomManager.broadcastGameState(roomId);
       }
     } catch (err) {

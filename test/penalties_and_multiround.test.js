@@ -21,8 +21,8 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(game.firstPlayerIndex, 0);
   assert.strictEqual(game.currentTurn, 0);
 
-  // 2. Test 153+ Open Penalty to Opponent Team
-  console.log('1. Testing 153+ Open Penalty to Opponents...');
+  // 2. Test 51+ opening bonus for the opening player
+  console.log('1. Testing 51+ Open Bonus...');
   game.indicator = new Tile('ind_test', 'yellow', 1); // Okey is yellow 2
 
   const run1 = [new Tile('red_11', 'red', 11), new Tile('red_12', 'red', 12), new Tile('red_13', 'red', 13)];
@@ -47,12 +47,12 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(openRes.success, true);
   assert.ok(openRes.score >= 153);
 
-  // Check opponent player 1 received +101 penalty (only 1 opponent)
-  assert.strictEqual(game.players[1].penaltyPoints, 101);
+  // The opener receives -101; no opponent is selected in solo or team play.
+  assert.strictEqual(game.players[1].penaltyPoints, 0);
   assert.strictEqual(game.players[3].penaltyPoints, 0);
-  assert.strictEqual(game.players[0].penaltyPoints, 0);
+  assert.strictEqual(game.players[0].penaltyPoints, -101);
   assert.strictEqual(game.players[2].penaltyPoints, 0);
-  console.log('   153+ Open Penalty: PASSED (Opponent 1 got +101)');
+  console.log('   51+ Open Bonus: PASSED (Opener got -101)');
 
   // 3. Test Playable Discard Penalty (+101)
   console.log('2. Testing Playable Discard Penalty (+101)...');
@@ -61,8 +61,8 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   game.players[0].hand.push(playableTile);
   const discardRes = game.discardTile(0, 'red_7');
   assert.strictEqual(discardRes.success, true);
-  assert.strictEqual(game.players[0].penaltyPoints, 101); // Player 0 received +101 for discarding playable
-  console.log('   Playable Discard Penalty: PASSED (Player 0 got +101)');
+  assert.strictEqual(game.players[0].penaltyPoints, 0); // -101 opening bonus + 101 playable discard
+  console.log('   Playable Discard Penalty: PASSED (Player 0 got +101; net returned to 0)');
 
   // 4. Test Okey Steal from Opponent Melds
   console.log('3. Testing Okey Steal from Opponents (+101 to opponent team)...');
@@ -83,14 +83,14 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   game.players[2].opened = true;
   game.players[2].hand = [new Tile('blue_2', 'blue', 2), new Tile('dummy_extra', 'black', 1)];
 
-  const initialP1Penalties = game.players[1].penaltyPoints; // was 101
-  const initialP3Penalties = game.players[3].penaltyPoints; // was 101
+  const initialP1Penalties = game.players[1].penaltyPoints;
+  const initialP3Penalties = game.players[3].penaltyPoints;
 
   const processRes = game.processTile(2, 'blue_2', 'meld_opp_1');
   assert.strictEqual(processRes.success, true);
   assert.strictEqual(processRes.okeyStolen, true);
 
-  // ONLY Player 1 (the meld owner) should now have an extra +101 penalty (+202 total), Player 3 remains 101
+  // ONLY Player 1 (the meld owner) should now have an extra +101 penalty.
   assert.strictEqual(game.players[1].penaltyPoints, initialP1Penalties + 101);
   assert.strictEqual(game.players[3].penaltyPoints, initialP3Penalties);
   console.log('   Okey Steal Penalty: PASSED (Only meld owner got +101)');
@@ -327,7 +327,9 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(uGame.players[0].openType, null);
   assert.strictEqual(uGame.tableMelds.length, 0);
   assert.strictEqual(uGame.players[0].hand.length, originalHandCount);
-  console.log('   Undo Turn (Vazgeç): PASSED (Hand and table completely restored!)');
+  assert.strictEqual(uGame.players[0].penaltyPoints, 101);
+  assert.strictEqual(undoRes.penaltyApplied, true);
+  console.log('   Undo Turn (Vazgeç): PASSED (Hand restored and false-open penalty applied!)');
 
   // 11. A prior +101 penalty may cancel the finisher's -101 in the net score,
   // but all three values must remain available to the result screen.

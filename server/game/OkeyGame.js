@@ -425,6 +425,7 @@ class OkeyGame {
 
     const player = this.players[playerIndex];
     const snap = this.turnSnapshot;
+    const undoesFirstOpening = Boolean(!snap.opened && player.opened && player.openedInThisTurn);
 
     // Restore player hand & opened state
     player.hand = snap.hand.map(t => new Tile(t.id, t.color, t.number, t.isFake));
@@ -469,8 +470,11 @@ class OkeyGame {
     this.drawnFromDiscard = snap.drawnFromDiscard ? { ...snap.drawnFromDiscard } : null;
 
     snap.modified = false;
+    if (undoesFirstOpening) {
+      this._applyFalseOpenPenalty(playerIndex, 'Açılan el geri toplandı');
+    }
     this.addLog(`↩️ ${player.name} yaptığı açma/işleme hamlelerinden vazgeçti ve elini geri aldı.`);
-    return { success: true };
+    return { success: true, penaltyApplied: undoesFirstOpening };
   }
 
   /**
@@ -483,6 +487,29 @@ class OkeyGame {
       if (!tile) return sum;
       return sum + (tile.isOkey(this.indicator) ? 101 : tile.getValue(this.indicator));
     }, 0);
+  }
+
+  _applyFalseOpenPenalty(playerIndex, detail = '') {
+    const player = this.players[playerIndex];
+    if (!player) return;
+    const points = PENALTIES.FALSE_OPEN;
+    player.penaltyPoints = (player.penaltyPoints || 0) + points;
+    player.penalties.push({
+      type: 'FALSE_OPEN',
+      points,
+      desc: `Hatalı el açma cezası (+${points})${detail ? ` — ${detail}` : ''}`
+    });
+    // Aynı turda oyuncu daha sonra doğru açıp geri toplasa bile önceden aldığı
+    // hatalı açma cezası snapshot geri yüklemesiyle silinmesin.
+    if (this.turnSnapshot && this.turnSnapshot.playerIndex === playerIndex && this.turnSnapshot.penalties[playerIndex]) {
+      this.turnSnapshot.penalties[playerIndex] = {
+        penaltyPoints: player.penaltyPoints,
+        penalties: [...player.penalties]
+      };
+    }
+    const message = `⚠️ ${player.name} hatalı el açtığı için +${points} ceza puanı aldı!`;
+    this.addLog(message);
+    this._emitSystemMessage(message);
   }
 
   /**
@@ -528,6 +555,7 @@ class OkeyGame {
     if (this.turnState !== 'DISCARD') return { success: false, reason: 'Önce taş çekmelisiniz.' };
 
     const player = this.players[playerIndex];
+    const firstTime = !player.opened;
     if (player.opened && player.openType === 'pairs') {
       return { success: false, reason: 'Çift açtığınız için seri açamazsınız.' };
     }
@@ -561,10 +589,20 @@ class OkeyGame {
 
     const reqs = this.getMinOpenRequirements(playerIndex);
     const minRequired = player.opened ? 0 : reqs.minScore;
-    const validation = Validator.validateOpening(melds, this.indicator, minRequired);
+    // Önce perlerin yapısını doğrula. Geçerli perlerle yapılan fakat barajı
+    // doldurmayan ilk açma denemesi artık hatalı açma sayılır.
+    const validation = Validator.validateOpening(melds, this.indicator, 0);
 
     if (!validation.valid) {
       return { success: false, reason: validation.reason };
+    }
+    if (firstTime && validation.score < minRequired) {
+      this._applyFalseOpenPenalty(playerIndex, `${validation.score}/${minRequired} puan`);
+      return {
+        success: false,
+        penaltyApplied: true,
+        reason: `Per toplamınız ${validation.score}; açma barajı ${minRequired}. Hatalı el açma: +${PENALTIES.FALSE_OPEN} ceza.`
+      };
     }
 
     // A hand can only be won by discarding the final tile. Opening every tile
@@ -589,7 +627,6 @@ class OkeyGame {
       player.openedMelds.push(tableMeld);
     }
 
-    const firstTime = !player.opened;
     if (this.players.some((p, idx) => idx !== playerIndex && p.opened)) {
       this.otherPlayersEverOpened = true;
     }
@@ -631,15 +668,12 @@ class OkeyGame {
     player.openType = 'seri';
 
     if (firstTime && validation.score >= 153) {
-      const nextOppSeat = (playerIndex + 1) % 4;
-      const oppP = this.players[nextOppSeat];
-      if (oppP) {
-        oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
-        oppP.penalties.push({ type: 'OPPONENT_HIGH_OPEN', points: 101, desc: '153+ açılış cezası (+101)' });
-        const pMsg = `🔥 ${player.name} ${validation.score} (153+) puanla açtı! Rakip (${oppP.name}) +101 ceza aldı!`;
-        this.addLog(pMsg);
-        this._emitSystemMessage(pMsg);
-      }
+      player.penaltyPoints = (player.penaltyPoints || 0) - 101;
+      player.penalties.push({ type: 'HIGH_OPEN_BONUS', points: -101, desc: '51+ seri açma bonusu (-101)' });
+      const displayScore = `${Math.floor(validation.score / 3)}/${validation.score % 3}`;
+      const pMsg = `🔥 ${player.name} ${displayScore} ile seri açtı ve kendi skorundan -101 düşürdü!`;
+      this.addLog(pMsg);
+      this._emitSystemMessage(pMsg);
     }
 
     this.drawnFromDiscard = null; // Successfully used
@@ -718,7 +752,17 @@ class OkeyGame {
       }
       indicatorPairIndex = i;
     }
-    if (pairs.length < minRequired) return { success: false, reason: `En az ${minRequired} çift açmalısınız.` };
+    if (pairs.length < minRequired) {
+      if (firstTime && pairs.length > 0) {
+        this._applyFalseOpenPenalty(playerIndex, `${pairs.length}/${minRequired} çift`);
+        return {
+          success: false,
+          penaltyApplied: true,
+          reason: `${pairs.length} çiftiniz var; açma barajı ${minRequired}. Hatalı el açma: +${PENALTIES.FALSE_OPEN} ceza.`
+        };
+      }
+      return { success: false, reason: `En az ${minRequired} çift açmalısınız.` };
+    }
 
     // Pair opening is not a finishing action; one tile must remain for the
     // player's explicit sideways discard.
@@ -785,15 +829,11 @@ class OkeyGame {
       }
 
       if (pairs.length >= 7) {
-        const nextOppSeat = (playerIndex + 1) % 4;
-        const oppP = this.players[nextOppSeat];
-        if (oppP) {
-          oppP.penaltyPoints = (oppP.penaltyPoints || 0) + 101;
-          oppP.penalties.push({ type: 'OPPONENT_SEVEN_PAIRS', points: 101, desc: '7+ çift açılış cezası (+101)' });
-          const pMsg = `💎 ${player.name} ${pairs.length} (7+) çift açtı! Rakip (${oppP.name}) +101 ceza aldı!`;
-          this.addLog(pMsg);
-          this._emitSystemMessage(pMsg);
-        }
+        player.penaltyPoints = (player.penaltyPoints || 0) - 101;
+        player.penalties.push({ type: 'SEVEN_PAIRS_BONUS', points: -101, desc: '7+ çift açma bonusu (-101)' });
+        const pMsg = `💎 ${player.name} ${pairs.length} çift açtı ve kendi skorundan -101 düşürdü!`;
+        this.addLog(pMsg);
+        this._emitSystemMessage(pMsg);
       }
     }
 
@@ -863,7 +903,12 @@ class OkeyGame {
 
       // If stolen from an OPPONENT's meld (different team), only that specific meld owner gets +101 penalty!
       // If taken from own team (self or partner), NO penalty!
-      const isOpponentMeld = (targetMeld && targetMeld.playerIndex !== undefined && (playerIndex % 2 !== targetMeld.playerIndex % 2));
+      const meldOwnerIndex = targetMeld && targetMeld.playerIndex;
+      const isOpponentMeld = Boolean(
+        meldOwnerIndex !== undefined &&
+        meldOwnerIndex !== playerIndex &&
+        (!this.rules.teams || playerIndex % 2 !== meldOwnerIndex % 2)
+      );
       if (isOpponentMeld) {
         const meldOwner = this.players[targetMeld.playerIndex];
         if (meldOwner) {
@@ -1403,15 +1448,18 @@ class OkeyGame {
       if (bot.opened && this.turnState === 'DISCARD') {
         let processedAny = true;
         let loopCount = 0;
+        const processedTileIds = new Set();
         while (processedAny && bot.hand.length > 1 && loopCount < 30) {
           loopCount++;
           processedAny = false;
           for (const tile of [...bot.hand]) {
+            if (processedTileIds.has(tile.id)) continue;
             for (const tableMeld of this.tableMelds) {
               const check = Validator.canProcessTile(tile, tableMeld, this.indicator);
               if (check.canProcess) {
                 const res = this.processTile(botIndex, tile.id, tableMeld.id);
                 if (res && res.success) {
+                  processedTileIds.add(tile.id);
                   processedAny = true;
                   if (res.finished || this.state !== GAME_STATES.PLAYING) return { finished: true };
                   break;

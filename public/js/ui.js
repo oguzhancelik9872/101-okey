@@ -86,7 +86,9 @@ class UIManager {
       if (!playerName) return '';
       const pEntry = Object.values(roundScores).find(p => p.name === playerName) || {};
       const points = pEntry.points !== undefined ? pEntry.points : 0;
-      const isFinisher = pEntry.isFinisher || points < 0;
+      // 51+ / 7 çift bonusu da negatif skor üretebilir; negatif puan tek
+      // başına oyuncunun eli bitirdiği anlamına gelmez.
+      const isFinisher = Boolean(pEntry.isFinisher);
       const isPartner = pEntry.isPartner;
       const penaltyPoints = pEntry.penaltyPoints || 0;
       const basePoints = pEntry.basePoints !== undefined ? pEntry.basePoints : points;
@@ -119,7 +121,7 @@ class UIManager {
           <div>
             <div style="font-size: 13px; font-weight: 800; color: #fff;">${playerName}</div>
             <div style="font-size: 11px; color: #bdc3c7; margin-top: 2px;">${statusText}</div>
-            ${penaltyPoints > 0 ? `<div style="font-size: 10px; color: #ff7675; font-weight: 800; margin-top: 2px;">⚠️ Oyun İçi Hata Cezası: +${penaltyPoints}</div>` : ''}
+            ${penaltyPoints !== 0 ? `<div style="font-size: 10px; color: ${penaltyPoints < 0 ? '#72d99b' : '#ff7675'}; font-weight: 800; margin-top: 2px;">${penaltyPoints < 0 ? '🎁 Oyun İçi Bonus' : '⚠️ Oyun İçi Hata Cezası'}: ${penaltyPoints > 0 ? '+' : ''}${penaltyPoints}</div>` : ''}
           </div>
           <div style="text-align: right;">
             <div style="font-size: 14px; ${pointStyle}">${points > 0 ? '+' : ''}${points}</div>
@@ -204,8 +206,8 @@ class UIManager {
               <b style="color:#fff; font-size:13px;">${signed(basePoints)}</b>
             </div>
             <div style="padding:5px 2px; border-radius:7px; background:rgba(231,76,60,0.09);">
-              <small style="display:block; color:#dca19d; font-size:8px; font-weight:800;">CEZA</small>
-              <b style="color:${penaltyPoints > 0 ? '#ff7675' : '#b4c2b8'}; font-size:13px;">${signed(penaltyPoints)}</b>
+              <small style="display:block; color:${penaltyPoints < 0 ? '#72d99b' : '#dca19d'}; font-size:8px; font-weight:800;">${penaltyPoints < 0 ? 'BONUS' : 'CEZA'}</small>
+              <b style="color:${penaltyPoints > 0 ? '#ff7675' : (penaltyPoints < 0 ? '#72d99b' : '#b4c2b8')}; font-size:13px;">${signed(penaltyPoints)}</b>
             </div>
             <div style="padding:5px 2px; border-radius:7px; background:rgba(241,196,15,0.08);">
               <small style="display:block; color:#cbbb7d; font-size:8px; font-weight:800;">TOPLAM</small>

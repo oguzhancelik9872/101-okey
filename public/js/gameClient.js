@@ -820,7 +820,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ruleBox) ruleBox.innerHTML = lobbyRulesHtml(tableData.rules);
     const title = document.getElementById('lobby-catalog-title');
     const page = document.getElementById('lobby-catalog-page');
-    if (title) title.textContent = `MASA ${tableData.id}`;
+    if (title) title.textContent = `MASA ${tableIndex + 1}`;
     if (page) page.textContent = `${tableIndex + 1} / ${latestLobbyTables.length}`;
     const hasMultipleTables = latestLobbyTables.length > 1;
     document.getElementById('btn-prev-lobby-table')?.classList.toggle('hidden', !hasMultipleTables);
@@ -1138,8 +1138,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     currentGameState = state;
     const assistanceEnabled = state.rules?.assistance !== false;
-    document.getElementById('btn-sort-runs')?.classList.toggle('rule-disabled', !assistanceEnabled);
-    document.getElementById('btn-sort-pairs')?.classList.toggle('rule-disabled', !assistanceEnabled);
+    document.getElementById('btn-sort-runs')?.classList.remove('rule-disabled');
+    document.getElementById('btn-sort-pairs')?.classList.remove('rule-disabled');
     document.getElementById('center-scoreboard-card')?.classList.toggle('rule-disabled', state.rules?.teams === false);
     const gameRulesSummary = document.getElementById('game-rules-summary');
     if (gameRulesSummary) gameRulesSummary.innerHTML = lobbyRulesHtml(state.rules);
@@ -1667,7 +1667,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnSortRuns) {
     btnSortRuns.addEventListener('click', () => {
-      if (currentGameState?.rules?.assistance === false) return ui.showToast('Bu masada yardım sistemi kapalı.', 'info');
       if (window.isRackLayoutLocked && window.isRackLayoutLocked()) return;
       const isMyTurn = currentGameState && currentGameState.currentTurn === viewerSeatIndex;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
@@ -1677,7 +1676,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnSortPairs) {
     btnSortPairs.addEventListener('click', () => {
-      if (currentGameState?.rules?.assistance === false) return ui.showToast('Bu masada yardım sistemi kapalı.', 'info');
       if (window.isRackLayoutLocked && window.isRackLayoutLocked()) return;
       const isMyTurn = currentGameState && currentGameState.currentTurn === viewerSeatIndex;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
@@ -1756,7 +1754,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const minRequired = isFirstOpen ? (currentGameState.minOpenScore || 101) : 0;
       const requiredId = (isMyTurn && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
 
       // 1. Detect valid melds from the player's own rack layout
@@ -1770,14 +1767,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const containsRequired = !requiredId || !isFirstOpen || rackAnalysis.validTileIds.has(requiredId);
       if (requiredId && isFirstOpen && !containsRequired) {
         ui.showToast('Yandan çektiğiniz taşı açtığınız perlerde kullanmalısınız veya geri bırakmalısınız.', 'error', 3500);
-        return;
-      }
-
-      if (isFirstOpen && rackAnalysis.totalScore < minRequired) {
-        const formattedScore = (window.formatOkeyScore && typeof window.formatOkeyScore === 'function')
-          ? window.formatOkeyScore(minRequired)
-          : `${minRequired}`;
-        ui.showToast(`Dizdiğiniz perlerin toplamı ${rackAnalysis.totalScore} puan. Seri açmak için en az ${formattedScore} (${minRequired} puan) olmalıdır.`, 'error', 3500);
         return;
       }
 
@@ -1831,15 +1820,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const minPairs = isFirstOpen ? (currentGameState.minOpenPairs || 5) : 1;
       const requiredId = (isMyTurn && isFirstOpen && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex) ? currentGameState.drawnFromDiscard.tileId : null;
 
       // 1. Analyze 2-tile pair groups currently arranged on the istaka rack
       const indicatorBonusTileId = isFirstOpen && viewerPlayer && viewerPlayer.indicatorBonusAvailable ? viewerPlayer.indicatorTileId : null;
       const rackPairs = istaka.analyzeRackPairs(indicatorBonusTileId);
 
-      if (rackPairs.validPairs.length < minPairs) {
-        ui.showToast(`Çift açmak için ıstakanızda en az ${minPairs} çift dizili olmalıdır (Şu an: ${rackPairs.validPairs.length} çift).`, 'error', 3000);
+      if (rackPairs.validPairs.length < 1) {
+        ui.showToast('Istakanızda açılacak geçerli bir çift bulunamadı.', 'error', 3000);
         return;
       }
 
@@ -2115,38 +2103,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasDrawnFromDiscard = isMyTurn && turnState === 'DISCARD' && currentGameState.drawnFromDiscard && currentGameState.drawnFromDiscard.playerIndex === viewerSeatIndex;
     const canAttemptOpen = isMyTurn && turnState === 'DISCARD';
 
-    // Anti-Cheat / Anti-Probe: Only enable Open buttons if player's arranged hand ACTUALLY qualifies to open
+    // Açma denemesi için tek şart ıstakada en az bir geçerli per/çift bulunmasıdır.
+    // Baraj eksikse kesin ceza kararı sunucuda verilir.
     let canActuallyOpenSeri = false;
     let canActuallyOpenPairs = false;
-    const rackCalculationEnabled = currentGameState.rules?.rackTotals !== false;
-
-    if (canAttemptOpen && !cannotOpenSeri && !rackCalculationEnabled) {
-      canActuallyOpenSeri = true;
-    } else if (canAttemptOpen && !cannotOpenSeri && typeof istaka !== 'undefined') {
+    if (canAttemptOpen && !cannotOpenSeri && typeof istaka !== 'undefined') {
       const rackAnalysis = istaka.analyzeRackMelds();
       const requiredId = hasDrawnFromDiscard ? currentGameState.drawnFromDiscard.tileId : null;
       const containsRequired = !requiredId || !isFirstOpen || rackAnalysis.validTileIds.has(requiredId);
-
-      if (isFirstOpen) {
-        canActuallyOpenSeri = Boolean(rackAnalysis.validMelds.length > 0 && rackAnalysis.totalScore >= minOpenScore && containsRequired);
-      } else {
-        canActuallyOpenSeri = Boolean(rackAnalysis.validMelds.length > 0);
-      }
+      canActuallyOpenSeri = Boolean(rackAnalysis.validMelds.length > 0 && containsRequired);
     }
 
-    if (canAttemptOpen && !cannotOpenPairs && !rackCalculationEnabled) {
-      canActuallyOpenPairs = true;
-    } else if (canAttemptOpen && !cannotOpenPairs && typeof istaka !== 'undefined') {
+    if (canAttemptOpen && !cannotOpenPairs && typeof istaka !== 'undefined') {
       const indicatorBonusTileId = isFirstOpen && viewerPlayer && viewerPlayer.indicatorBonusAvailable ? viewerPlayer.indicatorTileId : null;
       const rackPairs = istaka.analyzeRackPairs(indicatorBonusTileId);
       const requiredId = hasDrawnFromDiscard ? currentGameState.drawnFromDiscard.tileId : null;
       const containsRequired = !requiredId || !isFirstOpen || rackPairs.validTileIds.has(requiredId);
-
-      if (isFirstOpen) {
-        canActuallyOpenPairs = Boolean(rackPairs.validPairs.length >= minOpenPairs && containsRequired);
-      } else {
-        canActuallyOpenPairs = Boolean(rackPairs.validPairs.length >= 1);
-      }
+      canActuallyOpenPairs = Boolean(rackPairs.validPairs.length >= 1 && containsRequired);
     }
 
     if (btnOpenHand) {
@@ -2156,7 +2129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ? 'Çift açtığınız için seri açamazsınız'
         : (canActuallyOpenSeri
             ? 'Dizdiğiniz perleri masaya açın'
-            : (canAttemptOpen ? `Seri açmak için ıstakanıza en az ${minOpenScore} puanlık geçerli per dizmelisiniz` : 'Taş çektikten sonra el açabilirsiniz'));
+            : (canAttemptOpen ? 'Seri açmak için ıstakanızda en az bir geçerli per olmalı' : 'Taş çektikten sonra el açabilirsiniz'));
     }
     if (btnOpenPairs) {
       btnOpenPairs.classList.toggle('hidden', !Boolean(isMyTurn && isPlayingGame));
@@ -2165,7 +2138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ? 'Masada çift açmış bir oyuncu olmadığı için çift açamazsınız'
         : (canActuallyOpenPairs
             ? 'Dizdiğiniz çiftleri masaya açın'
-            : (canAttemptOpen ? `Çift açmak için ıstakanıza en az ${minOpenPairs} çift dizmelisiniz` : 'Taş çektikten sonra çift açabilirsiniz'));
+            : (canAttemptOpen ? 'Çift açmak için ıstakanızda en az bir geçerli çift olmalı' : 'Taş çektikten sonra çift açabilirsiniz'));
     }
     if (btnAutoProcess) {
       const hasPlayableTile = Boolean(viewerPlayer?.opened && (viewerPlayer.hand || []).some(tile =>

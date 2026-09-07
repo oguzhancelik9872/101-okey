@@ -2303,6 +2303,12 @@ body.plus-theme {
   white-space: nowrap;
 }
 
+.player-penalty-pill.is-bonus {
+  background: linear-gradient(135deg, #27ae60 0%, #187a42 100%);
+  border-color: #7ee2a6;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.62), 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
 /* =========================================================
    CENTER BOARD (MELDS & PILES) - SPREAD ACROSS ENTIRE FELT
    ========================================================= */
