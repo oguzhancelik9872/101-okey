@@ -139,7 +139,10 @@ class TableManager {
         rackRemainingEl.className = 'rack-remaining-hand-penalty';
         istakaBoardEl.appendChild(rackRemainingEl);
       }
-      rackRemainingEl.textContent = String(Number(viewerPlayer.remainingHandPenalty));
+      const remainingPenalty = Number(viewerPlayer.remainingHandPenalty);
+      rackRemainingEl.textContent = viewerPlayer.openType === 'seri'
+        ? formatOkeyScore(remainingPenalty)
+        : String(remainingPenalty);
       rackRemainingEl.classList.add('is-penalty');
       rackRemainingEl.classList.remove('is-rack-helper');
       rackRemainingEl.classList.remove('hidden');
