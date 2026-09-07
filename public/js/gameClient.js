@@ -1156,6 +1156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isViewerJustOpened = me && me.opened && (!lastMe || !lastMe.opened);
 
     istaka.setViewerOpened(me ? me.opened : false);
+    istaka.setIndicatorBonusTileId(me && !me.opened && me.indicatorBonusAvailable ? me.indicatorTileId : null);
     if (me && me.hand) {
       const isInitialDeal = (!roundStartedHandSorted && state.state === 'PLAYING' && me.hand.length >= 21);
 
@@ -2121,9 +2122,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const runScore = Number(data?.rackAnalysis?.totalScore || 0);
     const pairCount = Number(data?.rackPairs?.count || 0);
     const runText = window.formatOkeyScore ? window.formatOkeyScore(runScore) : String(runScore);
-    helperEl.textContent = pairCount > 0 ? `${runText} · ${pairCount} çift` : runText;
-    helperEl.classList.add('is-rack-helper');
-    helperEl.classList.remove('is-penalty', 'hidden');
+    const isReadyForPairs = pairCount >= Number(currentGameState.minOpenPairs || 5);
+    helperEl.textContent = isReadyForPairs ? String(Number(data?.pairRemainingPenalty || 0)) : runText;
+    helperEl.classList.toggle('is-rack-helper', !isReadyForPairs);
+    helperEl.classList.toggle('is-penalty', isReadyForPairs);
+    helperEl.classList.remove('hidden');
   }
 
   // =========================================================

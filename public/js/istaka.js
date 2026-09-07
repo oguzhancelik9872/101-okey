@@ -26,6 +26,7 @@ class IstakaManager {
     this.activeMeldGroup = null; // { row, startCol, count, tiles }
     this.tableMelds = [];
     this.showPlayableHints = true;
+    this.indicatorBonusTileId = null;
     this.viewerOpened = false;
     this.lastDrawnTileId = null;
     this.drawnDiscardTileId = null;
@@ -392,6 +393,10 @@ class IstakaManager {
     this.showPlayableHints = enabled !== false;
   }
 
+  setIndicatorBonusTileId(tileId) {
+    this.indicatorBonusTileId = tileId || null;
+  }
+
   isTilePlayableToTable(tile) {
     if (!this.showPlayableHints || !tile || !this.tableMelds.length || typeof ClientValidator === 'undefined') return false;
     try {
@@ -683,10 +688,15 @@ class IstakaManager {
     }
 
     if (this.onStateChange) {
+      const rackPairs = this.analyzeRackPairs(this.indicatorBonusTileId);
+      const pairRemainingPenalty = this.getAllTiles()
+        .filter(tile => !rackPairs.validTileIds.has(tile.id))
+        .reduce((sum, tile) => sum + (tile.isOkey ? 101 : Number(tile.effectiveValue ?? tile.number ?? 0)), 0) * 2;
       this.onStateChange({
         selectedTiles: [],
         rackAnalysis: rackAnalysis,
-        rackPairs: this.analyzeRackPairs(),
+        rackPairs,
+        pairRemainingPenalty,
         bestHandMelds: this.getBestHandMelds()
       });
     }
