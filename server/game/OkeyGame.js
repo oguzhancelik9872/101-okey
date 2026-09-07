@@ -102,6 +102,7 @@ class OkeyGame {
       roundScore: 0,      // Score in current round
       penaltyPoints: 0,   // Accumulated penalty points in current round (+101, +202 etc)
       penalties: [],
+      openingAttemptedThisTurn: false,
       indicatorDeclared: false,
       indicatorTileId: null,
       indicatorBonusUsed: false,
@@ -214,6 +215,7 @@ class OkeyGame {
       this.players[i].roundScore = 0;
       this.players[i].penaltyPoints = 0;
       this.players[i].penalties = [];
+      this.players[i].openingAttemptedThisTurn = false;
       this.players[i].indicatorDeclared = false;
       this.players[i].indicatorTileId = null;
       this.players[i].indicatorBonusUsed = false;
@@ -471,10 +473,10 @@ class OkeyGame {
 
     snap.modified = false;
     if (undoesFirstOpening) {
-      this._applyFalseOpenPenalty(playerIndex, 'Açılan el geri toplandı');
+      player.openingAttemptedThisTurn = true;
     }
     this.addLog(`↩️ ${player.name} yaptığı açma/işleme hamlelerinden vazgeçti ve elini geri aldı.`);
-    return { success: true, penaltyApplied: undoesFirstOpening };
+    return { success: true, openingMustBeCompleted: undoesFirstOpening };
   }
 
   /**
@@ -499,14 +501,6 @@ class OkeyGame {
       points,
       desc: `Hatalı el açma cezası (+${points})${detail ? ` — ${detail}` : ''}`
     });
-    // Aynı turda oyuncu daha sonra doğru açıp geri toplasa bile önceden aldığı
-    // hatalı açma cezası snapshot geri yüklemesiyle silinmesin.
-    if (this.turnSnapshot && this.turnSnapshot.playerIndex === playerIndex && this.turnSnapshot.penalties[playerIndex]) {
-      this.turnSnapshot.penalties[playerIndex] = {
-        penaltyPoints: player.penaltyPoints,
-        penalties: [...player.penalties]
-      };
-    }
     const message = `⚠️ ${player.name} hatalı el açtığı için +${points} ceza puanı aldı!`;
     this.addLog(message);
     this._emitSystemMessage(message);
@@ -596,12 +590,12 @@ class OkeyGame {
     if (!validation.valid) {
       return { success: false, reason: validation.reason };
     }
+    if (firstTime) player.openingAttemptedThisTurn = true;
     if (firstTime && validation.score < minRequired) {
-      this._applyFalseOpenPenalty(playerIndex, `${validation.score}/${minRequired} puan`);
       return {
         success: false,
-        penaltyApplied: true,
-        reason: `Per toplamınız ${validation.score}; açma barajı ${minRequired}. Hatalı el açma: +${PENALTIES.FALSE_OPEN} ceza.`
+        openingAttemptPending: true,
+        reason: `Per toplamınız ${validation.score}; açma barajı ${minRequired}. Tur bitmeden açılışı tamamlamazsanız +${PENALTIES.FALSE_OPEN} ceza alırsınız.`
       };
     }
 
@@ -666,6 +660,7 @@ class OkeyGame {
 
     player.opened = true;
     player.openType = 'seri';
+    player.openingAttemptedThisTurn = false;
 
     if (firstTime && validation.score >= 153) {
       player.penaltyPoints = (player.penaltyPoints || 0) - 101;
@@ -752,13 +747,13 @@ class OkeyGame {
       }
       indicatorPairIndex = i;
     }
+    if (firstTime && pairs.length > 0) player.openingAttemptedThisTurn = true;
     if (pairs.length < minRequired) {
       if (firstTime && pairs.length > 0) {
-        this._applyFalseOpenPenalty(playerIndex, `${pairs.length}/${minRequired} çift`);
         return {
           success: false,
-          penaltyApplied: true,
-          reason: `${pairs.length} çiftiniz var; açma barajı ${minRequired}. Hatalı el açma: +${PENALTIES.FALSE_OPEN} ceza.`
+          openingAttemptPending: true,
+          reason: `${pairs.length} çiftiniz var; açma barajı ${minRequired}. Tur bitmeden açılışı tamamlamazsanız +${PENALTIES.FALSE_OPEN} ceza alırsınız.`
         };
       }
       return { success: false, reason: `En az ${minRequired} çift açmalısınız.` };
@@ -801,6 +796,7 @@ class OkeyGame {
       player.openedInThisTurn = true;
       player.opened = true;
       player.openType = 'pairs';
+      player.openingAttemptedThisTurn = false;
 
       if (this.rules.folded && pairs.length >= (this.minOpenPairs || 5)) {
         this.minOpenPairs = pairs.length + 1;
@@ -996,6 +992,13 @@ class OkeyGame {
         reason: 'Yandan aldığınız taşı el açarak veya masaya işleyerek kullanmak zorundasınız. Kullanmayacaksanız "Taşı Geri Bırak" butonuna tıklamalısınız.'
       };
     }
+
+    // Oyuncu tur içinde açmayı deneyip geri toplayabilir veya yeniden dizebilir.
+    // Ceza yalnızca turu geçerli bir ilk açılış tamamlamadan kapatırsa yazılır.
+    if (!player.opened && player.openingAttemptedThisTurn) {
+      this._applyFalseOpenPenalty(playerIndex, 'Tur geçerli açılış tamamlanmadan kapatıldı');
+    }
+    player.openingAttemptedThisTurn = false;
 
     const tile = player.hand.splice(tileIndex, 1)[0];
     if (player.indicatorDeclared && tile.id === player.indicatorTileId && !player.indicatorBonusUsed) {

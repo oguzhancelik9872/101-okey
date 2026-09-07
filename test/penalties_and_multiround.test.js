@@ -327,9 +327,9 @@ test('Penalties & Multi-round 101 Okey Rules', async (t) => {
   assert.strictEqual(uGame.players[0].openType, null);
   assert.strictEqual(uGame.tableMelds.length, 0);
   assert.strictEqual(uGame.players[0].hand.length, originalHandCount);
-  assert.strictEqual(uGame.players[0].penaltyPoints, 101);
-  assert.strictEqual(undoRes.penaltyApplied, true);
-  console.log('   Undo Turn (Vazgeç): PASSED (Hand restored and false-open penalty applied!)');
+  assert.strictEqual(uGame.players[0].penaltyPoints, 0);
+  assert.strictEqual(undoRes.openingMustBeCompleted, true);
+  console.log('   Undo Turn (Vazgeç): PASSED (Hand restored without immediate penalty!)');
 
   // 11. A prior +101 penalty may cancel the finisher's -101 in the net score,
   // but all three values must remain available to the result screen.

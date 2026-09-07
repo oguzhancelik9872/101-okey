@@ -14,7 +14,7 @@ function createGame(id, rules = {}) {
   return game;
 }
 
-test('baraj altındaki geçerli seri açma denemesi +101 ceza verir ve eli değiştirmez', () => {
+test('baraj altındaki seri denemesi tur bitene kadar bekler ve açmadan atılırsa +101 verir', () => {
   const game = createGame('false-run');
   const run = [new Tile('r1', 'red', 1), new Tile('r2', 'red', 2), new Tile('r3', 'red', 3)];
   game.players[0].hand = [...run, new Tile('extra', 'black', 13)];
@@ -22,25 +22,29 @@ test('baraj altındaki geçerli seri açma denemesi +101 ceza verir ve eli deği
 
   const result = game.openHand(0, [run.map(tile => tile.id)]);
   assert.equal(result.success, false);
-  assert.equal(result.penaltyApplied, true);
-  assert.equal(game.players[0].penaltyPoints, 101);
+  assert.equal(result.openingAttemptPending, true);
+  assert.equal(game.players[0].penaltyPoints, 0);
   assert.equal(game.players[0].hand.length, 4);
   assert.equal(game.tableMelds.length, 0);
+  assert.equal(game.discardTile(0, 'extra').success, true);
+  assert.equal(game.players[0].penaltyPoints, 101);
 });
 
-test('baraj altındaki en az bir geçerli çift denemesi +101 ceza verir', () => {
+test('baraj altındaki çift denemesi tur bitene kadar bekler ve açmadan atılırsa +101 verir', () => {
   const game = createGame('false-pairs');
   const pair = [new Tile('b7a', 'blue', 7), new Tile('b7b', 'blue', 7)];
   game.players[0].hand = [...pair, new Tile('extra', 'black', 13)];
 
   const result = game.openPairs(0, [pair.map(tile => tile.id)]);
   assert.equal(result.success, false);
-  assert.equal(result.penaltyApplied, true);
-  assert.equal(game.players[0].penaltyPoints, 101);
+  assert.equal(result.openingAttemptPending, true);
+  assert.equal(game.players[0].penaltyPoints, 0);
   assert.equal(game.players[0].hand.length, 3);
+  assert.equal(game.discardTile(0, 'extra').success, true);
+  assert.equal(game.players[0].penaltyPoints, 101);
 });
 
-test('aynı turdaki hatalı deneme cezası doğru açılış geri toplanınca silinmez', () => {
+test('oyuncu aynı turda açıp topladıktan sonra doğru açarsa ceza almaz', () => {
   const game = createGame('false-then-undo');
   const melds = ['red', 'blue', 'black', 'yellow'].map((color, index) => [
     new Tile(`${index}a`, color, 10),
@@ -51,12 +55,32 @@ test('aynı turdaki hatalı deneme cezası doğru açılış geri toplanınca si
   game._saveTurnSnapshot(0);
 
   const falseAttempt = game.openHand(0, [melds[0].map(tile => tile.id)]);
-  assert.equal(falseAttempt.penaltyApplied, true);
+  assert.equal(falseAttempt.openingAttemptPending, true);
   const validAttempt = game.openHand(0, melds.map(meld => meld.map(tile => tile.id)));
   assert.equal(validAttempt.success, true);
   const undo = game.undoTurn(0);
-  assert.equal(undo.penaltyApplied, true);
-  assert.equal(game.players[0].penaltyPoints, 202);
+  assert.equal(undo.success, true);
+  assert.equal(game.players[0].penaltyPoints, 0);
+  const reopened = game.openHand(0, melds.map(meld => meld.map(tile => tile.id)));
+  assert.equal(reopened.success, true);
+  assert.equal(game.discardTile(0, 'extra').success, true);
+  assert.equal(game.players[0].penaltyPoints, 0);
+});
+
+test('başarılı ilk açılışı geri toplayıp açmadan turu kapatmak +101 verir', () => {
+  const game = createGame('open-undo-no-reopen');
+  const melds = ['red', 'blue', 'black', 'yellow'].map((color, index) => [
+    new Tile(`${index}a`, color, 10),
+    new Tile(`${index}b`, color, 11),
+    new Tile(`${index}c`, color, 12)
+  ]);
+  game.players[0].hand = [...melds.flat(), new Tile('extra', 'red', 1)];
+  game._saveTurnSnapshot(0);
+  assert.equal(game.openHand(0, melds.map(meld => meld.map(tile => tile.id))).success, true);
+  assert.equal(game.undoTurn(0).success, true);
+  assert.equal(game.players[0].penaltyPoints, 0);
+  assert.equal(game.discardTile(0, 'extra').success, true);
+  assert.equal(game.players[0].penaltyPoints, 101);
 });
 
 test('tekli oyunda 7 çift açan oyuncu kendi skoruna -101 yazar', () => {
