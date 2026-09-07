@@ -191,6 +191,20 @@ class TableManager {
           }
         }
 
+        let remainingEl = seatEl.querySelector('.player-remaining-hand-penalty');
+        if (player.opened && Number.isFinite(Number(player.remainingHandPenalty))) {
+          if (!remainingEl) {
+            remainingEl = document.createElement('span');
+            remainingEl.className = 'player-remaining-hand-penalty';
+            (seatEl.querySelector('.bar-player-info') || seatEl).appendChild(remainingEl);
+          }
+          remainingEl.textContent = `${Number(player.remainingHandPenalty)} kaldı`;
+          remainingEl.classList.remove('hidden');
+        } else if (remainingEl) {
+          remainingEl.classList.add('hidden');
+          remainingEl.textContent = '';
+        }
+
         // Red Penalty Pill e.g. +101, +202
         let penaltyBadge = seatEl.querySelector('.player-penalty-pill');
         if (player.penaltyPoints && player.penaltyPoints > 0) {
@@ -227,6 +241,12 @@ class TableManager {
         if (statusEl) {
           statusEl.className = 'player-open-status';
           statusEl.textContent = 'Boş Koltuk';
+        }
+
+        const remainingEl = seatEl.querySelector('.player-remaining-hand-penalty');
+        if (remainingEl) {
+          remainingEl.classList.add('hidden');
+          remainingEl.textContent = '';
         }
       }
     });

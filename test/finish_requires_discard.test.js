@@ -111,3 +111,23 @@ test('son taşla Okey alma işlemi yapılabilir çünkü atılacak Okey ele dön
   assert.equal(game.state, GAME_STATES.GAME_OVER);
 });
 
+test('açan oyuncuların kalan cezası seri için normal, çift için iki kat yayınlanır', () => {
+  const game = createPlayingGame('remaining-hand-penalty');
+  const tiles = (prefix) => [
+    new Tile(`${prefix}10`, 'red', 10),
+    new Tile(`${prefix}11`, 'blue', 11),
+    new Tile(`${prefix}3`, 'black', 3)
+  ];
+
+  game.players[0].opened = true;
+  game.players[0].openType = 'seri';
+  game.players[0].hand = tiles('seri');
+  game.players[1].opened = true;
+  game.players[1].openType = 'pairs';
+  game.players[1].hand = tiles('pairs');
+
+  const clientState = game.getClientState(3);
+  assert.equal(clientState.players[0].remainingHandPenalty, 24);
+  assert.equal(clientState.players[1].remainingHandPenalty, 48);
+  assert.equal(clientState.players[2].remainingHandPenalty, null);
+});
