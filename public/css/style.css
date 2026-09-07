@@ -2017,19 +2017,19 @@ body.plus-theme {
 
 .rack-remaining-hand-penalty {
   position: absolute;
-  top: -24px;
+  top: -28px;
   right: -1px;
   z-index: 35;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: fit-content;
-  padding: 1px 6px;
+  padding: 3px 8px;
   border: 1px solid rgba(255, 118, 118, 0.34);
   border-radius: 8px;
   background: rgba(126, 28, 28, 0.2);
   color: rgba(255, 145, 145, 0.92);
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: 0.15px;
@@ -4240,10 +4240,10 @@ body.plus-theme {
   }
 
   .rack-remaining-hand-penalty {
-    top: -18px;
+    top: -22px;
     right: 0;
-    padding: 1px 4px;
-    font-size: 7px;
+    padding: 2px 6px;
+    font-size: 9px;
   }
 
   .btn-side-sort {
