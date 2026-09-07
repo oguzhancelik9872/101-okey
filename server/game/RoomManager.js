@@ -8,12 +8,13 @@ class RoomManager {
   }
 
   normalizeRules(rules = {}) {
+    const assistance = rules.assistance !== false;
     return {
       folded: rules.folded === true,
-      assistance: rules.assistance !== false,
-      rackTotals: rules.rackTotals !== false,
-      showPlayableTiles: rules.showPlayableTiles !== false,
-      discardDrawPenalty: rules.discardDrawPenalty !== false,
+      assistance,
+      rackTotals: assistance,
+      showPlayableTiles: assistance,
+      discardDrawPenalty: true,
       teams: rules.teams !== false
     };
   }

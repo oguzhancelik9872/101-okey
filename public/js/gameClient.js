@@ -736,7 +736,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function lobbyRuleLabels(rules = {}) {
-    return [rules.folded ? 'Katlamalı' : 'Katlamasız', rules.assistance !== false ? 'Yardım açık' : 'Yardım kapalı', rules.rackTotals !== false ? 'Toplam açık' : 'Toplam kapalı', rules.showPlayableTiles !== false ? 'İşlek görünür' : 'İşlek gizli', rules.discardDrawPenalty !== false ? 'Yandan ceza var' : 'Yandan ceza yok', rules.teams !== false ? 'Eşli' : 'Eşsiz'];
+    return [
+      { label: rules.teams !== false ? 'Eşli' : 'Tekli', tone: rules.teams !== false ? 'rule-green' : 'rule-gray' },
+      { label: rules.folded ? 'Katlamalı' : 'Katlamasız', tone: rules.folded ? 'rule-red' : 'rule-gray' },
+      { label: rules.assistance !== false ? 'Yardımlı' : 'Yardımsız', tone: rules.assistance !== false ? 'rule-green' : 'rule-gray' }
+    ];
+  }
+
+  function lobbyRulesHtml(rules) {
+    return lobbyRuleLabels(rules).map(rule => `<span class="${rule.tone}">${rule.label}</span>`).join('');
   }
 
   function openLobbyTable(tableId) {
@@ -746,7 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('lobby-browser')?.classList.add('hidden');
     document.getElementById('lobby-table-detail')?.classList.remove('hidden');
     const ruleBox = document.getElementById('lobby-detail-rules');
-    if (ruleBox) ruleBox.innerHTML = lobbyRuleLabels(tableData.rules).map(label => `<span>${label}</span>`).join('');
+    if (ruleBox) ruleBox.innerHTML = lobbyRulesHtml(tableData.rules);
     const title = document.getElementById('lobby-catalog-title');
     const page = document.getElementById('lobby-catalog-page');
     if (title) title.textContent = `MASA ${tableData.id}`;
@@ -840,12 +848,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-cancel-table-rules')?.addEventListener('click', closeTableRules);
   document.getElementById('btn-confirm-table-rules')?.addEventListener('click', () => {
     const rules = {
-      folded: document.getElementById('rule-folded').checked,
-      assistance: document.getElementById('rule-assistance').checked,
-      rackTotals: document.getElementById('rule-rack-totals').checked,
-      showPlayableTiles: document.getElementById('rule-playable').checked,
-      discardDrawPenalty: document.getElementById('rule-discard-penalty').checked,
-      teams: document.getElementById('rule-teams').checked
+      folded: document.querySelector('input[name="rule-folded"]:checked')?.value === 'true',
+      assistance: document.querySelector('input[name="rule-assistance"]:checked')?.value === 'true',
+      teams: document.querySelector('input[name="rule-teams"]:checked')?.value === 'true'
     };
     const user = currentUser || {};
     socket.emit(tableRulesForBots ? 'createBotRoom' : 'createRoom', { playerName: getPlayerName(), userId: getUserId(), gender: user.gender, avatarIndex: user.avatarIndex, isPrivate: tableRulesForBots, targetRounds: 1, rules }, (res) => {
@@ -1074,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-sort-pairs')?.classList.toggle('rule-disabled', !assistanceEnabled);
     document.getElementById('center-scoreboard-card')?.classList.toggle('rule-disabled', state.rules?.teams === false);
     const gameRulesSummary = document.getElementById('game-rules-summary');
-    if (gameRulesSummary) gameRulesSummary.innerHTML = lobbyRuleLabels(state.rules).map(label => `<span>${label}</span>`).join('');
+    if (gameRulesSummary) gameRulesSummary.innerHTML = lobbyRulesHtml(state.rules);
     document.getElementById('btn-auto-process')?.classList.toggle('rule-disabled', !assistanceEnabled);
     table.setViewerSeatIndex(viewerSeatIndex);
     istaka.setIndicator(state.indicator);

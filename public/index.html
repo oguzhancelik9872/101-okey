@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=170">
+  <link rel="stylesheet" href="css/style.css?v=171">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -193,14 +193,11 @@
     <div id="table-rules-modal" class="modal-backdrop hidden">
       <div class="plus-modal-card table-rules-card" role="dialog" aria-modal="true" aria-labelledby="table-rules-title">
         <div class="modal-header"><div><span class="rules-kicker">YENİ MASA</span><h3 id="table-rules-title">Masa Kuralları</h3></div><button id="btn-close-table-rules" class="btn-close-modal">✕</button></div>
-        <p class="table-rules-intro">Her masa kendi kurallarıyla oynanır. İstediğin seçenekleri belirle.</p>
+        <p class="table-rules-intro">Üç temel kuralı seç, masanı hemen aç.</p>
         <div class="table-rule-grid">
-          <label class="table-rule-option"><span><b>Katlamalı oyun</b><small>Rakibin açtığının bir üstü gerekir</small></span><input id="rule-folded" type="checkbox"><i></i></label>
-          <label class="table-rule-option"><span><b>Yardım sistemi</b><small>Seri diz ve çift diz kullanılabilir</small></span><input id="rule-assistance" type="checkbox" checked><i></i></label>
-          <label class="table-rule-option"><span><b>Seri/çift toplamı</b><small>Eldeki açılış hesabı gösterilir</small></span><input id="rule-rack-totals" type="checkbox" checked><i></i></label>
-          <label class="table-rule-option"><span><b>İşlek taşları göster</b><small>Masaya işlenebilen taşlar belirtilir</small></span><input id="rule-playable" type="checkbox" checked><i></i></label>
-          <label class="table-rule-option"><span><b>Yandan alma cezası</b><small>Yandan alınan taşla açtırana ceza yazılır</small></span><input id="rule-discard-penalty" type="checkbox" checked><i></i></label>
-          <label class="table-rule-option"><span><b>Eşli oyun</b><small>Karşılıklı oyuncular takım olur</small></span><input id="rule-teams" type="checkbox" checked><i></i></label>
+          <div class="table-rule-choice"><strong>Oyun düzeni</strong><div class="rule-segment"><label><input type="radio" name="rule-teams" value="false"><span class="rule-gray">Tekli</span></label><label><input type="radio" name="rule-teams" value="true" checked><span class="rule-green">Eşli</span></label></div></div>
+          <div class="table-rule-choice"><strong>Katlama</strong><div class="rule-segment"><label><input type="radio" name="rule-folded" value="false" checked><span class="rule-gray">Katlamasız</span></label><label><input type="radio" name="rule-folded" value="true"><span class="rule-red">Katlamalı</span></label></div></div>
+          <div class="table-rule-choice"><strong>Oyun yardımı</strong><div class="rule-segment"><label><input type="radio" name="rule-assistance" value="false"><span class="rule-gray">Yardımsız</span></label><label><input type="radio" name="rule-assistance" value="true" checked><span class="rule-green">Yardımlı</span></label></div></div>
         </div>
         <div class="table-rules-actions"><button id="btn-cancel-table-rules" class="btn-back-table-list">Vazgeç</button><button id="btn-confirm-table-rules" class="btn-bot-quick-play">Masayı Oluştur</button></div>
       </div>
@@ -587,6 +584,6 @@
   <script src="js/istaka.js?v=124"></script>
   <script src="js/table.js?v=124"></script>
   <script src="js/ui.js?v=125"></script>
-  <script src="js/gameClient.js?v=140"></script>
+  <script src="js/gameClient.js?v=141"></script>
 </body>
 </html>

@@ -8,12 +8,13 @@ class OkeyGame {
   constructor(id, options = {}) {
     this.id = id;
     this.mode = options.mode || GAME_MODES.STANDARD; // standard | folded
+    const assistance = options.rules?.assistance !== false;
     this.rules = {
       folded: options.rules?.folded === true || this.mode === GAME_MODES.FOLDED,
-      assistance: options.rules?.assistance !== false,
-      rackTotals: options.rules?.rackTotals !== false,
-      showPlayableTiles: options.rules?.showPlayableTiles !== false,
-      discardDrawPenalty: options.rules?.discardDrawPenalty !== false,
+      assistance,
+      rackTotals: assistance,
+      showPlayableTiles: assistance,
+      discardDrawPenalty: true,
       teams: options.rules?.teams !== false
     };
     this.targetRounds = options.targetRounds || 1;
