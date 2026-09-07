@@ -1071,8 +1071,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const assistanceEnabled = state.rules?.assistance !== false;
     document.getElementById('btn-sort-runs')?.classList.toggle('rule-disabled', !assistanceEnabled);
     document.getElementById('btn-sort-pairs')?.classList.toggle('rule-disabled', !assistanceEnabled);
-    document.getElementById('table-seri-target-badge')?.classList.toggle('rule-disabled', state.rules?.rackTotals === false);
-    document.getElementById('table-pairs-target-badge')?.classList.toggle('rule-disabled', state.rules?.rackTotals === false);
     document.getElementById('center-scoreboard-card')?.classList.toggle('rule-disabled', state.rules?.teams === false);
     table.setViewerSeatIndex(viewerSeatIndex);
     istaka.setIndicator(state.indicator);
@@ -2029,8 +2027,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Anti-Cheat / Anti-Probe: Only enable Open buttons if player's arranged hand ACTUALLY qualifies to open
     let canActuallyOpenSeri = false;
     let canActuallyOpenPairs = false;
+    const rackCalculationEnabled = currentGameState.rules?.rackTotals !== false;
 
-    if (canAttemptOpen && !cannotOpenSeri && typeof istaka !== 'undefined') {
+    if (canAttemptOpen && !cannotOpenSeri && !rackCalculationEnabled) {
+      canActuallyOpenSeri = true;
+    } else if (canAttemptOpen && !cannotOpenSeri && typeof istaka !== 'undefined') {
       const rackAnalysis = istaka.analyzeRackMelds();
       const requiredId = hasDrawnFromDiscard ? currentGameState.drawnFromDiscard.tileId : null;
       const containsRequired = !requiredId || !isFirstOpen || rackAnalysis.validTileIds.has(requiredId);
@@ -2042,7 +2043,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    if (canAttemptOpen && !cannotOpenPairs && typeof istaka !== 'undefined') {
+    if (canAttemptOpen && !cannotOpenPairs && !rackCalculationEnabled) {
+      canActuallyOpenPairs = true;
+    } else if (canAttemptOpen && !cannotOpenPairs && typeof istaka !== 'undefined') {
       const indicatorBonusTileId = isFirstOpen && viewerPlayer && viewerPlayer.indicatorBonusAvailable ? viewerPlayer.indicatorTileId : null;
       const rackPairs = istaka.analyzeRackPairs(indicatorBonusTileId);
       const requiredId = hasDrawnFromDiscard ? currentGameState.drawnFromDiscard.tileId : null;

@@ -615,8 +615,9 @@ class RoomManager {
         // If no human players left, clean up all bots and reset
         const remainingHumans = room.game.players.filter(p => p && !p.isBot);
         if (remainingHumans.length === 0) {
-          room.game.players = [null, null, null, null];
-          room.hostId = null;
+          this.rooms.delete(roomId);
+          this.broadcastLobbyState();
+          return;
         }
       } else {
         const leavingPlayer = room.game.players[playerIndex];
@@ -661,8 +662,8 @@ class RoomManager {
           const remainingHumans = game.players.filter(p => p && !p.isBot);
           if (remainingHumans.length === 0) {
             this.cancelLobbyCountdown(room);
-            game.players = [null, null, null, null];
-            room.hostId = null;
+            this.rooms.delete(roomId);
+            continue;
           }
         } else {
           const leavingPlayer = game.players[playerIndex];
