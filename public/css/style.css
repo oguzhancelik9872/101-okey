@@ -3372,27 +3372,51 @@ body.plus-theme {
 }
 
 .game-rules-summary {
-  width: calc(100% - 4px);
+  width: calc(100% - 10px);
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
   justify-content: center;
-  gap: 2px;
-  padding: 3px 2px;
+  gap: 4px;
+  padding: 6px 5px;
   border-top: 1px solid rgba(213, 185, 103, .18);
   border-bottom: 1px solid rgba(213, 185, 103, .18);
   box-sizing: border-box;
   flex: 0 0 auto;
 }
 .game-rules-summary span {
-  padding: 1px 3px;
-  border-radius: 4px;
+  min-height: 21px;
+  padding: 4px 7px;
+  border-radius: 7px;
   color: rgba(218, 229, 222, .78);
   background: rgba(255, 255, 255, .045);
-  font-size: 6px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 900;
   line-height: 1.2;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+  letter-spacing: .15px;
+}
+
+@media (pointer: coarse), (max-width: 900px) {
+  .game-rules-summary {
+    width: calc(100% - 4px);
+    gap: 3px;
+    padding: 4px 2px;
+  }
+
+  .game-rules-summary span {
+    min-height: 17px;
+    padding: 3px 2px;
+    border-radius: 5px;
+    font-size: clamp(7px, 1.75dvh, 9px);
+    line-height: 1;
+  }
 }
 
 .btn-pill-action:hover:not(:disabled) {
