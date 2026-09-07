@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { containsProfanity } = require('../utils/contentFilter');
 
 const DB_DIR = path.join(__dirname);
 const DB_FILE = path.join(DB_DIR, 'users.json');
@@ -15,6 +16,9 @@ const ALLOWED_PLAYERS = [
   'Özkan',
   'Yekta'
 ];
+
+const GUEST_NAME_MIN_LENGTH = 2;
+const GUEST_NAME_MAX_LENGTH = 20;
 
 class Database {
   constructor() {
@@ -143,6 +147,62 @@ class Database {
     };
   }
 
+  loginGuestName(name, socketId) {
+    const displayName = String(name || '').trim().replace(/\s+/g, ' ');
+    if (displayName.length < GUEST_NAME_MIN_LENGTH || displayName.length > GUEST_NAME_MAX_LENGTH) {
+      return { success: false, reason: `İsim ${GUEST_NAME_MIN_LENGTH}-${GUEST_NAME_MAX_LENGTH} karakter olmalı.` };
+    }
+    if (!/^[\p{L}\p{N} ._-]+$/u.test(displayName)) {
+      return { success: false, reason: 'İsim yalnızca harf, sayı, boşluk, nokta, tire ve alt çizgi içerebilir.' };
+    }
+    if (containsProfanity(displayName)) {
+      return { success: false, reason: 'Uygunsuz isim.' };
+    }
+
+    const normalizedName = displayName.toLocaleLowerCase('tr-TR');
+    if (ALLOWED_PLAYERS.some(player => player.toLocaleLowerCase('tr-TR') === normalizedName)) {
+      return { success: false, reason: 'Bu isim hazır karakterlere ait.' };
+    }
+
+    const username = `guest_${crypto.createHash('sha256').update(normalizedName).digest('hex').slice(0, 16)}`;
+    let userId = this.usernameIndex.get(username);
+    let user = userId ? this.users.get(userId) : null;
+    if (!user) {
+      userId = `usr_${username}`;
+      user = {
+        id: userId,
+        username,
+        displayName,
+        gender: 'female',
+        avatarIndex: crypto.randomInt(0, 7),
+        isGuest: true,
+        createdAt: Date.now(),
+        lastLogin: Date.now(),
+        stats: { gamesPlayed: 0, wins: 0, totalScore: 0 },
+        currentRoomId: null
+      };
+      this.users.set(userId, user);
+      this.usernameIndex.set(username, userId);
+    } else {
+      user.displayName = displayName;
+      user.gender = 'female';
+      user.lastLogin = Date.now();
+    }
+
+    const existingSocket = this.activeUsers.get(username);
+    if (existingSocket && existingSocket !== socketId) this.releaseSocket(existingSocket);
+    this.releaseSocket(socketId);
+    this.activeUsers.set(username, socketId);
+    this.activeSockets.set(socketId, username);
+    this.save();
+
+    return {
+      success: true,
+      token: this.generateToken(user.id),
+      user: this.sanitizeUser(user)
+    };
+  }
+
   verifyToken(token, socketId = null, fallbackUserId = null) {
     let userId = token ? this.tokens.get(token) : null;
     if (!userId && fallbackUserId) {
@@ -238,6 +298,7 @@ class Database {
       displayName: user.displayName || user.username,
       gender: user.gender || 'male',
       avatarIndex: (user.avatarIndex !== undefined) ? user.avatarIndex : null,
+      isGuest: Boolean(user.isGuest),
       stats: user.stats || { gamesPlayed: 0, wins: 0 },
       currentRoomId: user.currentRoomId || null
     };

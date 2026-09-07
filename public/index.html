@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=171">
+  <link rel="stylesheet" href="css/style.css?v=172">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -21,14 +21,36 @@
 
   <div id="app-container">
     
-    <!-- ================= 101 OKEY AUTH VIEW (NAME SELECTOR) ================= -->
+    <!-- ================= 101 OKEY AUTH VIEW ================= -->
     <div id="auth-view">
       <div class="plus-lobby-wrapper name-picker-wrapper">
         <div class="plus-logo-box" style="margin-bottom: 20px;">
           <h1 class="plus-logo-title" style="font-size: 46px; font-weight: 900; letter-spacing: 3px; margin: 0; color: #f1c40f; text-shadow: 0 4px 15px rgba(0,0,0,0.8);">101 OKEY</h1>
         </div>
 
-        <div class="auth-card name-picker-card">
+        <div class="auth-card guest-login-card">
+          <span class="guest-login-eyebrow">MASAYA HOŞ GELDİN</span>
+          <h2>Oyuncu adını yaz</h2>
+          <p>Sadece bir isim seç, profilin hazır olsun.</p>
+          <form id="guest-login-form" class="guest-login-form" novalidate>
+            <label for="guest-name-input">Oyuncu adı</label>
+            <div class="guest-name-row">
+              <input id="guest-name-input" type="text" minlength="2" maxlength="20" autocomplete="nickname" spellcheck="false" placeholder="İsmini yaz..." aria-describedby="guest-name-error">
+              <button id="btn-guest-login" type="submit">OYUNA GİR</button>
+            </div>
+            <span id="guest-name-error" class="guest-name-error" role="alert" aria-live="polite"></span>
+          </form>
+          <div class="guest-avatar-note"><span>♀</span> Şimdilik rastgele kadın profili atanır.</div>
+        </div>
+      </div>
+
+      <button id="btn-show-ready-characters" class="btn-show-ready-characters" type="button">👥 Hazır Karakterler</button>
+      <div id="ready-characters-panel" class="ready-characters-overlay hidden" aria-hidden="true">
+        <div class="auth-card name-picker-card ready-characters-card" role="dialog" aria-modal="true" aria-labelledby="ready-characters-title">
+          <div class="ready-characters-header">
+            <div><span>ARKADAŞ PROFİLLERİ</span><h2 id="ready-characters-title">Hazır Karakterler</h2></div>
+            <button id="btn-close-ready-characters" type="button" aria-label="Hazır karakterleri kapat">✕</button>
+          </div>
           <div class="name-picker-grid" id="name-picker-grid">
             <div class="name-card available" data-name="Akın">
               <div class="name-card-avatar"><img src="/profiller/akin.png" alt="Akın" class="avatar-img-photo" /></div>
@@ -67,7 +89,7 @@
           <!-- Bottom Action Container: "Oyuna Giriş Yap" Button -->
           <div class="auth-action-box">
             <button id="btn-enter-game" class="btn-enter-game disabled" disabled>
-              <span>🚀 OYUNA GİRİŞ YAP</span>
+              <span>SEÇİLEN KARAKTERLE GİR</span>
             </button>
           </div>
         </div>
@@ -582,8 +604,8 @@
   <script src="js/validator.js?v=114"></script>
   <script src="js/tileAnimations.js?v=115"></script>
   <script src="js/istaka.js?v=124"></script>
-  <script src="js/table.js?v=124"></script>
+  <script src="js/table.js?v=125"></script>
   <script src="js/ui.js?v=125"></script>
-  <script src="js/gameClient.js?v=141"></script>
+  <script src="js/gameClient.js?v=142"></script>
 </body>
 </html>

@@ -1039,6 +1039,153 @@ body.plus-theme {
   box-sizing: border-box;
 }
 
+.guest-login-card {
+  width: min(100%, 520px);
+  padding: 34px 36px 28px;
+  border: 1px solid rgba(241, 196, 15, 0.48);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(14, 43, 27, 0.97), rgba(4, 19, 11, 0.98));
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.guest-login-eyebrow {
+  display: block;
+  color: #d9b943;
+  font: 800 11px/1.2 Montserrat, sans-serif;
+  letter-spacing: 2.2px;
+  margin-bottom: 9px;
+}
+
+.guest-login-card h2 {
+  margin: 0;
+  color: #fff4c2;
+  font: 900 27px/1.2 Montserrat, sans-serif;
+}
+
+.guest-login-card > p {
+  margin: 8px 0 23px;
+  color: rgba(225, 239, 229, 0.68);
+  font: 600 13px/1.5 Montserrat, sans-serif;
+}
+
+.guest-login-form label {
+  display: block;
+  margin: 0 0 7px 2px;
+  color: #bbd5c3;
+  font: 800 11px/1 Montserrat, sans-serif;
+}
+
+.guest-name-row { display: flex; gap: 9px; }
+
+.guest-name-row input {
+  min-width: 0;
+  flex: 1;
+  height: 50px;
+  padding: 0 16px;
+  border: 1.5px solid rgba(241, 196, 15, 0.34);
+  border-radius: 12px;
+  outline: none;
+  box-sizing: border-box;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.34);
+  font: 800 15px Montserrat, sans-serif;
+  transition: border-color .18s, box-shadow .18s;
+}
+
+.guest-name-row input:focus {
+  border-color: #e2be3c;
+  box-shadow: 0 0 0 3px rgba(226, 190, 60, 0.13);
+}
+
+.guest-name-row input.invalid { border-color: #e85b4f; }
+
+.guest-name-row button {
+  min-width: 130px;
+  padding: 0 18px;
+  border: 1px solid #f5d66d;
+  border-radius: 12px;
+  color: #172013;
+  background: linear-gradient(180deg, #f2d36a, #cfa52b);
+  box-shadow: 0 7px 17px rgba(0, 0, 0, .32);
+  font: 900 12px Montserrat, sans-serif;
+  cursor: pointer;
+}
+
+.guest-name-row button:disabled { opacity: .6; cursor: wait; }
+
+.guest-name-error {
+  display: block;
+  min-height: 18px;
+  padding: 6px 2px 0;
+  color: #ff8177;
+  font: 700 11px/1.2 Montserrat, sans-serif;
+}
+
+.guest-avatar-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  color: rgba(218, 232, 221, .58);
+  font: 600 10px Montserrat, sans-serif;
+}
+
+.guest-avatar-note span { color: #e4b4ce; font-size: 17px; }
+
+.btn-show-ready-characters {
+  position: absolute;
+  right: max(22px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 20;
+  padding: 11px 15px;
+  border: 1px solid rgba(241, 196, 15, .38);
+  border-radius: 12px;
+  color: #eadcaa;
+  background: rgba(5, 25, 14, .9);
+  box-shadow: 0 6px 20px rgba(0,0,0,.4);
+  font: 800 11px Montserrat, sans-serif;
+  cursor: pointer;
+}
+
+.ready-characters-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  box-sizing: border-box;
+  background: rgba(0, 10, 5, .78);
+  backdrop-filter: blur(7px);
+}
+
+.ready-characters-card { max-width: 680px; max-height: calc(100dvh - 36px); overflow-y: auto; }
+
+.ready-characters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.ready-characters-header span { color: #b99b35; font: 800 9px Montserrat, sans-serif; letter-spacing: 1.8px; }
+.ready-characters-header h2 { margin: 3px 0 0; color: #fff1ae; font: 900 21px Montserrat, sans-serif; }
+.ready-characters-header button {
+  width: 36px; height: 36px; border: 1px solid rgba(255,255,255,.18); border-radius: 10px;
+  color: #fff; background: rgba(255,255,255,.06); cursor: pointer;
+}
+
+@media (max-width: 650px) {
+  .guest-login-card { padding: 24px 20px 20px; }
+  .guest-name-row { flex-direction: column; }
+  .guest-name-row button { min-height: 44px; }
+  .btn-show-ready-characters { right: 10px; bottom: 8px; }
+}
+
 .name-picker-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

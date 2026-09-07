@@ -65,6 +65,12 @@ function getPlayerAvatarHTML(name, gender = null, avatarIndex = null, isBot = fa
     return `<img src="/botlar/${chosenBotFile}" alt="${name}" class="avatar-img-photo" loading="lazy" onerror="this.onerror=null; this.src='/botlar/1.png';" />`;
   }
 
+  // İsimle giren geçici oyunculara şimdilik kadın avatar havuzundan bir profil verilir.
+  if (gender === 'female' && typeof avatarIndex === 'number') {
+    const chosenProfile = BOT_AVATAR_FILES[Math.abs(avatarIndex) % BOT_AVATAR_FILES.length];
+    return `<img src="/botlar/${chosenProfile}" alt="${name}" class="avatar-img-photo" loading="lazy" onerror="this.style.display='none';" />`;
+  }
+
   return `<div class="avatar-fallback-badge"><span class="bot-glyph">👤</span></div>`;
 }
 
@@ -140,9 +146,7 @@ class TableManager {
         istakaBoardEl.appendChild(rackRemainingEl);
       }
       const remainingPenalty = Number(viewerPlayer.remainingHandPenalty);
-      rackRemainingEl.textContent = viewerPlayer.openType === 'seri'
-        ? formatOkeyScore(remainingPenalty)
-        : String(remainingPenalty);
+      rackRemainingEl.textContent = String(remainingPenalty);
       rackRemainingEl.classList.add('is-penalty');
       rackRemainingEl.classList.remove('is-rack-helper');
       rackRemainingEl.classList.remove('hidden');

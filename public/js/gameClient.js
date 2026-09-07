@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const avatarEl = document.getElementById('lobby-avatar-img');
 
     if (nameEl) nameEl.textContent = currentUser.displayName || currentUser.username;
-    if (tagEl) tagEl.textContent = '@' + currentUser.username;
+    if (tagEl) tagEl.textContent = currentUser.isGuest ? 'Misafir oyuncu' : '@' + currentUser.username;
     if (avatarEl && typeof window.getPlayerAvatarSVG === 'function') {
       avatarEl.innerHTML = window.getPlayerAvatarSVG(currentUser.displayName || currentUser.username, currentUser.gender, currentUser.avatarIndex);
     }
@@ -310,7 +310,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         localStorage.setItem('okey101_user', JSON.stringify(res.user));
         updateLobbyProfileUI();
+        setReadyCharactersOpen(false);
       }
+    });
+  }
+
+  function setReadyCharactersOpen(isOpen) {
+    const panel = document.getElementById('ready-characters-panel');
+    if (!panel) return;
+    panel.classList.toggle('hidden', !isOpen);
+    panel.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+  }
+
+  function setGuestLoginError(message = '') {
+    const errorEl = document.getElementById('guest-name-error');
+    const input = document.getElementById('guest-name-input');
+    if (errorEl) errorEl.textContent = message;
+    if (input) input.classList.toggle('invalid', Boolean(message));
+  }
+
+  function doGuestLogin() {
+    const input = document.getElementById('guest-name-input');
+    const button = document.getElementById('btn-guest-login');
+    const name = String(input?.value || '').trim().replace(/\s+/g, ' ');
+    setGuestLoginError('');
+    if (name.length < 2 || name.length > 20) {
+      setGuestLoginError('İsim 2-20 karakter olmalı.');
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'GİRİLİYOR...';
+    }
+    socket.emit('auth:guestLogin', { name }, (res) => {
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'OYUNA GİR';
+      }
+      if (res && res.success && res.user) {
+        handleLoginSuccess(res.user, res.token, false);
+        ui.showToast(`Hoş geldin, ${res.user.displayName}!`, 'success');
+        return;
+      }
+      const reason = (res && res.reason) || 'Giriş yapılamadı.';
+      setGuestLoginError(reason);
+      ui.showToast(reason, 'warning');
+      input?.focus();
     });
   }
 
@@ -353,6 +399,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       };
     }
+
+    const guestForm = document.getElementById('guest-login-form');
+    if (guestForm) guestForm.onsubmit = (event) => {
+      event.preventDefault();
+      doGuestLogin();
+    };
+    const openReady = document.getElementById('btn-show-ready-characters');
+    if (openReady) openReady.onclick = () => setReadyCharactersOpen(true);
+    const closeReady = document.getElementById('btn-close-ready-characters');
+    if (closeReady) closeReady.onclick = () => setReadyCharactersOpen(false);
+    const readyPanel = document.getElementById('ready-characters-panel');
+    if (readyPanel) readyPanel.onclick = (event) => {
+      if (event.target === readyPanel) setReadyCharactersOpen(false);
+    };
   }
 
   // Initial event binding
@@ -402,8 +462,11 @@ document.addEventListener('DOMContentLoaded', () => {
       authView.style.setProperty('display', 'flex', 'important');
     }
     selectedCharName = null;
+    setReadyCharactersOpen(false);
+    setGuestLoginError('');
     updateNamePickerUI();
     initNamePickerEvents();
+    window.setTimeout(() => document.getElementById('guest-name-input')?.focus(), 50);
   }
 
   function handleLoginSuccess(user, token, isReconnectCheck = false) {
@@ -2153,7 +2216,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const runScore = Number(data?.rackAnalysis?.totalScore || 0);
     const pairCount = Number(data?.rackPairs?.count || 0);
-    const runText = window.formatOkeyScore ? window.formatOkeyScore(runScore) : String(runScore);
+    const runText = String(runScore);
     const isReadyForPairs = pairCount >= Number(currentGameState.minOpenPairs || 5);
     helperEl.textContent = isReadyForPairs ? String(Number(data?.pairRemainingPenalty || 0)) : runText;
     helperEl.classList.toggle('is-rack-helper', !isReadyForPairs);

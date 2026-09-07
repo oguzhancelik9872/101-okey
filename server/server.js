@@ -4,6 +4,7 @@ const path = require('path');
 const cors = require('cors');
 const { Server } = require('socket.io');
 const RoomManager = require('./game/RoomManager');
+const { censorProfanity } = require('./utils/contentFilter');
 
 const app = express();
 const server = http.createServer(app);
@@ -61,6 +62,19 @@ io.on('connection', (socket) => {
       if (callback) callback(res);
     } catch (err) {
       if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
+  socket.on('auth:guestLogin', (data, callback) => {
+    try {
+      const res = db.loginGuestName(data && data.name, socket.id);
+      if (res.success) {
+        socket.userId = res.user.id;
+        socket.emit('lobby:stateUpdate', roomManager.getLobbyState());
+      }
+      if (callback) callback(res);
+    } catch (err) {
+      if (callback) callback({ success: false, reason: 'Giriş yapılamadı.' });
     }
   });
 
@@ -607,7 +621,7 @@ io.on('connection', (socket) => {
     // Server-enforced limit: clients cannot bypass the table chat size cap.
     const rawText = String((data && data.text) || '').trim().slice(0, 80);
     if (!rawText) return;
-    const cleanText = localizeTileNames(rawText);
+    const cleanText = censorProfanity(localizeTileNames(rawText));
     const senderPlayer = room.game.players.find(p => p && p.id === socket.id && !p.isBot);
     if (!senderPlayer) return;
     io.to(targetRoom).emit('chatMessage', {
