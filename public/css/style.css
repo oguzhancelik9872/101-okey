@@ -1412,7 +1412,9 @@ body.plus-theme {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(ellipse at center, var(--felt-green-light) 0%, var(--felt-green-mid) 50%, var(--felt-green-deep) 100%);
+  background:
+    linear-gradient(rgba(3, 22, 13, 0.25), rgba(2, 15, 8, 0.38)),
+    url('../images/table-background-v1.jpg') center / cover no-repeat;
   position: relative;
   overflow: hidden;
 }
@@ -1587,9 +1589,7 @@ body.plus-theme {
   width: 100%;
   box-sizing: border-box;
   overflow: visible;
-  background:
-    linear-gradient(rgba(3, 22, 13, 0.25), rgba(2, 15, 8, 0.38)),
-    url('../images/table-background-v1.jpg') center / cover no-repeat;
+  background: transparent;
 }
 
 .table-felt-mat {
@@ -3098,9 +3098,7 @@ body.plus-theme {
    ========================================================= */
  
 .plus-istaka-section {
-  background:
-    linear-gradient(rgba(3, 22, 13, 0.25), rgba(2, 15, 8, 0.38)),
-    url('../images/table-background-v1.jpg') center / cover no-repeat;
+  background: transparent;
   border-top: 0;
   padding: 6px 16px 10px 16px;
   display: flex;
