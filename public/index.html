@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <link rel="stylesheet" href="css/style.css?v=161">
+  <link rel="stylesheet" href="css/style.css?v=162">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700;800;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
@@ -502,6 +502,22 @@
           </div>
         </div>
 
+        <div class="drawer-section-card shortcut-settings-card">
+          <div class="drawer-setting-info">
+            <span class="drawer-setting-title">⌨️ Klavye Kısayolları</span>
+            <span class="drawer-setting-desc">Değiştirmek için tuşa dokun, ardından yeni klavye tuşuna bas</span>
+          </div>
+          <div class="shortcut-settings-list">
+            <div class="shortcut-setting-row"><span>Taş çek</span><button type="button" class="shortcut-key-button" data-shortcut-action="drawDeck">Boşluk</button></div>
+            <div class="shortcut-setting-row"><span>Yandan taş al</span><button type="button" class="shortcut-key-button" data-shortcut-action="drawDiscard">A</button></div>
+            <div class="shortcut-setting-row"><span>Seri aç</span><button type="button" class="shortcut-key-button" data-shortcut-action="openHand">S</button></div>
+            <div class="shortcut-setting-row"><span>Çift aç</span><button type="button" class="shortcut-key-button" data-shortcut-action="openPairs">C</button></div>
+            <div class="shortcut-setting-row"><span>Ayarları aç</span><button type="button" class="shortcut-key-button" data-shortcut-action="settings">O</button></div>
+            <div class="shortcut-setting-row"><span>Sohbeti aç</span><button type="button" class="shortcut-key-button" data-shortcut-action="chat">Enter</button></div>
+          </div>
+          <button id="btn-reset-shortcuts" type="button" class="btn-reset-shortcuts">Varsayılanlara Dön</button>
+        </div>
+
         <!-- In-Game Exit Table Action (Shows when in table) -->
         <div id="drawer-in-game-actions" class="drawer-section-card hidden">
           <div class="drawer-setting-info">
@@ -576,6 +592,6 @@
   <script src="js/istaka.js?v=121"></script>
   <script src="js/table.js?v=121"></script>
   <script src="js/ui.js?v=124"></script>
-  <script src="js/gameClient.js?v=133"></script>
+  <script src="js/gameClient.js?v=134"></script>
 </body>
 </html>

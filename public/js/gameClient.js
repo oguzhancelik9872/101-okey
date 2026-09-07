@@ -119,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastTickedSecond = null;
   let isUndoingTurn = false;
   let pendingTimeoutAnimationSeat = null;
+  let shortcutCaptureAction = null;
 
   socket.on('timeoutActionSequence', (sequence) => {
     if (!sequence || !Array.isArray(sequence.actions)) return;
@@ -195,6 +196,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cDrawer) cDrawer.classList.remove('open');
     if (sDrawer) sDrawer.classList.remove('open');
     if (dBackdrop) dBackdrop.classList.add('hidden');
+    shortcutCaptureAction = null;
+    document.querySelectorAll('.shortcut-key-button.is-capturing').forEach(button => button.classList.remove('is-capturing'));
   }
 
   function updateLobbyProfileUI() {
@@ -2038,6 +2041,63 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnLobbyRules = document.getElementById('btn-lobby-rules');
   const btnSettingsRules = document.getElementById('btn-settings-rules');
   const btnCloseRules = document.getElementById('btn-close-rules');
+  const btnResetShortcuts = document.getElementById('btn-reset-shortcuts');
+  const shortcutButtons = Array.from(document.querySelectorAll('.shortcut-key-button[data-shortcut-action]'));
+
+  const DEFAULT_GAME_SHORTCUTS = Object.freeze({
+    drawDeck: 'Space',
+    drawDiscard: 'KeyA',
+    openHand: 'KeyS',
+    openPairs: 'KeyC',
+    settings: 'KeyO',
+    chat: 'Enter'
+  });
+  const SHORTCUT_STORAGE_KEY = 'okey101_keyboard_shortcuts';
+
+  function loadGameShortcuts() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SHORTCUT_STORAGE_KEY) || '{}');
+      const merged = { ...DEFAULT_GAME_SHORTCUTS };
+      Object.keys(merged).forEach(action => {
+        if (typeof saved[action] === 'string' && saved[action]) merged[action] = saved[action];
+      });
+      // Repair corrupt or old settings that assign one key to two actions.
+      if (new Set(Object.values(merged)).size !== Object.keys(merged).length) return { ...DEFAULT_GAME_SHORTCUTS };
+      return merged;
+    } catch (error) {
+      return { ...DEFAULT_GAME_SHORTCUTS };
+    }
+  }
+
+  let gameShortcuts = loadGameShortcuts();
+
+  function shortcutLabel(code) {
+    const labels = {
+      Space: 'Boşluk', Enter: 'Enter', Escape: 'Esc', Backspace: 'Sil',
+      ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→'
+    };
+    if (labels[code]) return labels[code];
+    if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+    if (/^Digit[0-9]$/.test(code)) return code.slice(5);
+    if (/^Numpad[0-9]$/.test(code)) return `Num ${code.slice(6)}`;
+    return code.replace(/^Numpad/, 'Num ');
+  }
+
+  function renderShortcutSettings() {
+    shortcutButtons.forEach(button => {
+      const action = button.dataset.shortcutAction;
+      const isCapturing = shortcutCaptureAction === action;
+      button.classList.toggle('is-capturing', isCapturing);
+      button.textContent = isCapturing ? 'Tuşa bas…' : shortcutLabel(gameShortcuts[action]);
+    });
+  }
+
+  function saveGameShortcuts() {
+    try {
+      localStorage.setItem(SHORTCUT_STORAGE_KEY, JSON.stringify(gameShortcuts));
+    } catch (error) {}
+    renderShortcutSettings();
+  }
 
   function openDrawer(drawer) {
     if (!drawer) return;
@@ -2056,7 +2116,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (chatLogs) chatLogs.scrollTop = chatLogs.scrollHeight;
     } else if (drawer === settingsDrawer) {
       syncSettingsDrawer();
+      renderShortcutSettings();
     }
+  }
+
+  function toggleDrawer(drawer) {
+    if (!drawer) return;
+    if (drawer.classList.contains('open')) closeAllDrawers();
+    else openDrawer(drawer);
   }
 
   if (btnLobbyChat) btnLobbyChat.addEventListener('click', () => openDrawer(chatDrawer));
@@ -2084,11 +2151,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeAllDrawers);
 
+  shortcutButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      shortcutCaptureAction = button.dataset.shortcutAction;
+      renderShortcutSettings();
+    });
+  });
+
+  if (btnResetShortcuts) {
+    btnResetShortcuts.addEventListener('click', () => {
+      shortcutCaptureAction = null;
+      gameShortcuts = { ...DEFAULT_GAME_SHORTCUTS };
+      saveGameShortcuts();
+      ui.showToast('Klavye kısayolları varsayılanlara döndürüldü.', 'success', 2200);
+    });
+  }
+
   document.addEventListener('keydown', (e) => {
+    if (shortcutCaptureAction) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'Escape') {
+        shortcutCaptureAction = null;
+        renderShortcutSettings();
+        return;
+      }
+      if (e.ctrlKey || e.altKey || e.metaKey || ['Tab', 'CapsLock', 'ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight'].includes(e.code)) {
+        ui.showToast('Tek bir normal tuş seçmelisiniz.', 'error', 2200);
+        return;
+      }
+      const duplicateAction = Object.keys(gameShortcuts).find(action => action !== shortcutCaptureAction && gameShortcuts[action] === e.code);
+      if (duplicateAction) {
+        ui.showToast(`${shortcutLabel(e.code)} başka bir işlemde kullanılıyor.`, 'error', 2400);
+        return;
+      }
+      gameShortcuts[shortcutCaptureAction] = e.code;
+      shortcutCaptureAction = null;
+      saveGameShortcuts();
+      ui.showToast('Kısayol kaydedildi.', 'success', 1800);
+      return;
+    }
+
     if (e.key === 'Escape') {
       closeAllDrawers();
       closeRules();
+      return;
     }
+
+    if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    const target = e.target;
+    const isTyping = target && ((typeof target.matches === 'function' && target.matches('input, textarea, select, button, a')) || target.isContentEditable);
+    if (isTyping) return;
+
+    const action = Object.keys(gameShortcuts).find(name => gameShortcuts[name] === e.code);
+    if (!action) return;
+
+    if (action === 'settings') {
+      e.preventDefault();
+      toggleDrawer(settingsDrawer);
+      return;
+    }
+    if (action === 'chat') {
+      e.preventDefault();
+      toggleDrawer(chatDrawer);
+      return;
+    }
+
+    const isGameVisible = gameView && !gameView.classList.contains('hidden');
+    if (!isGameVisible || !currentGameState || currentGameState.state !== 'PLAYING') return;
+    if ((chatDrawer && chatDrawer.classList.contains('open')) || (settingsDrawer && settingsDrawer.classList.contains('open')) ||
+        (rulesModal && !rulesModal.classList.contains('hidden'))) return;
+
+    e.preventDefault();
+    if (action === 'drawDeck') handleDrawDeck();
+    else if (action === 'drawDiscard') handleDrawDiscard();
+    else if (action === 'openHand' && btnOpenHand && !btnOpenHand.disabled) btnOpenHand.click();
+    else if (action === 'openPairs' && btnOpenPairs && !btnOpenPairs.disabled) btnOpenPairs.click();
   });
 
   // --- Live Chat Message Handling (In-Game Only) ---
