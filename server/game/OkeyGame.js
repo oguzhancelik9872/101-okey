@@ -887,6 +887,50 @@ class OkeyGame {
     };
   }
 
+  /** Automatically processes every currently playable tile while preserving
+   * the mandatory final discard. Each move still passes through processTile,
+   * so Okey replacement and side-draw rules stay identical to manual play. */
+  autoProcessTiles(playerIndex) {
+    if (this.state !== GAME_STATES.PLAYING) return { success: false, reason: 'Oyun devam etmiyor.' };
+    if (this.currentTurn !== playerIndex) return { success: false, reason: 'Sıra sizde değil.' };
+    if (this.turnState !== 'DISCARD') return { success: false, reason: 'Önce taş çekmelisiniz.' };
+    const player = this.players[playerIndex];
+    if (!player || !player.opened) return { success: false, reason: 'Otomatik işlemek için önce elinizi açmalısınız.' };
+
+    const processed = [];
+    const alreadyProcessed = new Set();
+    let moved = true;
+    let safety = 0;
+    while (moved && safety++ < 32) {
+      moved = false;
+      const requiredTileId = this.drawnFromDiscard?.playerIndex === playerIndex ? this.drawnFromDiscard.tile.id : null;
+      const candidates = [...player.hand]
+        .filter(tile => !alreadyProcessed.has(tile.id))
+        .sort((a, b) => {
+          if (a.id === requiredTileId) return -1;
+          if (b.id === requiredTileId) return 1;
+          return b.getValue(this.indicator) - a.getValue(this.indicator);
+        });
+
+      for (const tile of candidates) {
+        for (const meld of this.tableMelds) {
+          if (!Validator.canProcessTile(tile, meld, this.indicator).canProcess) continue;
+          const result = this.processTile(playerIndex, tile.id, meld.id);
+          alreadyProcessed.add(tile.id);
+          if (result.success) {
+            processed.push({ tileId: tile.id, meldId: meld.id, okeyStolen: Boolean(result.okeyStolen) });
+            moved = true;
+          }
+          break;
+        }
+        if (moved) break;
+      }
+    }
+
+    if (processed.length === 0) return { success: false, reason: 'Elinizde masaya işlenebilecek taş bulunamadı.' };
+    return { success: true, processedCount: processed.length, processed, remainingTilesCount: player.hand.length };
+  }
+
   /**
    * Discard a tile to end turn
    */

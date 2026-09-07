@@ -1073,6 +1073,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-sort-runs')?.classList.toggle('rule-disabled', !assistanceEnabled);
     document.getElementById('btn-sort-pairs')?.classList.toggle('rule-disabled', !assistanceEnabled);
     document.getElementById('center-scoreboard-card')?.classList.toggle('rule-disabled', state.rules?.teams === false);
+    const gameRulesSummary = document.getElementById('game-rules-summary');
+    if (gameRulesSummary) gameRulesSummary.innerHTML = lobbyRuleLabels(state.rules).map(label => `<span>${label}</span>`).join('');
+    document.getElementById('btn-auto-process')?.classList.toggle('rule-disabled', !assistanceEnabled);
     table.setViewerSeatIndex(viewerSeatIndex);
     istaka.setIndicator(state.indicator);
     istaka.setPlayableHintsEnabled(state.rules?.showPlayableTiles !== false);
@@ -1538,6 +1541,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSortPairs = document.getElementById('btn-sort-pairs');
   const btnOpenHand = document.getElementById('btn-open-hand');
   const btnOpenPairs = document.getElementById('btn-open-pairs');
+  const btnAutoProcess = document.getElementById('btn-auto-process');
   const btnDiscard = document.getElementById('btn-discard-tile');
 
   // Return Discard Tile Button (Taşı Geri Bırak)
@@ -1553,6 +1557,22 @@ document.addEventListener('DOMContentLoaded', () => {
           window.soundEngine.playTilePlace();
         } else {
           ui.showToast(res.reason, 'error');
+        }
+      });
+    });
+  }
+
+  if (btnAutoProcess) {
+    btnAutoProcess.addEventListener('click', () => {
+      if (!currentGameState || guardAnimationOverlap() || btnAutoProcess.disabled) return;
+      lockGameInteraction(850);
+      socket.emit('autoProcessTiles', { roomId }, (res) => {
+        if (res?.success) {
+          istaka.clearSelection();
+          window.soundEngine.playTilePlace();
+          ui.showToast(`${res.processedCount} taş otomatik işlendi.`, 'success', 2200);
+        } else {
+          ui.showToast(res?.reason || 'Taşlar işlenemedi.', 'error');
         }
       });
     });
@@ -2078,6 +2098,13 @@ document.addEventListener('DOMContentLoaded', () => {
         : (canActuallyOpenPairs
             ? 'Dizdiğiniz çiftleri masaya açın'
             : (canAttemptOpen ? `Çift açmak için ıstakanıza en az ${minOpenPairs} çift dizmelisiniz` : 'Taş çektikten sonra çift açabilirsiniz'));
+    }
+    if (btnAutoProcess) {
+      const hasPlayableTile = Boolean(viewerPlayer?.opened && (viewerPlayer.hand || []).some(tile =>
+        window.ClientValidator?.isPlayableToTable(tile, currentGameState.tableMelds || [], currentGameState.indicator)
+      ));
+      btnAutoProcess.disabled = Boolean(!isPlayingGame || !canAttemptOpen || currentGameState.rules?.assistance === false || !hasPlayableTile);
+      btnAutoProcess.title = hasPlayableTile ? 'Uygun taşları masadaki perlere otomatik işle' : 'Masaya işlenebilecek taş bulunmuyor';
     }
 
     // Show "Taşı Geri Bırak" only if viewer has drawn from discard and hasn't opened/discarded yet

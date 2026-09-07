@@ -505,6 +505,22 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('autoProcessTiles', (data, callback) => {
+    try {
+      const roomId = data.roomId || socket.roomId;
+      const room = roomManager.rooms.get(roomId);
+      if (!room) return callback && callback({ success: false, reason: 'Oda bulunamadı.' });
+      const playerIdx = room.game.players.findIndex(p => p && p.id === socket.id);
+      if (playerIdx === -1) return callback && callback({ success: false, reason: 'Oyuncu bulunamadı.' });
+
+      const result = room.game.autoProcessTiles(playerIdx);
+      if (callback) callback(result);
+      if (result.success) roomManager.broadcastGameState(roomId);
+    } catch (err) {
+      if (callback) callback({ success: false, reason: err.message });
+    }
+  });
+
   // Undo Turn Actions (Vazgeç)
   socket.on('undoTurn', (data, callback) => {
     try {

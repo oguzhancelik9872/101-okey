@@ -3217,6 +3217,37 @@ body.plus-theme {
   color: #fff;
 }
 
+.btn-pill-process {
+  background: linear-gradient(180deg, #377a68 0%, #285d50 60%, #1a4037 100%);
+  color: #eef8f3;
+  border-color: rgba(126, 211, 177, .72);
+  box-shadow: 0 3px 10px rgba(26, 92, 72, .42);
+}
+
+.game-rules-summary {
+  width: calc(100% - 4px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 3px 2px;
+  border-top: 1px solid rgba(213, 185, 103, .18);
+  border-bottom: 1px solid rgba(213, 185, 103, .18);
+  box-sizing: border-box;
+  flex: 0 0 auto;
+}
+.game-rules-summary span {
+  padding: 1px 3px;
+  border-radius: 4px;
+  color: rgba(218, 229, 222, .78);
+  background: rgba(255, 255, 255, .045);
+  font-size: 6px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .btn-pill-action:hover:not(:disabled) {
   transform: translateY(-2px);
   filter: brightness(1.1);
@@ -3729,15 +3760,23 @@ body.plus-theme {
   box-shadow: inset -1px 1px 0 rgba(69, 190, 112, .28), 0 0 5px rgba(54, 184, 101, .12);
 }
 .istaka-slot .okey-tile.is-playable-hint::after {
-  content: '';
+  content: '+';
   position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 9px;
-  height: 9px;
-  border-top: 2px solid rgba(47, 176, 94, .78);
-  border-right: 2px solid rgba(47, 176, 94, .78);
-  border-radius: 0 3px 0 0;
+  top: 2px;
+  left: 2px;
+  right: auto;
+  width: 13px;
+  height: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(47, 176, 94, .62);
+  border-radius: 50%;
+  background: rgba(19, 92, 48, .16);
+  color: rgba(35, 161, 80, .9);
+  font-size: 12px;
+  font-weight: 1000;
+  line-height: 1;
   filter: drop-shadow(0 0 2px rgba(50, 210, 109, .28));
   pointer-events: none;
   z-index: 4;
