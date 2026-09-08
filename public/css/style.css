@@ -3451,6 +3451,20 @@ body.plus-theme {
   }
 }
 
+/* Rule rows contain only the selected rule; no redundant label column. */
+.game-rule-row,
+#lobby-view .lobby-rule-row {
+  grid-template-columns:1fr;
+}
+
+.game-rule-value,
+#lobby-view .lobby-detail-rules .lobby-rule-value {
+  grid-column:1 / -1;
+  width:100%;
+  box-sizing:border-box;
+  text-align:center;
+}
+
 .btn-pill-action:hover:not(:disabled) {
   transform: translateY(-2px);
   filter: brightness(1.1);
@@ -5534,6 +5548,7 @@ body.plus-theme {
 
 .game-rule-row,
 #lobby-view .lobby-rule-row {
+  grid-template-columns:1fr;
   border:0;
   border-radius:3px;
   background:rgba(255, 255, 255, .05);
@@ -5561,6 +5576,10 @@ body.plus-theme {
 
 .game-rule-value,
 #lobby-view .lobby-detail-rules .lobby-rule-value {
+  grid-column:1 / -1;
+  width:100%;
+  box-sizing:border-box;
+  text-align:center;
   margin:0;
   padding:2px 4px;
   border:0 !important;

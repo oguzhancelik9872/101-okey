@@ -810,22 +810,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function lobbyRulesHtml(rules) {
-    const labels = lobbyRuleLabels(rules);
-    const rowTitles = ['Oyun', 'Katlama', 'Yardım'];
-    return labels.map((rule, index) => `
+    return lobbyRuleLabels(rules).map(rule => `
       <div class="lobby-rule-row">
-        <span class="lobby-rule-label">${rowTitles[index]}</span>
         <strong class="lobby-rule-value ${rule.tone}">${rule.label}</strong>
       </div>
     `).join('');
   }
 
   function gameRulesTableHtml(rules = {}) {
-    const labels = lobbyRuleLabels(rules);
-    const rowTitles = ['Oyun', 'Katlama', 'Yardım'];
-    return labels.map((rule, index) => `
+    return lobbyRuleLabels(rules).map(rule => `
       <div class="game-rule-row">
-        <span class="game-rule-label">${rowTitles[index]}</span>
         <strong class="game-rule-value ${rule.tone}">${rule.label}</strong>
       </div>
     `).join('');
