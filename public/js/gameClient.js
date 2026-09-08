@@ -2189,7 +2189,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const runScore = Number(data?.rackAnalysis?.totalScore || 0);
     const pairCount = Number(data?.rackPairs?.count || 0);
-    const runText = String(runScore);
+    // Açılmadan önce bu alan açılış toplamını 101 Okey yazımıyla gösterir
+    // (101 => 33/2). Açıldıktan sonraki kalan ceza ise table.js tarafında
+    // düz sayı olarak kalır (5 => 5, 10 => 10).
+    const runText = window.formatOkeyScore ? window.formatOkeyScore(runScore) : String(runScore);
     const isReadyForPairs = pairCount >= Number(currentGameState.minOpenPairs || 5);
     helperEl.textContent = isReadyForPairs ? String(Number(data?.pairRemainingPenalty || 0)) : runText;
     helperEl.classList.toggle('is-rack-helper', !isReadyForPairs);
