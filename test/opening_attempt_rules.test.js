@@ -63,6 +63,22 @@ test('geçici seri açılışı süre bitince geri toplanır ve +101 ceza uygula
   assert.ok(timeoutResult.actions.some(action => action.type === 'discard'));
 });
 
+test('geçici seri açılışı geri toplandıktan sonra oyuncu +101 ile yana taş atabilir', () => {
+  const game = createGame('false-run-undo-discard');
+  const run = [new Tile('r1', 'red', 1), new Tile('r2', 'red', 2), new Tile('r3', 'red', 3)];
+  game.players[0].hand = [...run, new Tile('extra', 'black', 13)];
+  game._saveTurnSnapshot(0);
+
+  assert.equal(game.openHand(0, [run.map(tile => tile.id)]).provisional, true);
+  assert.equal(game.discardTile(0, 'extra').success, false);
+  assert.equal(game.undoTurn(0).success, true);
+
+  const discardResult = game.discardTile(0, 'extra');
+  assert.equal(discardResult.success, true);
+  assert.equal(game.players[0].penaltyPoints, 101);
+  assert.equal(game.currentTurn, 1);
+});
+
 test('baraj altındaki çift denemesi tur bitene kadar bekler ve açmadan atılırsa +101 verir', () => {
   const game = createGame('false-pairs');
   const pair = [new Tile('b7a', 'blue', 7), new Tile('b7b', 'blue', 7)];

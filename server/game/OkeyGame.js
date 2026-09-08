@@ -483,6 +483,9 @@ class OkeyGame {
     snap.modified = false;
     if (undoesFirstOpening) {
       player.openingAttemptedThisTurn = true;
+      // Geçici perler ıstakaya döndü; oyuncu artık ister doğru açılışı
+      // tamamlayabilir, ister +101 hatalı açma cezasını kabul edip taş atabilir.
+      player.openingNeedsCorrection = false;
     }
     this.addLog(`↩️ ${player.name} yaptığı açma/işleme hamlelerinden vazgeçti ve elini geri aldı.`);
     return { success: true, openingMustBeCompleted: undoesFirstOpening };
