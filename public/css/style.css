@@ -1741,10 +1741,11 @@ body.plus-theme {
 
 .table-felt-mat {
   position: absolute;
-  top: 78px;
-  bottom: 78px;
+  top: 50%;
+  bottom: auto;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
+  height: calc(100% - 156px);
   width: fit-content;
   max-width: 95%;
   margin: 0 auto;
@@ -1759,8 +1760,8 @@ body.plus-theme {
   justify-content: center;
   padding: 4px 10px;
   box-sizing: border-box;
-  will-change: top, bottom, border-radius;
-  transition: top .52s cubic-bezier(.22,1,.36,1), bottom .52s cubic-bezier(.22,1,.36,1), border-radius .46s cubic-bezier(.22,1,.36,1), opacity .22s ease;
+  will-change: height, border-radius;
+  transition: height .52s cubic-bezier(.22,1,.36,1), border-radius .46s cubic-bezier(.22,1,.36,1), opacity .22s ease;
 }
 
 .felt-watermark {
@@ -1967,11 +1968,12 @@ body.plus-theme {
 }
 
 .my-turn-focus .table-felt-mat {
-  top: 14px !important;
-  bottom: 24px !important;
+  top: 50% !important;
+  bottom: auto !important;
   left: 50% !important;
   right: auto !important;
-  transform: translateX(-50%) !important;
+  transform: translate(-50%, -50%) !important;
+  height: calc(100% - 38px) !important;
   width: fit-content !important;
   max-width: 95% !important;
   border-radius: 36px !important;
@@ -3379,47 +3381,71 @@ body.plus-theme {
 
 .game-rules-summary {
   width: calc(100% - 10px);
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  justify-content: center;
-  gap: 4px;
-  padding: 6px 5px;
-  border-top: 1px solid rgba(213, 185, 103, .18);
-  border-bottom: 1px solid rgba(213, 185, 103, .18);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 0;
+  border: 1px solid rgba(213, 185, 103, .3);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(1, 13, 7, .62);
   box-sizing: border-box;
   flex: 0 0 auto;
 }
-.game-rules-summary span {
-  min-height: 21px;
-  padding: 4px 7px;
-  border-radius: 7px;
-  color: rgba(218, 229, 222, .78);
-  background: rgba(255, 255, 255, .045);
-  font-size: 10px;
-  font-weight: 900;
-  line-height: 1.2;
-  white-space: nowrap;
+
+.game-rule-row {
+  display: grid;
+  grid-template-columns: minmax(42px, .85fr) minmax(58px, 1.15fr);
+  min-height: 25px;
+}
+
+.game-rule-row + .game-rule-row {
+  border-top: 1px solid rgba(213, 185, 103, .2);
+}
+
+.game-rule-label,
+.game-rule-value {
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   box-sizing: border-box;
-  letter-spacing: .15px;
+  white-space: nowrap;
+  font-family: Montserrat, sans-serif;
+}
+
+.game-rule-label {
+  padding: 4px 5px;
+  color: rgba(202, 218, 208, .76);
+  background: rgba(255, 255, 255, .035);
+  border-right: 1px solid rgba(213, 185, 103, .18);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.game-rule-value {
+  padding: 4px 5px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 @media (pointer: coarse), (max-width: 900px) {
   .game-rules-summary {
     width: calc(100% - 4px);
-    gap: 3px;
-    padding: 4px 2px;
+    padding: 0;
   }
 
-  .game-rules-summary span {
-    min-height: 17px;
-    padding: 3px 2px;
-    border-radius: 5px;
+  .game-rule-row {
+    grid-template-columns: minmax(27px, .78fr) minmax(37px, 1.22fr);
+    min-height: 18px;
+  }
+
+  .game-rule-label,
+  .game-rule-value {
+    padding: 2px 1px;
     font-size: clamp(7px, 1.75dvh, 9px);
     line-height: 1;
   }
@@ -5018,6 +5044,43 @@ body.plus-theme {
   .btn-lobby-fill-bots { padding: 5px 9px; font-size: 8px; margin-top: 1px; }
 }
 
+/* Lobby catalogue: navigation stays in its own top layer while the physical
+   table is anchored to the exact centre of the available stage. */
+#lobby-view .lobby-center-stage {
+  padding: 62px 20px;
+}
+
+#lobby-view .lobby-table-detail {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  justify-content: flex-start;
+}
+
+#lobby-view .lobby-table-detail .lobby-table-wrapper {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: 0 !important;
+  transform: translate(-50%, -50%);
+}
+
+@media (max-width: 900px) {
+  #lobby-view .lobby-center-stage {
+    padding: 42px 72px;
+  }
+}
+
+@media (pointer: coarse) and (orientation: landscape), (max-height: 540px) and (orientation: landscape) {
+  #lobby-view .lobby-center-stage {
+    padding: 38px 72px;
+  }
+
+  #lobby-view .lobby-table-detail .lobby-table-wrapper {
+    margin: 0 !important;
+  }
+}
+
 /* Compact, centered lobby actions */
 #lobby-view .lobby-left-panel {
   position: absolute;
@@ -5294,18 +5357,18 @@ body.plus-theme {
 #lobby-view .lobby-right-panel { margin-left:auto; }
 #lobby-view .lobby-center-title { left:50%; top:50%; transform:translate(-50%,-50%); }
 #lobby-view .lobby-left-panel { left:50%; top:calc(100% + 12px); transform:translateX(-50%); }
-#lobby-view .lobby-center-stage { padding-top:62px; }
+#lobby-view .lobby-center-stage { padding:62px 20px; }
 
 @media (max-width: 900px) {
   #lobby-view .lobby-center-title { left:50%; }
   #lobby-view .lobby-left-panel { top:calc(100% + 7px); }
-  #lobby-view .lobby-center-stage { padding-top:42px; }
+  #lobby-view .lobby-center-stage { padding:42px 72px; }
   .table-rule-choice { padding:7px 9px; }
   .rule-segment span { min-width:68px; padding:5px 7px; font-size:9px; }
 }
 
 @media (pointer: coarse) and (orientation: landscape), (max-height: 540px) and (orientation: landscape) {
-  #lobby-view .lobby-center-stage { padding-top: 38px; padding-bottom: 3px; }
+  #lobby-view .lobby-center-stage { padding:38px 72px; }
   #lobby-view .lobby-catalog-nav { gap: 10px; margin-bottom: 2px; }
   #lobby-view .lobby-catalog-arrow { width: 30px; height: 30px; font-size: 23px; }
   #lobby-view .lobby-catalog-meta span { font-size: 9px; }
@@ -5313,7 +5376,7 @@ body.plus-theme {
   #lobby-view .lobby-catalog-rules { gap: 3px; min-height: 18px; }
   #lobby-view .lobby-catalog-rules span { padding: 2px 4px; font-size: 7px; }
   #lobby-view .lobby-table-detail .lobby-table-wrapper {
-    margin-top: 27px;
+    margin:0 !important;
     height: calc(100dvh - 164px);
     max-height: 248px;
   }

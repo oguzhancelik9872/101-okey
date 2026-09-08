@@ -810,6 +810,17 @@ document.addEventListener('DOMContentLoaded', () => {
     return lobbyRuleLabels(rules).map(rule => `<span class="${rule.tone}">${rule.label}</span>`).join('');
   }
 
+  function gameRulesTableHtml(rules = {}) {
+    const labels = lobbyRuleLabels(rules);
+    const rowTitles = ['Oyun', 'Katlama', 'Yardım'];
+    return labels.map((rule, index) => `
+      <div class="game-rule-row">
+        <span class="game-rule-label">${rowTitles[index]}</span>
+        <strong class="game-rule-value ${rule.tone}">${rule.label}</strong>
+      </div>
+    `).join('');
+  }
+
   function openLobbyTable(tableId) {
     const tableData = latestLobbyTables.find(table => table.id === tableId);
     if (!tableData) return;
@@ -1142,7 +1153,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-sort-pairs')?.classList.remove('rule-disabled');
     document.getElementById('center-scoreboard-card')?.classList.toggle('rule-disabled', state.rules?.teams === false);
     const gameRulesSummary = document.getElementById('game-rules-summary');
-    if (gameRulesSummary) gameRulesSummary.innerHTML = lobbyRulesHtml(state.rules);
+    if (gameRulesSummary) gameRulesSummary.innerHTML = gameRulesTableHtml(state.rules);
     document.getElementById('btn-auto-process')?.classList.toggle('rule-disabled', !assistanceEnabled);
     table.setViewerSeatIndex(viewerSeatIndex);
     istaka.setIndicator(state.indicator);
