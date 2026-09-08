@@ -2252,6 +2252,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const shortcutButtons = Array.from(document.querySelectorAll('.shortcut-key-button[data-shortcut-action]'));
 
   const DEFAULT_GAME_SHORTCUTS = Object.freeze({
+    drawDeck: 'KeyW',
+    drawDiscard: 'KeyA',
+    openHand: 'KeyS',
+    openPairs: 'KeyD',
+    sortRuns: 'KeyQ',
+    sortPairs: 'KeyE',
+    settings: 'KeyR',
+    chat: 'KeyF'
+  });
+  const LEGACY_DEFAULT_GAME_SHORTCUTS = Object.freeze({
     drawDeck: 'Space',
     drawDiscard: 'KeyA',
     openHand: 'KeyS',
@@ -2264,12 +2274,31 @@ document.addEventListener('DOMContentLoaded', () => {
   function loadGameShortcuts() {
     try {
       const saved = JSON.parse(localStorage.getItem(SHORTCUT_STORAGE_KEY) || '{}');
-      const merged = { ...DEFAULT_GAME_SHORTCUTS };
-      Object.keys(merged).forEach(action => {
-        if (typeof saved[action] === 'string' && saved[action]) merged[action] = saved[action];
+      const savedActions = Object.keys(saved);
+      const isUntouchedLegacyDefault = savedActions.length === Object.keys(LEGACY_DEFAULT_GAME_SHORTCUTS).length &&
+        Object.entries(LEGACY_DEFAULT_GAME_SHORTCUTS).every(([action, code]) => saved[action] === code);
+      if (isUntouchedLegacyDefault) return { ...DEFAULT_GAME_SHORTCUTS };
+
+      const merged = {};
+      const usedCodes = new Set();
+      const actions = Object.keys(DEFAULT_GAME_SHORTCUTS);
+      // Keep every non-conflicting key the player explicitly customized.
+      actions.forEach(action => {
+        const savedCode = saved[action];
+        if (typeof savedCode === 'string' && savedCode && !usedCodes.has(savedCode)) {
+          merged[action] = savedCode;
+          usedCodes.add(savedCode);
+        }
       });
-      // Repair corrupt or old settings that assign one key to two actions.
-      if (new Set(Object.values(merged)).size !== Object.keys(merged).length) return { ...DEFAULT_GAME_SHORTCUTS };
+      // Add new actions without stealing a customized key from an old profile.
+      const fallbackCodes = ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'Space', 'Enter', 'KeyG', 'KeyT'];
+      actions.forEach(action => {
+        if (merged[action]) return;
+        const candidates = [DEFAULT_GAME_SHORTCUTS[action], ...fallbackCodes];
+        const availableCode = candidates.find(code => !usedCodes.has(code));
+        merged[action] = availableCode || DEFAULT_GAME_SHORTCUTS[action];
+        usedCodes.add(merged[action]);
+      });
       return merged;
     } catch (error) {
       return { ...DEFAULT_GAME_SHORTCUTS };
@@ -2420,6 +2449,8 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (action === 'drawDiscard') handleDrawDiscard();
     else if (action === 'openHand' && btnOpenHand && !btnOpenHand.disabled) btnOpenHand.click();
     else if (action === 'openPairs' && btnOpenPairs && !btnOpenPairs.disabled) btnOpenPairs.click();
+    else if (action === 'sortRuns' && btnSortRuns && !btnSortRuns.disabled) btnSortRuns.click();
+    else if (action === 'sortPairs' && btnSortPairs && !btnSortPairs.disabled) btnSortPairs.click();
   });
 
   // --- Live Chat Message Handling (In-Game Only) ---
