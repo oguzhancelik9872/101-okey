@@ -2,7 +2,7 @@ const Deck = require('./Deck');
 const Tile = require('./Tile');
 const Validator = require('./Validator');
 const BotAI = require('./BotAI');
-const { GAME_STATES, GAME_MODES, PENALTIES } = require('./Constants');
+const { GAME_STATES, GAME_MODES, PENALTIES, TURN_DURATION_MS } = require('./Constants');
 
 class OkeyGame {
   constructor(id, options = {}) {
@@ -235,7 +235,7 @@ class OkeyGame {
     // First player starts directly in DISCARD state because they hold 22 tiles
     this.turnState = 'DISCARD';
     this.turnStartTime = Date.now();
-    this.turnDuration = 30000;
+    this.turnDuration = TURN_DURATION_MS;
     this._saveTurnSnapshot(this.firstPlayerIndex);
     this.addLog(`El ${this.currentRound} başladı! Gösterge: ${this.indicator.getTurkishName(this.indicator)}. Başlayan: ${this.players[this.firstPlayerIndex].name}`);
   }
@@ -737,6 +737,9 @@ class OkeyGame {
 
     const player = this.players[playerIndex];
     const firstTime = !player.opened;
+    if (firstTime && player.openingAttemptedThisTurn && this.tableMelds.some(m => m.playerIndex === playerIndex && m.provisional)) {
+      return { success: false, reason: 'Önce geçici açtığınız çiftleri Geri Topla ile ıstakaya alın.' };
+    }
 
     // Seri açan oyuncu, masada çift açan başka bir oyuncu yoksa çift açamaz
     if (player.opened && player.openType === 'seri') {
@@ -787,22 +790,43 @@ class OkeyGame {
       }
       indicatorPairIndex = i;
     }
-    if (firstTime && pairs.length > 0) player.openingAttemptedThisTurn = true;
-    if (pairs.length < minRequired) {
-      if (firstTime && pairs.length > 0) {
-        return {
-          success: false,
-          openingAttemptPending: true,
-          reason: `${pairs.length} çiftiniz var; açma barajı ${minRequired}. Tur bitmeden açılışı tamamlamazsanız +${PENALTIES.FALSE_OPEN} ceza alırsınız.`
-        };
-      }
-      return { success: false, reason: `En az ${minRequired} çift açmalısınız.` };
-    }
-
     // Pair opening is not a finishing action; one tile must remain for the
     // player's explicit sideways discard.
     if (usedTileIds.size >= player.hand.length) {
       return { success: false, reason: 'Bitmek için elinizde son bir taş bırakıp onu yana atmalısınız.' };
+    }
+
+    if (!this.turnSnapshot || this.turnSnapshot.playerIndex !== playerIndex) {
+      this._saveTurnSnapshot(playerIndex);
+    }
+    if (firstTime && pairs.length > 0) player.openingAttemptedThisTurn = true;
+    if (pairs.length < minRequired) {
+      if (firstTime && pairs.length > 0) {
+        player.openingNeedsCorrection = true;
+        player.hand = player.hand.filter(t => !usedTileIds.has(t.id));
+        for (let pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
+          const pair = pairs[pairIndex];
+          this.tableMelds.push({
+            id: `meld_${this.tableMeldCounter++}`,
+            playerIndex,
+            type: 'pairs',
+            tiles: pair,
+            score: pair.reduce((sum, tile) => sum + tile.getValue(this.indicator), 0),
+            isIndicatorPair: pairIndex === indicatorPairIndex,
+            provisional: true
+          });
+        }
+        if (this.turnSnapshot) this.turnSnapshot.modified = true;
+        return {
+          success: true,
+          provisional: true,
+          openingAttemptPending: true,
+          count: pairs.length,
+          remainingTilesCount: player.hand.length,
+          reason: `${pairs.length} çiftiniz var; açma barajı ${minRequired}. Geri Topla ile düzeltip tur bitmeden açılışı tamamlayın.`
+        };
+      }
+      return { success: false, reason: `En az ${minRequired} çift açmalısınız.` };
     }
 
     player.hand = player.hand.filter(t => !usedTileIds.has(t.id));
@@ -837,6 +861,7 @@ class OkeyGame {
       player.opened = true;
       player.openType = 'pairs';
       player.openingAttemptedThisTurn = false;
+      player.openingNeedsCorrection = false;
 
       if (this.rules.folded && pairs.length >= (this.minOpenPairs || 5)) {
         this.minOpenPairs = pairs.length + 1;
@@ -1108,7 +1133,7 @@ class OkeyGame {
     this.turnState = 'DRAW';
     this.drawnFromDiscard = null;
     this.turnStartTime = Date.now();
-    this.turnDuration = 30000;
+    this.turnDuration = TURN_DURATION_MS;
 
     return {
       success: true,
@@ -1721,7 +1746,7 @@ class OkeyGame {
       currentTurn: this.currentTurn,
       turnState: this.turnState,
       turnStartTime: this.turnStartTime || Date.now(),
-      turnDuration: this.turnDuration || 30000,
+      turnDuration: this.turnDuration || TURN_DURATION_MS,
       firstPlayerIndex: this.firstPlayerIndex,
       remainingDeckCount: this.deck ? this.deck.remainingCount() : 0,
       indicator: this.indicator ? this.indicator.toJSON() : null,

@@ -1574,7 +1574,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const turnStartTime = currentGameState.turnStartTime || Date.now();
-      const turnDuration = currentGameState.turnDuration || 30000;
+      const turnDuration = currentGameState.turnDuration || 40000;
       const elapsed = Date.now() - turnStartTime;
       const progress = Math.max(0, Math.min(1, elapsed / turnDuration));
       const remainingRatio = Math.max(0, Math.min(1, 1 - progress));

@@ -37,6 +37,8 @@ const PLAYER_STATES = {
   WAITING_DISCARD: 'WAITING_DISCARD'
 };
 
+const TURN_DURATION_MS = 40000;
+
 const PENALTIES = {
   FALSE_OPEN: 101,      // Yanlış el açmaya çalışma veya açamama
   ILLEGAL_DISCARD_DRAW: 101, // Yandan uygunsuz taş çekme
@@ -52,5 +54,6 @@ module.exports = {
   GAME_MODES,
   GAME_STATES,
   PLAYER_STATES,
+  TURN_DURATION_MS,
   PENALTIES
 };

@@ -1,5 +1,5 @@
 const OkeyGame = require('./OkeyGame');
-const { GAME_STATES } = require('./Constants');
+const { GAME_STATES, TURN_DURATION_MS } = require('./Constants');
 
 class RoomManager {
   constructor(io) {
@@ -524,9 +524,9 @@ class RoomManager {
             this.broadcastGameState(room.id);
           }
         } else {
-          // Inactive human player watchdog (30 seconds based on game.turnStartTime)
+          // Inactive human player watchdog follows the shared turn duration.
           const turnStart = game.turnStartTime || room.turnStartTime || now;
-          const turnDur = game.turnDuration || 30000;
+          const turnDur = game.turnDuration || TURN_DURATION_MS;
           if (now - turnStart >= turnDur) {
             game.turnStartTime = now;
             room.turnStartTime = now;

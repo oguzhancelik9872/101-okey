@@ -79,18 +79,44 @@ test('geçici seri açılışı geri toplandıktan sonra oyuncu +101 ile yana ta
   assert.equal(game.currentTurn, 1);
 });
 
-test('baraj altındaki çift denemesi tur bitene kadar bekler ve açmadan atılırsa +101 verir', () => {
+test('baraj altındaki çiftler masaya iner, atış uyarılır ve geri toplandıktan sonra +101 ile atılabilir', () => {
   const game = createGame('false-pairs');
   const pair = [new Tile('b7a', 'blue', 7), new Tile('b7b', 'blue', 7)];
   game.players[0].hand = [...pair, new Tile('extra', 'black', 13)];
+  game._saveTurnSnapshot(0);
 
   const result = game.openPairs(0, [pair.map(tile => tile.id)]);
-  assert.equal(result.success, false);
+  assert.equal(result.success, true);
+  assert.equal(result.provisional, true);
   assert.equal(result.openingAttemptPending, true);
   assert.equal(game.players[0].penaltyPoints, 0);
-  assert.equal(game.players[0].hand.length, 3);
+  assert.equal(game.players[0].hand.length, 1);
+  assert.equal(game.tableMelds.length, 1);
+  assert.equal(game.tableMelds[0].provisional, true);
+  assert.equal(game.discardTile(0, 'extra').success, false);
+  assert.equal(game.undoTurn(0).success, true);
   assert.equal(game.discardTile(0, 'extra').success, true);
   assert.equal(game.players[0].penaltyPoints, 101);
+});
+
+test('geçici çift açılışı geri toplanıp doğru tamamlanırsa ceza verilmez', () => {
+  const game = createGame('false-pairs-corrected');
+  const pairs = [];
+  for (let number = 3; number <= 7; number++) {
+    pairs.push([
+      new Tile(`b${number}a`, 'blue', number),
+      new Tile(`b${number}b`, 'blue', number)
+    ]);
+  }
+  game.players[0].hand = [...pairs.flat(), new Tile('extra', 'black', 13)];
+  game._saveTurnSnapshot(0);
+
+  assert.equal(game.openPairs(0, [pairs[0].map(tile => tile.id)]).provisional, true);
+  assert.equal(game.discardTile(0, 'extra').success, false);
+  assert.equal(game.undoTurn(0).success, true);
+  assert.equal(game.openPairs(0, pairs.map(pair => pair.map(tile => tile.id))).success, true);
+  assert.equal(game.discardTile(0, 'extra').success, true);
+  assert.equal(game.players[0].penaltyPoints, 0);
 });
 
 test('oyuncu aynı turda açıp topladıktan sonra doğru açarsa ceza almaz', () => {
