@@ -921,6 +921,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let tableRulesForBots = false;
   const showTableRules = (forBots) => {
     tableRulesForBots = forBots;
+    const defaultTeams = document.querySelector('input[name="rule-teams"][value="true"]');
+    const defaultFolded = document.querySelector('input[name="rule-folded"][value="true"]');
+    const defaultAssistance = document.querySelector('input[name="rule-assistance"][value="false"]');
+    if (defaultTeams) defaultTeams.checked = true;
+    if (defaultFolded) defaultFolded.checked = true;
+    if (defaultAssistance) defaultAssistance.checked = true;
     document.getElementById('table-rules-title').textContent = forBots ? 'Bot Maçı Kuralları' : 'Masa Kuralları';
     document.getElementById('btn-confirm-table-rules').textContent = forBots ? 'Maçı Başlat' : 'Masayı Oluştur';
     ui.showModal('table-rules-modal');

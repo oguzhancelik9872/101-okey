@@ -5451,6 +5451,7 @@ body.plus-theme {
 /* Rule plaques — one restrained felt/wood visual language in lobby and game. */
 .game-rules-summary,
 #lobby-view .lobby-detail-rules {
+  box-sizing:border-box;
   border:1px solid rgba(151, 112, 48, .72);
   background:
     linear-gradient(90deg, rgba(126, 88, 30, .08), transparent 22%, transparent 78%, rgba(126, 88, 30, .08)),
@@ -5517,5 +5518,93 @@ body.plus-theme {
     margin:2px 3px;
     padding:2px 3px;
     border-radius:4px !important;
+  }
+}
+
+/* Rule tables deliberately mirror the live player score/penalty card. */
+.game-rules-summary,
+#lobby-view .lobby-detail-rules {
+  gap:3px;
+  padding:4px 5px;
+  border:1px solid rgba(241, 196, 15, .45);
+  border-radius:8px;
+  background:rgba(0, 0, 0, .75);
+  box-shadow:inset 0 2px 6px rgba(0, 0, 0, .6);
+}
+
+.game-rule-row,
+#lobby-view .lobby-rule-row {
+  border:0;
+  border-radius:3px;
+  background:rgba(255, 255, 255, .05);
+}
+
+.game-rule-row + .game-rule-row,
+#lobby-view .lobby-rule-row + .lobby-rule-row {
+  border-top:0;
+}
+
+.game-rule-label,
+#lobby-view .lobby-detail-rules .lobby-rule-label {
+  align-self:center;
+  margin:2px 3px;
+  padding:2px 3px;
+  border:1px solid rgba(255, 255, 255, .1) !important;
+  border-radius:3px;
+  color:#a8d5ba;
+  background:rgba(0, 0, 0, .4);
+  font-size:8px;
+  line-height:11px;
+  font-weight:800;
+  letter-spacing:0;
+}
+
+.game-rule-value,
+#lobby-view .lobby-detail-rules .lobby-rule-value {
+  margin:0;
+  padding:2px 4px;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none;
+  font-size:9px;
+  line-height:12px;
+  font-weight:900;
+}
+
+.game-rules-summary .game-rule-value.rule-green,
+#lobby-view .lobby-detail-rules .lobby-rule-value.rule-green {
+  color:#2ecc71 !important;
+  background:transparent !important;
+}
+
+.game-rules-summary .game-rule-value.rule-red,
+#lobby-view .lobby-detail-rules .lobby-rule-value.rule-red {
+  color:#ff7675 !important;
+  background:transparent !important;
+}
+
+.game-rules-summary .game-rule-value.rule-gray,
+#lobby-view .lobby-detail-rules .lobby-rule-value.rule-gray {
+  color:rgba(255, 255, 255, .58) !important;
+  background:transparent !important;
+}
+
+@media (pointer: coarse), (max-width: 900px) {
+  .game-rules-summary,
+  #lobby-view .lobby-detail-rules { gap:2px; padding:3px 4px; }
+  .game-rule-label,
+  #lobby-view .lobby-detail-rules .lobby-rule-label {
+    margin:1px 2px;
+    padding:1px 2px;
+    font-size:7px;
+    line-height:9px;
+  }
+  .game-rule-value,
+  #lobby-view .lobby-detail-rules .lobby-rule-value {
+    margin:0;
+    padding:1px 3px;
+    font-size:7px;
+    line-height:10px;
   }
 }
