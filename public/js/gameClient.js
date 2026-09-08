@@ -605,12 +605,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const countdownBanner = document.getElementById('lobby-countdown-banner');
     const countdownNum = document.getElementById('lobby-countdown-num');
     const instructionEl = document.getElementById('lobby-table-instruction');
+    const rulesEl = document.getElementById('lobby-detail-rules');
     const isCountingDown = tableData.countdown !== null && tableData.countdown !== undefined && tableData.countdown > 0;
 
     if (isCountingDown) {
       if (countdownBanner) countdownBanner.classList.remove('hidden');
       if (countdownNum) countdownNum.textContent = tableData.countdown;
       if (instructionEl) instructionEl.classList.add('hidden');
+      if (rulesEl) rulesEl.classList.add('hidden');
       if (btnFillBots) btnFillBots.classList.add('hidden');
       try {
         if (window.soundEngine && typeof window.soundEngine.playTileTouch === 'function') {
@@ -620,6 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       if (countdownBanner) countdownBanner.classList.add('hidden');
       if (instructionEl) instructionEl.classList.remove('hidden');
+      if (rulesEl) rulesEl.classList.remove('hidden');
       if (btnFillBots) {
         if (mySeatedIndex !== null && tableData.state === 'WAITING' && (tableData.playerCount || 0) < 4) {
           btnFillBots.classList.remove('hidden');
@@ -807,7 +810,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function lobbyRulesHtml(rules) {
-    return lobbyRuleLabels(rules).map(rule => `<span class="${rule.tone}">${rule.label}</span>`).join('');
+    const labels = lobbyRuleLabels(rules);
+    const rowTitles = ['Oyun', 'Katlama', 'Yardım'];
+    return labels.map((rule, index) => `
+      <div class="lobby-rule-row">
+        <span class="lobby-rule-label">${rowTitles[index]}</span>
+        <strong class="lobby-rule-value ${rule.tone}">${rule.label}</strong>
+      </div>
+    `).join('');
   }
 
   function gameRulesTableHtml(rules = {}) {

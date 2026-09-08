@@ -5071,6 +5071,72 @@ body.plus-theme {
   }
 }
 
+/* Lobby table rules live inside the felt as a fixed three-row table. Keeping
+   every label/value in its own cell prevents wrapping and chip collisions. */
+#lobby-view .lobby-detail-rules {
+  display:grid;
+  grid-template-columns:1fr;
+  width:clamp(190px, 24vw, 235px);
+  margin:0;
+  gap:0;
+  overflow:hidden;
+  border:1px solid rgba(202, 177, 103, .42);
+  border-radius:10px;
+  background:rgba(3, 27, 18, .9);
+  box-shadow:0 5px 15px rgba(0, 0, 0, .32);
+}
+
+#lobby-view .lobby-rule-row {
+  display:grid;
+  grid-template-columns:72px minmax(0, 1fr);
+  align-items:center;
+  min-width:0;
+  min-height:25px;
+}
+
+#lobby-view .lobby-rule-row + .lobby-rule-row {
+  border-top:1px solid rgba(255, 255, 255, .08);
+}
+
+#lobby-view .lobby-detail-rules .lobby-rule-label,
+#lobby-view .lobby-detail-rules .lobby-rule-value {
+  display:block;
+  box-sizing:border-box;
+  min-width:0;
+  margin:0;
+  border:0 !important;
+  border-radius:0;
+  padding:5px 8px;
+  font-size:9px;
+  line-height:15px;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+#lobby-view .lobby-detail-rules .lobby-rule-label {
+  color:#9fb2a7;
+  background:rgba(255, 255, 255, .035);
+}
+
+#lobby-view .lobby-detail-rules .lobby-rule-value {
+  text-align:center;
+  letter-spacing:.15px;
+}
+
+@media (pointer: coarse) and (orientation: landscape), (max-height: 540px) and (orientation: landscape) {
+  #lobby-view .lobby-table-center-hub { gap:3px; }
+  #lobby-view .lobby-detail-rules { width:150px; border-radius:7px; }
+  #lobby-view .lobby-rule-row { grid-template-columns:52px minmax(0, 1fr); min-height:14px; }
+  #lobby-view .lobby-detail-rules .lobby-rule-label,
+  #lobby-view .lobby-detail-rules .lobby-rule-value {
+    padding:2px 5px;
+    font-size:7px;
+    line-height:10px;
+  }
+}
+
 @media (pointer: coarse) and (orientation: landscape), (max-height: 540px) and (orientation: landscape) {
   #lobby-view .lobby-center-stage {
     padding: 38px 72px;
