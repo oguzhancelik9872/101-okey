@@ -1947,11 +1947,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    istaka.setDrawnTileId(null);
-    istaka.clearTurnSnapshot();
     lockGameInteraction();
     socket.emit('discardTile', { roomId, tileId: activeTile.id }, (res) => {
       if (res.success) {
+        istaka.setDrawnTileId(null);
+        istaka.clearTurnSnapshot();
         istaka.clearSelection();
       } else {
         ui.showToast(res.reason, 'error');
@@ -1978,11 +1978,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    istaka.setDrawnTileId(null);
-    istaka.clearTurnSnapshot();
     lockGameInteraction();
     socket.emit('discardTile', { roomId, tileId: tile.id }, (res) => {
       if (res.success) {
+        istaka.setDrawnTileId(null);
+        istaka.clearTurnSnapshot();
         istaka.clearSelection();
       } else {
         ui.showToast(res.reason, 'error');

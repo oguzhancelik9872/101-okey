@@ -103,6 +103,7 @@ class OkeyGame {
       penaltyPoints: 0,   // Accumulated penalty points in current round (+101, +202 etc)
       penalties: [],
       openingAttemptedThisTurn: false,
+      openingNeedsCorrection: false,
       indicatorDeclared: false,
       indicatorTileId: null,
       indicatorBonusUsed: false,
@@ -216,6 +217,7 @@ class OkeyGame {
       this.players[i].penaltyPoints = 0;
       this.players[i].penalties = [];
       this.players[i].openingAttemptedThisTurn = false;
+      this.players[i].openingNeedsCorrection = false;
       this.players[i].indicatorDeclared = false;
       this.players[i].indicatorTileId = null;
       this.players[i].indicatorBonusUsed = false;
@@ -403,6 +405,7 @@ class OkeyGame {
         tiles: m.tiles.map(t => new Tile(t.id, t.color, t.number, t.isFake)),
         score: m.score
         ,isIndicatorPair: Boolean(m.isIndicatorPair)
+        ,provisional: Boolean(m.provisional)
       })),
       tableMeldCounter: this.tableMeldCounter,
       penalties: this.players.map(p => ({
@@ -427,7 +430,12 @@ class OkeyGame {
 
     const player = this.players[playerIndex];
     const snap = this.turnSnapshot;
-    const undoesFirstOpening = Boolean(!snap.opened && player.opened && player.openedInThisTurn);
+    const undoesFirstOpening = Boolean(
+      !snap.opened && (
+        (player.opened && player.openedInThisTurn) ||
+        (player.openingAttemptedThisTurn && this.tableMelds.some(m => m.playerIndex === playerIndex && m.provisional))
+      )
+    );
 
     // Restore player hand & opened state
     player.hand = snap.hand.map(t => new Tile(t.id, t.color, t.number, t.isFake));
@@ -457,6 +465,7 @@ class OkeyGame {
       tiles: m.tiles.map(t => new Tile(t.id, t.color, t.number, t.isFake)),
       score: m.score
       ,isIndicatorPair: Boolean(m.isIndicatorPair)
+      ,provisional: Boolean(m.provisional)
     }));
     this.tableMeldCounter = snap.tableMeldCounter;
 
@@ -553,6 +562,9 @@ class OkeyGame {
     if (player.opened && player.openType === 'pairs') {
       return { success: false, reason: 'Çift açtığınız için seri açamazsınız.' };
     }
+    if (firstTime && player.openingAttemptedThisTurn && this.tableMelds.some(m => m.playerIndex === playerIndex && m.provisional)) {
+      return { success: false, reason: 'Önce geçici açtığınız perleri Geri Topla ile ıstakaya alın.' };
+    }
 
     // Convert tile IDs to tile instances from player's hand
     const melds = [];
@@ -590,19 +602,43 @@ class OkeyGame {
     if (!validation.valid) {
       return { success: false, reason: validation.reason };
     }
-    if (firstTime) player.openingAttemptedThisTurn = true;
-    if (firstTime && validation.score < minRequired) {
-      return {
-        success: false,
-        openingAttemptPending: true,
-        reason: `Per toplamınız ${validation.score}; açma barajı ${minRequired}. Tur bitmeden açılışı tamamlamazsanız +${PENALTIES.FALSE_OPEN} ceza alırsınız.`
-      };
-    }
 
     // A hand can only be won by discarding the final tile. Opening every tile
     // would leave nothing to discard and must therefore be rejected atomically.
     if (usedTileIds.size >= player.hand.length) {
       return { success: false, reason: 'Bitmek için elinizde son bir taş bırakıp onu yana atmalısınız.' };
+    }
+
+    if (!this.turnSnapshot || this.turnSnapshot.playerIndex !== playerIndex) {
+      this._saveTurnSnapshot(playerIndex);
+    }
+    if (firstTime) player.openingAttemptedThisTurn = true;
+
+    // Baraj altındaki yapısal olarak geçerli perler de gerçekten masaya iner.
+    // Bunlar geçici kalır: oyuncu yana taş atamaz, Geri Topla ile düzeltip aynı
+    // süre içinde geçerli bir açılış yapabilir. Süre bitince +101 uygulanır.
+    if (firstTime && validation.score < minRequired) {
+      player.openingNeedsCorrection = true;
+      player.hand = player.hand.filter(t => !usedTileIds.has(t.id));
+      for (const vMeld of validation.melds) {
+        this.tableMelds.push({
+          id: `meld_${this.tableMeldCounter++}`,
+          playerIndex,
+          type: vMeld.type,
+          tiles: vMeld.tiles,
+          score: vMeld.score,
+          provisional: true
+        });
+      }
+      if (this.turnSnapshot) this.turnSnapshot.modified = true;
+      return {
+        success: true,
+        provisional: true,
+        openingAttemptPending: true,
+        score: validation.score,
+        remainingTilesCount: player.hand.length,
+        reason: `Per toplamınız ${validation.score}; açma barajı ${minRequired}. Geri Topla ile düzeltip tur bitmeden açılışı tamamlayın.`
+      };
     }
 
     // Remove tiles from player's hand
@@ -661,6 +697,7 @@ class OkeyGame {
     player.opened = true;
     player.openType = 'seri';
     player.openingAttemptedThisTurn = false;
+    player.openingNeedsCorrection = false;
 
     if (firstTime && validation.score >= 153) {
       player.penaltyPoints = (player.penaltyPoints || 0) - 101;
@@ -982,6 +1019,13 @@ class OkeyGame {
     if (this.turnState !== 'DISCARD') return { success: false, reason: 'Henüz taş çekmediniz.' };
 
     const player = this.players[playerIndex];
+    if (!player.opened && player.openingNeedsCorrection) {
+      return {
+        success: false,
+        openingAttemptPending: true,
+        reason: 'Eliniz henüz açılmadı. Geri Topla ile taşları ıstakaya alın, açılış barajını tamamlayın ve sonra yana taş atın.'
+      };
+    }
     const tileIndex = player.hand.findIndex(t => t.id === tileId);
     if (tileIndex === -1) return { success: false, reason: 'Atılacak taş elinizde yok.' };
 
@@ -993,12 +1037,11 @@ class OkeyGame {
       };
     }
 
-    // Oyuncu tur içinde açmayı deneyip geri toplayabilir veya yeniden dizebilir.
-    // Ceza yalnızca turu geçerli bir ilk açılış tamamlamadan kapatırsa yazılır.
     if (!player.opened && player.openingAttemptedThisTurn) {
       this._applyFalseOpenPenalty(playerIndex, 'Tur geçerli açılış tamamlanmadan kapatıldı');
     }
     player.openingAttemptedThisTurn = false;
+    player.openingNeedsCorrection = false;
 
     const tile = player.hand.splice(tileIndex, 1)[0];
     if (player.indicatorDeclared && tile.id === player.indicatorTileId && !player.indicatorBonusUsed) {
@@ -1594,6 +1637,17 @@ class OkeyGame {
     const actions = [];
 
     try {
+      // Süre, tamamlanmamış bir ilk açılış varken biterse geçici perleri geri
+      // topla, hatalı açma cezasını uygula ve ardından normal otomatik turu bitir.
+      if (!player.opened && player.openingAttemptedThisTurn) {
+        if (this.turnSnapshot && this.turnSnapshot.modified && this.turnSnapshot.playerIndex === playerIndex) {
+          this.undoTurn(playerIndex);
+        }
+        this._applyFalseOpenPenalty(playerIndex, 'Süre geçerli açılış tamamlanmadan bitti');
+        player.openingAttemptedThisTurn = false;
+        player.openingNeedsCorrection = false;
+      }
+
       // 1. If player took a tile from discard and didn't use it, RETURN it back immediately!
       if (this.drawnFromDiscard && this.drawnFromDiscard.playerIndex === playerIndex) {
         const returnedTile = this.drawnFromDiscard.tile;
@@ -1683,6 +1737,7 @@ class OkeyGame {
         type: m.type,
         score: m.score,
         isIndicatorPair: Boolean(m.isIndicatorPair),
+        provisional: Boolean(m.provisional),
         tiles: m.tiles.map(t => ({
           ...t.toJSON(),
           effectiveColor: t.getColor(this.indicator),
