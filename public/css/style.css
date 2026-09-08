@@ -5447,3 +5447,75 @@ body.plus-theme {
     max-height: 248px;
   }
 }
+
+/* Rule plaques — one restrained felt/wood visual language in lobby and game. */
+.game-rules-summary,
+#lobby-view .lobby-detail-rules {
+  border:1px solid rgba(151, 112, 48, .72);
+  background:
+    linear-gradient(90deg, rgba(126, 88, 30, .08), transparent 22%, transparent 78%, rgba(126, 88, 30, .08)),
+    linear-gradient(180deg, rgba(9, 42, 28, .97), rgba(3, 24, 16, .98));
+  box-shadow:
+    inset 0 1px 0 rgba(246, 218, 145, .1),
+    inset 0 0 18px rgba(0, 0, 0, .28),
+    0 4px 11px rgba(0, 0, 0, .28);
+}
+
+.game-rule-row + .game-rule-row,
+#lobby-view .lobby-rule-row + .lobby-rule-row {
+  border-top:1px solid rgba(177, 137, 68, .18);
+}
+
+.game-rule-label,
+#lobby-view .lobby-detail-rules .lobby-rule-label {
+  color:rgba(205, 178, 112, .78);
+  background:rgba(7, 25, 17, .28);
+  border-right:1px solid rgba(177, 137, 68, .16);
+  font-family:'Montserrat', sans-serif;
+  font-weight:700;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+}
+
+.game-rule-value,
+#lobby-view .lobby-detail-rules .lobby-rule-value {
+  align-self:center;
+  margin:3px 4px;
+  border:1px solid transparent !important;
+  border-radius:5px !important;
+  padding:3px 5px;
+  font-family:'Montserrat', sans-serif;
+  font-weight:800;
+  letter-spacing:.1px;
+  box-shadow:inset 0 1px 0 rgba(255, 255, 255, .035);
+}
+
+.game-rules-summary .game-rule-value.rule-green,
+#lobby-view .lobby-detail-rules .lobby-rule-value.rule-green {
+  color:#b7d8bf !important;
+  background:rgba(38, 91, 57, .38) !important;
+  border-color:rgba(90, 144, 103, .25) !important;
+}
+
+.game-rules-summary .game-rule-value.rule-red,
+#lobby-view .lobby-detail-rules .lobby-rule-value.rule-red {
+  color:#d9b1a4 !important;
+  background:rgba(105, 52, 40, .38) !important;
+  border-color:rgba(157, 90, 72, .25) !important;
+}
+
+.game-rules-summary .game-rule-value.rule-gray,
+#lobby-view .lobby-detail-rules .lobby-rule-value.rule-gray {
+  color:#c7bea8 !important;
+  background:rgba(91, 79, 56, .3) !important;
+  border-color:rgba(150, 132, 94, .2) !important;
+}
+
+@media (pointer: coarse), (max-width: 900px) {
+  .game-rule-value,
+  #lobby-view .lobby-detail-rules .lobby-rule-value {
+    margin:2px 3px;
+    padding:2px 3px;
+    border-radius:4px !important;
+  }
+}
