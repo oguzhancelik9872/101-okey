@@ -172,6 +172,55 @@ assert.strictEqual(canProcess8.canProcess, true);
 const cannotProcess = Validator.canProcessTile(new Tile('tb8', COLORS.BLUE, 8), targetRun, indicator);
 assert.strictEqual(cannotProcess.canProcess, false);
 
+// A real Okey (Red 9 for this indicator) can stand for the missing tile at
+// either end of a differently-coloured run.
+const okeyAtRunEnd = Validator.canProcessTile(new Tile('okey-run-end', COLORS.RED, 9), {
+  type: 'run',
+  tiles: [
+    new Tile('blue5', COLORS.BLUE, 5),
+    new Tile('blue6', COLORS.BLUE, 6),
+    new Tile('blue7', COLORS.BLUE, 7)
+  ]
+}, indicator);
+assert.strictEqual(okeyAtRunEnd.canProcess, true);
+assert.strictEqual(okeyAtRunEnd.position, 'append');
+
+// At the 13 boundary it must choose the valid beginning rather than trying 14.
+const okeyAtRunStart = Validator.canProcessTile(new Tile('okey-run-start', COLORS.RED, 9), {
+  type: 'run',
+  tiles: [
+    new Tile('blue11', COLORS.BLUE, 11),
+    new Tile('blue12', COLORS.BLUE, 12),
+    new Tile('blue13', COLORS.BLUE, 13)
+  ]
+}, indicator);
+assert.strictEqual(okeyAtRunStart.canProcess, true);
+assert.strictEqual(okeyAtRunStart.position, 'prepend');
+
+// Reverse runs preserve their visible direction when extended.
+const reverseRun = Validator.canProcessTile(new Tile('blue4', COLORS.BLUE, 4), {
+  type: 'run',
+  tiles: [
+    new Tile('reverse7', COLORS.BLUE, 7),
+    new Tile('reverse6', COLORS.BLUE, 6),
+    new Tile('reverse5', COLORS.BLUE, 5)
+  ]
+}, indicator);
+assert.strictEqual(reverseRun.canProcess, true);
+assert.strictEqual(reverseRun.position, 'append');
+
+// A real Okey can also complete a four-colour number group.
+const okeyInGroup = Validator.canProcessTile(new Tile('okey-group', COLORS.RED, 9), {
+  type: 'group',
+  tiles: [
+    new Tile('group-yellow', COLORS.YELLOW, 8),
+    new Tile('group-blue', COLORS.BLUE, 8),
+    new Tile('group-black', COLORS.BLACK, 8)
+  ]
+}, indicator);
+assert.strictEqual(okeyInGroup.canProcess, true);
+assert.strictEqual(okeyInGroup.newTiles.length, 4);
+
 // Check isPlayableToTable
 const isPlayable = Validator.isPlayableToTable(new Tile('t4', COLORS.RED, 4), [targetRun], indicator);
 assert.strictEqual(isPlayable, true);

@@ -375,25 +375,13 @@ class Validator {
     // 1. RUN (SERİ)
     // ============================================
     if (type === 'run') {
-      const pTile = this.getTileProps(tile, indicator);
-      const regularIndices = [];
-      tiles.forEach((t, i) => { if (!isJoker(t)) regularIndices.push(i); });
-      if (regularIndices.length === 0) return { canProcess: false };
-
-      const firstRegIdx = regularIndices[0];
-      const firstRegTile = this.getTileProps(tiles[firstRegIdx], indicator);
-      const startNum = firstRegTile.number - firstRegIdx;
-      const runColor = firstRegTile.color;
-
-      if (pTile.color !== runColor) return { canProcess: false };
-
-      // 1. Check if played tile replaces any Joker in its exact physical position (Okey Steal)
+      // 1. Check whether the natural tile can replace an existing Okey while
+      // preserving the exact visible order of ascending or descending runs.
       for (let i = 0; i < tiles.length; i++) {
         if (isJoker(tiles[i])) {
-          const jokerExpectedNum = startNum + i;
-          if (pTile.number === jokerExpectedNum) {
-            const newTiles = [...tiles];
-            newTiles[i] = tile;
+          const newTiles = [...tiles];
+          newTiles[i] = tile;
+          if (!isJoker(tile) && this.isValidRun(newTiles, indicator).valid) {
             return {
               canProcess: true,
               isOkeySteal: true,
@@ -405,23 +393,25 @@ class Validator {
         }
       }
 
-      // 2. Check if played tile extends the run on the left (startNum - 1)
-      if (pTile.number === startNum - 1 && startNum - 1 >= 1) {
-        return {
-          canProcess: true,
-          isOkeySteal: false,
-          position: 'prepend',
-          newTiles: [tile, ...tiles]
-        };
-      }
-
-      // 3. Check if played tile extends the run on the right (startNum + tiles.length)
-      if (pTile.number === startNum + tiles.length && startNum + tiles.length <= 13) {
+      // 2. A real Okey may extend either end of a valid run. Trying the actual
+      // resulting arrays also handles reverse runs and the 1/13 boundaries.
+      const appendedTiles = [...tiles, tile];
+      if (this.isValidRun(appendedTiles, indicator).valid) {
         return {
           canProcess: true,
           isOkeySteal: false,
           position: 'append',
-          newTiles: [...tiles, tile]
+          newTiles: appendedTiles
+        };
+      }
+
+      const prependedTiles = [tile, ...tiles];
+      if (this.isValidRun(prependedTiles, indicator).valid) {
+        return {
+          canProcess: true,
+          isOkeySteal: false,
+          position: 'prepend',
+          newTiles: prependedTiles
         };
       }
 
