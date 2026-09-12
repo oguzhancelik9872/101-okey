@@ -374,6 +374,156 @@ html body.plus-theme #auth-view .plus-logo-title { color:#edf3ee !important; -we
   .player-outer-bar.active-turn,.plus-discard-box.can-draw-pulse { animation:none !important; }
 }
 
+/* Desktop game contrast + original focus geometry. The visual rework must not
+   flatten the oval's vertical turn animation or wash game controls in white. */
+@media (min-width:901px) and (min-height:541px) {
+  #game-view {
+    color:#e8f0eb !important;
+    background:
+      radial-gradient(ellipse at 50% 34%,rgba(24,78,60,.28),transparent 52%),
+      linear-gradient(155deg,#0b1b16 0%,#07130f 58%,#040b09 100%) !important;
+  }
+
+  .table-felt-mat,
+  .my-turn-focus .table-felt-mat {
+    right:auto !important;
+    bottom:auto !important;
+    left:50% !important;
+    width:fit-content !important;
+    max-width:95% !important;
+    padding:4px 10px !important;
+    border:7px solid #15231e !important;
+    outline:1px solid rgba(194,157,82,.34) !important;
+    background:
+      radial-gradient(ellipse at 50% 44%,rgba(24,105,75,.2),transparent 56%),
+      linear-gradient(145deg,#0d4a37 0%,#083727 58%,#05261b 100%) !important;
+    box-shadow:inset 0 0 78px rgba(0,7,5,.72),0 18px 52px rgba(0,0,0,.56),0 0 0 2px rgba(194,157,82,.16) !important;
+    will-change:height,border-radius,transform !important;
+    transition:height .52s cubic-bezier(.22,1,.36,1),border-radius .46s cubic-bezier(.22,1,.36,1),box-shadow .3s ease,opacity .22s ease !important;
+  }
+  .table-felt-mat {
+    top:50% !important;
+    height:calc(100% - 156px) !important;
+    transform:translate(-50%,-50%) !important;
+    border-radius:40px !important;
+  }
+  .my-turn-focus .table-felt-mat {
+    top:50% !important;
+    height:calc(100% - 38px) !important;
+    transform:translate(-50%,-50%) !important;
+    border-radius:36px !important;
+    border-color:#1d312a !important;
+    box-shadow:inset 0 0 90px rgba(0,7,5,.76),0 20px 58px rgba(0,0,0,.62),0 0 0 3px rgba(207,168,87,.42) !important;
+  }
+  .my-turn-focus .bar-top {
+    opacity:0 !important;
+    pointer-events:none !important;
+    transform:translateX(-50%) translateY(-25px) scale(.8) !important;
+  }
+  .my-turn-focus .bar-bottom {
+    opacity:0 !important;
+    pointer-events:none !important;
+    transform:translateY(20px) scale(.8) !important;
+  }
+  .my-turn-focus .table-top-actions {
+    opacity:0 !important;
+    pointer-events:none !important;
+    transform:translateY(-20px) scale(.8) !important;
+  }
+  .bar-top { top:5px !important; }
+  .canvas-bottom-strip,.my-turn-focus .canvas-bottom-strip { bottom:6px !important; max-width:852px !important; }
+  .corner-top-left { top:14px !important; left:16px !important; }
+  .corner-top-right { top:14px !important; right:16px !important; }
+  .corner-bottom-left { bottom:14px !important; left:16px !important; }
+  .corner-bottom-right { bottom:14px !important; right:16px !important; }
+
+  .felt-watermark { color:rgba(225,239,231,.045) !important; }
+  .seri-section-wrapper,.pairs-section-wrapper {
+    border-color:rgba(177,210,195,.14) !important;
+    background:rgba(1,20,14,.38) !important;
+    box-shadow:inset 0 1px rgba(255,255,255,.045) !important;
+  }
+  .grid-cell-slot { border-color:rgba(197,222,210,.13) !important; background:rgba(0,16,11,.3) !important; }
+  .seri-divider-line,.pairs-divider-line { background:rgba(203,225,215,.17) !important; }
+  .split-target-badge {
+    border-color:rgba(210,177,108,.4) !important;
+    color:#e5d3a9 !important;
+    background:rgba(5,24,18,.96) !important;
+    box-shadow:0 5px 16px rgba(0,0,0,.34) !important;
+  }
+
+  .center-deck-strip {
+    border-color:rgba(182,211,198,.18) !important;
+    color:#e7efea !important;
+    background:rgba(5,24,18,.9) !important;
+    box-shadow:0 12px 30px rgba(0,0,0,.35),inset 0 1px rgba(255,255,255,.045) !important;
+  }
+  .center-scoreboard-card,.game-rules-summary {
+    border-color:rgba(182,211,198,.14) !important;
+    color:#e7efea !important;
+    background:rgba(0,13,9,.46) !important;
+  }
+  .score-round-row,.score-empty-history,.center-deck-side-by-side {
+    color:#dce8e1 !important;
+    background:rgba(255,255,255,.055) !important;
+  }
+  .team-header-col,.total-label-badge,.game-rule-value,.indicator-subtext,.deck-count-subtext { color:#9fb3aa !important; }
+  .total-score-val { color:#f0d99e !important; }
+  .plus-3d-deck .deck-layer { border-color:#cfc9b9 !important; background:linear-gradient(145deg,#f8f5eb,#ded9cb) !important; }
+
+  .turn-center-actions {
+    border-color:rgba(187,214,202,.22) !important;
+    background:rgba(5,21,16,.96) !important;
+    box-shadow:0 15px 38px rgba(0,0,0,.42) !important;
+    backdrop-filter:blur(14px) !important;
+  }
+  .turn-center-actions .btn-pill-action {
+    border:1px solid rgba(188,215,203,.14) !important;
+    color:#dce8e1 !important;
+    background:#142a23 !important;
+  }
+  .turn-center-actions .btn-pill-green { border-color:rgba(81,180,132,.3) !important; color:#9ee0bd !important; background:#123326 !important; }
+  .turn-center-actions .btn-pill-magenta { border-color:rgba(166,126,192,.3) !important; color:#d1b5df !important; background:#2b2031 !important; }
+  .turn-center-actions .btn-pill-process { border-color:rgba(99,154,195,.3) !important; color:#b5d3ea !important; background:#172d3b !important; }
+  .turn-center-actions .btn-pill-danger { border-color:rgba(211,105,88,.3) !important; color:#efa99d !important; background:#39201c !important; }
+
+  .player-outer-bar,.player-outer-bar.bar-bottom {
+    border-color:rgba(181,208,196,.2) !important;
+    color:#e8f0eb !important;
+    background:rgba(7,24,18,.94) !important;
+    box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.04) !important;
+  }
+  .player-name { color:#edf3ef !important; }
+  .player-open-status { color:#9eb2a9 !important; }
+  .pod-avatar { border-color:rgba(211,177,105,.72) !important; background:#173a2e !important; box-shadow:0 4px 14px rgba(0,0,0,.34) !important; }
+  .player-turn-progress-track { background:rgba(255,255,255,.1) !important; }
+  .player-turn-progress-fill { background:#d0a956 !important; }
+  .player-outer-bar.active-turn,.player-outer-bar.bar-bottom.active-turn {
+    border-color:rgba(216,176,91,.78) !important;
+    box-shadow:0 0 0 3px rgba(216,176,91,.12),0 12px 30px rgba(0,0,0,.42) !important;
+  }
+  .plus-discard-box { border-color:rgba(184,211,199,.22) !important; background:rgba(2,20,14,.58) !important; }
+  .points-badge { border-color:rgba(184,211,199,.2) !important; color:#eef3ef !important; background:rgba(4,23,17,.95) !important; box-shadow:0 8px 22px rgba(0,0,0,.3) !important; }
+  .btn-menu-trigger,.btn-side-sort {
+    border-color:rgba(184,211,199,.2) !important;
+    color:#d8e5de !important;
+    background:rgba(8,28,21,.94) !important;
+    box-shadow:0 8px 24px rgba(0,0,0,.28) !important;
+  }
+  .btn-side-sort:hover { color:#fff !important; background:#163a2e !important; }
+  .plus-istaka-section { background:rgba(3,13,10,.72) !important; border-top-color:rgba(188,214,202,.1) !important; }
+  .plus-istaka-board,.plus-istaka-board.your-turn-active,#player-istaka-container.your-turn-active {
+    border-color:rgba(184,211,199,.18) !important;
+    background:linear-gradient(180deg,#1a2e28 0%,#0b1a16 100%) !important;
+    box-shadow:0 13px 34px rgba(0,0,0,.43),inset 0 1px rgba(255,255,255,.05) !important;
+  }
+  .plus-istaka-board.your-turn-active,#player-istaka-container.your-turn-active {
+    border-color:rgba(211,174,94,.82) !important;
+    box-shadow:0 13px 34px rgba(0,0,0,.43),0 0 0 3px rgba(211,174,94,.18),inset 0 1px rgba(255,255,255,.05) !important;
+  }
+  .istaka-row { background:rgba(0,7,5,.46) !important; }
+}
+
 /* Mobil arayüz sonraki sürüme kadar kapalı tutulur. Mevcut responsive kurallar
    korunur; yeniden açıldığında kaldığımız yerden geliştirilebilir. */
 @media (pointer:coarse) and (hover:none) and (max-width:1366px),
