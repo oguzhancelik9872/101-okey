@@ -56,7 +56,12 @@ class TileAnimationEngine {
     this.isAnimating = true;
 
     const nextFn = this.queue.shift();
-    nextFn(() => {
+    let completed = false;
+    let watchdog = null;
+    const finishCurrent = () => {
+      if (completed) return;
+      completed = true;
+      if (watchdog) clearTimeout(watchdog);
       this.isProcessingQueue = false;
       if (this.queue.length > 0) {
         // Small 30ms pause between sequential actions for natural physical cadence
@@ -67,7 +72,16 @@ class TileAnimationEngine {
         const callbacks = this.idleCallbacks.splice(0);
         requestAnimationFrame(() => callbacks.forEach(callback => callback()));
       }
-    });
+    };
+
+    // A broken DOM target or interrupted browser animation must never freeze gameplay.
+    watchdog = setTimeout(finishCurrent, 5000);
+    try {
+      nextFn(finishCurrent);
+    } catch (error) {
+      console.error('[TileAnimationEngine] Animation queue recovered:', error);
+      finishCurrent();
+    }
   }
 
   getElCenter(el) {
@@ -149,17 +163,25 @@ class TileAnimationEngine {
     }
 
     const tileEl = this.createTileDOM(tile, isClosed);
-    const tileW = 34;
-    const tileH = 46;
+    const isTileSized = coords => coords
+      && Number.isFinite(coords.width) && Number.isFinite(coords.height)
+      && coords.width >= 20 && coords.width <= 90
+      && coords.height >= 28 && coords.height <= 120
+      && coords.width / coords.height >= .5 && coords.width / coords.height <= .9;
+    const sourceSize = isTileSized(fromCoords) ? fromCoords : null;
+    const targetSize = isTileSized(toCoords) ? toCoords : null;
+    const tileW = Math.round(targetSize?.width || sourceSize?.width || 34);
+    const tileH = Math.round(targetSize?.height || sourceSize?.height || 46);
+    const startScale = sourceSize ? Math.max(.72, Math.min(1.35, sourceSize.height / tileH)) : 1;
 
     tileEl.style.width = `${tileW}px`;
     tileEl.style.height = `${tileH}px`;
     tileEl.style.position = 'fixed';
     tileEl.style.left = `${fromCoords.x - tileW / 2}px`;
     tileEl.style.top = `${fromCoords.y - tileH / 2}px`;
-    tileEl.style.transform = `translate3d(0, 0, 0)`;
+    tileEl.style.transform = `translate3d(0, 0, 0) scale(${startScale})`;
     tileEl.style.opacity = '1';
-    tileEl.style.transition = `transform ${duration}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${duration}ms ease`;
+    tileEl.style.willChange = 'transform';
     tileEl.style.zIndex = '9999';
     tileEl.style.pointerEvents = 'none';
 
@@ -168,15 +190,16 @@ class TileAnimationEngine {
     const deltaX = toCoords.x - fromCoords.x;
     const deltaY = toCoords.y - fromCoords.y;
 
-    // Force reflow
-    void tileEl.offsetWidth;
-
-    // Trigger transform
-    requestAnimationFrame(() => {
-      tileEl.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
-    });
-
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const motionDuration = prefersReducedMotion ? Math.min(duration, 90) : duration;
+    const travelDistance = Math.hypot(deltaX, deltaY);
+    const lift = prefersReducedMotion ? 0 : Math.min(24, Math.max(8, travelDistance * 0.055));
+    const tilt = prefersReducedMotion ? 0 : Math.max(-4, Math.min(4, deltaX / 150));
+    const midScale = ((startScale + 1) / 2) * (prefersReducedMotion ? 1 : 1.045);
+    let cleanedUp = false;
     const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
       if (tileEl && tileEl.parentNode) {
         tileEl.parentNode.removeChild(tileEl);
       }
@@ -185,7 +208,27 @@ class TileAnimationEngine {
       }
     };
 
-    setTimeout(cleanup, duration + 20);
+    if (typeof tileEl.animate === 'function') {
+      const motion = tileEl.animate([
+        { transform: `translate3d(0,0,0) rotate(0deg) scale(${startScale})`, offset: 0 },
+        { transform: `translate3d(${deltaX * .48}px,${(deltaY * .48) - lift}px,0) rotate(${tilt}deg) scale(${midScale})`, offset: .48 },
+        { transform: `translate3d(${deltaX}px,${deltaY}px,0) rotate(0deg) scale(1)`, offset: 1 }
+      ], {
+        duration: motionDuration,
+        easing: 'cubic-bezier(.22,.82,.24,1)',
+        fill: 'forwards'
+      });
+      motion.addEventListener('finish', cleanup, { once: true });
+      motion.addEventListener('cancel', cleanup, { once: true });
+      setTimeout(cleanup, motionDuration + 100);
+    } else {
+      tileEl.style.transition = `transform ${motionDuration}ms cubic-bezier(.22,.82,.24,1)`;
+      void tileEl.offsetWidth;
+      requestAnimationFrame(() => {
+        tileEl.style.transform = `translate3d(${deltaX}px,${deltaY}px,0) scale(1)`;
+      });
+      setTimeout(cleanup, motionDuration + 30);
+    }
   }
 
   /**

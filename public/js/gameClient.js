@@ -1318,39 +1318,33 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           });
         }
-      } else if (lastGameState.tableMelds && state.tableMelds && anim) {
+      }
+
+      // A player can open and process a tile in the same server update. Keep this
+      // as an independent pass so the process animation queues after the opening.
+      if (lastGameState.tableMelds && state.tableMelds && anim) {
         // Check for tile processed into existing melds (İşleme - Seri veya Çifte Taş İşleme)
-        for (let mIdx = 0; mIdx < state.tableMelds.length; mIdx++) {
+        const turnPlayer = (discardedByPlayer !== null) ? discardedByPlayer : state.currentTurn;
+        const seatPos = table.getRelativePosition(turnPlayer);
+        const isViewer = (turnPlayer === viewerSeatIndex);
+        const comparableMeldCount = Math.min(lastGameState.tableMelds.length, state.tableMelds.length);
+        for (let mIdx = 0; mIdx < comparableMeldCount; mIdx++) {
           const lastM = lastGameState.tableMelds[mIdx];
           const curM = state.tableMelds[mIdx];
           if (lastM && curM && curM.tiles && lastM.tiles) {
-            // Case 1: Tile appended to run or group meld
-            if (curM.tiles.length > lastM.tiles.length) {
-              const lastIds = new Set(lastM.tiles.map(t => t.id));
-              const addedTile = curM.tiles.find(t => !lastIds.has(t.id)) || curM.tiles[curM.tiles.length - 1];
-              const turnPlayer = (discardedByPlayer !== null) ? discardedByPlayer : state.currentTurn;
-              const seatPos = table.getRelativePosition(turnPlayer);
-              const isViewer = (turnPlayer === viewerSeatIndex);
-              if (isViewer) beginViewerRackAnimation();
-              anim.animateProcessTile(seatPos, addedTile, isViewer, () => {
-                if (isViewer) endViewerRackAnimation();
-              });
-              break;
-            }
-            // Case 2: Tile processed to a pair meld (e.g. replacing Okey Joker in pair)
-            else if (curM.type === 'pairs') {
-              const lastIds = new Set(lastM.tiles.map(t => t.id));
-              const replacedTile = curM.tiles.find(t => !lastIds.has(t.id));
-              if (replacedTile) {
-                const turnPlayer = (discardedByPlayer !== null) ? discardedByPlayer : state.currentTurn;
-                const seatPos = table.getRelativePosition(turnPlayer);
-                const isViewer = (turnPlayer === viewerSeatIndex);
+            const lastIds = new Set(lastM.tiles.map(tile => tile.id));
+            const currentIds = new Set(curM.tiles.map(tile => tile.id));
+            const addedTiles = curM.tiles.filter(tile => !lastIds.has(tile.id));
+            const hasReplacement = curM.tiles.length === lastM.tiles.length
+              && addedTiles.length > 0
+              && lastM.tiles.some(tile => !currentIds.has(tile.id));
+            if (curM.tiles.length > lastM.tiles.length || hasReplacement) {
+              addedTiles.forEach(addedTile => {
                 if (isViewer) beginViewerRackAnimation();
-                anim.animateProcessTile(seatPos, replacedTile, isViewer, () => {
+                anim.animateProcessTile(seatPos, addedTile, isViewer, () => {
                   if (isViewer) endViewerRackAnimation();
                 });
-                break;
-              }
+              });
             }
           }
         }
@@ -1658,7 +1652,6 @@ document.addEventListener('DOMContentLoaded', () => {
       socket.emit('autoProcessTiles', { roomId }, (res) => {
         if (res?.success) {
           istaka.clearSelection();
-          window.soundEngine.playTilePlace();
           ui.showToast(`${res.processedCount} taş otomatik işlendi.`, 'success', 2200);
         } else {
           ui.showToast(res?.reason || 'Taşlar işlenemedi.', 'error');
@@ -1817,7 +1810,6 @@ document.addEventListener('DOMContentLoaded', () => {
       lockGameInteraction(800);
       socket.emit('openHand', { roomId, melds: meldIdArrays }, (res) => {
         if (res.success) {
-          window.soundEngine.playOpenHand();
           istaka.clearSelection();
         } else {
           ui.showToast(res.reason, 'error');
@@ -1884,7 +1876,6 @@ document.addEventListener('DOMContentLoaded', () => {
       lockGameInteraction(800);
       socket.emit('openPairs', { roomId, pairs: pairIdArrays }, (res) => {
         if (res.success) {
-          window.soundEngine.playOpenHand();
           istaka.clearSelection();
         } else {
           ui.showToast(res.reason, 'error');
@@ -2040,8 +2031,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.okeyStolen) {
           ui.showToast('✨ Tebrikler! Perdeki Okey yerine taş işlediniz ve OKEY elinize geçti!', 'success', 3500);
           window.soundEngine.playVictory();
-        } else {
-          window.soundEngine.playDiscard();
         }
         istaka.clearSelection();
       } else {

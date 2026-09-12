@@ -114,18 +114,16 @@ class UIManager {
         statusText = results.isEldenBitme ? `Açmadı (+${basePoints} Elden Bitme)` : `Açmadı (+202)`;
       }
 
-      const pointStyle = points <= 0 ? 'color: #2ecc71; font-weight: 900;' : 'color: #f1c40f; font-weight: 800;';
+      const pointClass = points <= 0 ? 'is-benefit' : 'is-penalty';
 
       return `
-        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 10px;">
-          <div>
-            <div style="font-size: 13px; font-weight: 800; color: #fff;">${playerName}</div>
-            <div style="font-size: 11px; color: #bdc3c7; margin-top: 2px;">${statusText}</div>
-            ${penaltyPoints !== 0 ? `<div style="font-size: 10px; color: ${penaltyPoints < 0 ? '#72d99b' : '#ff7675'}; font-weight: 800; margin-top: 2px;">${penaltyPoints < 0 ? '🎁 Oyun İçi Bonus' : '⚠️ Oyun İçi Hata Cezası'}: ${penaltyPoints > 0 ? '+' : ''}${penaltyPoints}</div>` : ''}
+        <div class="result-player-row">
+          <div class="result-player-copy">
+            <div class="result-player-name">${playerName}</div>
+            <div class="result-player-status">${statusText}</div>
+            ${penaltyPoints !== 0 ? `<div class="result-player-adjustment ${penaltyPoints < 0 ? 'is-benefit' : 'is-penalty'}">${penaltyPoints < 0 ? 'Oyun içi bonus' : 'Oyun içi hata cezası'}: ${penaltyPoints > 0 ? '+' : ''}${penaltyPoints}</div>` : ''}
           </div>
-          <div style="text-align: right;">
-            <div style="font-size: 14px; ${pointStyle}">${points > 0 ? '+' : ''}${points}</div>
-          </div>
+          <div class="result-player-points ${pointClass}">${points > 0 ? '+' : ''}${points}</div>
         </div>
       `;
     };
@@ -196,32 +194,31 @@ class UIManager {
       const points = Number(entry.points || 0);
       const basePoints = Number(entry.basePoints || 0);
       const penaltyPoints = Number(entry.penaltyPoints || 0);
-      const pointColor = points <= 0 ? '#2ecc71' : '#f1c40f';
       return `
-        <div style="padding:10px 11px; border-radius:12px; border:1px solid rgba(255,255,255,0.11); background:rgba(0,0,0,0.28);">
-          <strong style="display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; font-size:13px; margin-bottom:8px;">${this.escapeHTML(playerName)}</strong>
-          <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; text-align:center;">
-            <div style="padding:5px 2px; border-radius:7px; background:rgba(255,255,255,0.045);">
-              <small style="display:block; color:#91aa9a; font-size:8px; font-weight:800;">EL PUANI</small>
-              <b style="color:#fff; font-size:13px;">${signed(basePoints)}</b>
+        <article class="hand-score-card">
+          <strong class="hand-score-player">${this.escapeHTML(playerName)}</strong>
+          <div class="hand-score-metrics">
+            <div class="hand-score-metric">
+              <small>EL PUANI</small>
+              <b>${signed(basePoints)}</b>
             </div>
-            <div style="padding:5px 2px; border-radius:7px; background:rgba(231,76,60,0.09);">
-              <small style="display:block; color:${penaltyPoints < 0 ? '#72d99b' : '#dca19d'}; font-size:8px; font-weight:800;">${penaltyPoints < 0 ? 'BONUS' : 'CEZA'}</small>
-              <b style="color:${penaltyPoints > 0 ? '#ff7675' : (penaltyPoints < 0 ? '#72d99b' : '#b4c2b8')}; font-size:13px;">${signed(penaltyPoints)}</b>
+            <div class="hand-score-metric adjustment ${penaltyPoints < 0 ? 'is-benefit' : (penaltyPoints > 0 ? 'is-penalty' : '')}">
+              <small>${penaltyPoints < 0 ? 'BONUS' : 'CEZA'}</small>
+              <b>${signed(penaltyPoints)}</b>
             </div>
-            <div style="padding:5px 2px; border-radius:7px; background:rgba(241,196,15,0.08);">
-              <small style="display:block; color:#cbbb7d; font-size:8px; font-weight:800;">TOPLAM</small>
-              <b style="color:${pointColor}; font-size:13px;">${signed(points)}</b>
+            <div class="hand-score-metric total ${points <= 0 ? 'is-benefit' : 'is-penalty'}">
+              <small>TOPLAM</small>
+              <b>${signed(points)}</b>
             </div>
           </div>
-        </div>
+        </article>
       `;
     };
 
-    const renderTeamTotal = (team, color) => `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding:9px 10px 2px; border-top:1px solid rgba(255,255,255,0.13); color:#c9d8ce; font-size:10px; font-weight:900; letter-spacing:.4px;">
+    const renderTeamTotal = (team, teamClass) => `
+      <div class="hand-team-total ${teamClass}">
         <span>BU EL TAKIM TOPLAMI</span>
-        <strong style="color:${color}; font-size:17px;">${signed(Number(team?.score || 0))}</strong>
+        <strong>${signed(Number(team?.score || 0))}</strong>
       </div>
     `;
 
@@ -229,38 +226,38 @@ class UIManager {
     const cumulativeTeam2 = getTeamCumulativeScore(t2);
 
     html = `
-      <div class="round-result-header" style="text-align:center; margin-bottom:16px;">
-        <span style="display:block; color:#72c990; font-size:10px; font-weight:900; letter-spacing:2px; margin-bottom:4px;">EL SONU</span>
-        <h2 style="font-family:'Cinzel',serif; font-size:23px; font-weight:900; color:#f1c40f; letter-spacing:1.5px; margin:0;">${handNumber}. EL TAMAMLANDI</h2>
+      <div class="round-result-header">
+        <span>EL SONU</span>
+        <h2>${handNumber}. EL TAMAMLANDI</h2>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;">
-        <section style="padding:12px; border-radius:15px; border:1px solid rgba(46,204,113,0.34); background:rgba(8,50,28,0.34);">
-          <h3 style="margin:0 0 9px; text-align:center; color:#72d99b; font-size:12px; letter-spacing:1px;">TAKIM 1</h3>
-          <div style="display:flex; flex-direction:column; gap:8px;">
+      <div class="hand-team-grid">
+        <section class="hand-team-panel team-one">
+          <h3>TAKIM 1</h3>
+          <div class="hand-team-players">
             ${(t1 && t1.players ? t1.players : []).map(renderHandScore).join('')}
           </div>
-          ${renderTeamTotal(t1, '#72d99b')}
+          ${renderTeamTotal(t1, 'team-one')}
         </section>
-        <section style="padding:12px; border-radius:15px; border:1px solid rgba(52,152,219,0.38); background:rgba(13,52,76,0.34);">
-          <h3 style="margin:0 0 9px; text-align:center; color:#78c8ff; font-size:12px; letter-spacing:1px;">TAKIM 2</h3>
-          <div style="display:flex; flex-direction:column; gap:8px;">
+        <section class="hand-team-panel team-two">
+          <h3>TAKIM 2</h3>
+          <div class="hand-team-players">
             ${(t2 && t2.players ? t2.players : []).map(renderHandScore).join('')}
           </div>
-          ${renderTeamTotal(t2, '#78c8ff')}
+          ${renderTeamTotal(t2, 'team-two')}
         </section>
       </div>
-      <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin:13px 0 0; padding:10px 12px; border-radius:12px; border:1px solid rgba(241,196,15,.25); background:rgba(0,0,0,.28); font-size:12px; font-weight:900;">
-        <span style="color:#c7b978; letter-spacing:.8px;">TOPLAM SKOR</span>
-        <span style="color:#72d99b;">Takım 1: ${signed(cumulativeTeam1)}</span>
-        <span style="color:#61766a;">•</span>
-        <span style="color:#78c8ff;">Takım 2: ${signed(cumulativeTeam2)}</span>
+      <div class="match-total-strip">
+        <span>TOPLAM SKOR</span>
+        <strong class="team-one">Takım 1: ${signed(cumulativeTeam1)}</strong>
+        <i>•</i>
+        <strong class="team-two">Takım 2: ${signed(cumulativeTeam2)}</strong>
       </div>
-      <div class="round-result-actions" style="margin-top:16px; display:flex; gap:10px; justify-content:center;">
-        <button id="btn-vote-rematch" class="btn-plus-gold" style="flex:2; padding:12px 18px; font-size:14px; font-weight:900;">
-          🔄 Sonraki Eli Başlat
+      <div class="round-result-actions">
+        <button id="btn-vote-rematch" class="btn-plus-gold">
+          Sonraki Eli Başlat
         </button>
-        <button id="btn-result-leave" class="btn-danger-action" style="flex:1; padding:12px 14px; font-size:13px; font-weight:800; border-radius:14px; background:rgba(231,76,60,0.3); border:1.5px solid #e74c3c; color:#ff7675; cursor:pointer;">
-          🚪 Masadan Ayrıl
+        <button id="btn-result-leave" class="btn-danger-action">
+          Masadan Ayrıl
         </button>
       </div>
     `;
@@ -268,9 +265,9 @@ class UIManager {
     if (results.isTeamGame === false) {
       const soloPlayers = Object.values(roundScores).sort((a, b) => Number(a.points || 0) - Number(b.points || 0));
       html = `
-        <div class="round-result-header" style="text-align:center; margin-bottom:16px;"><span style="display:block;color:#72c990;font-size:10px;font-weight:900;letter-spacing:2px;">EL SONU · EŞSİZ</span><h2 style="color:#f1c40f;margin:5px 0 0;">${handNumber}. EL TAMAMLANDI</h2></div>
-        <div style="display:flex;flex-direction:column;gap:8px;">${soloPlayers.map(player => renderHandScore(player.name)).join('')}</div>
-        <div class="round-result-actions" style="margin-top:16px;display:flex;gap:10px;"><button id="btn-vote-rematch" class="btn-plus-gold" style="flex:2;padding:12px;">🔄 Sonraki Eli Başlat</button><button id="btn-result-leave" class="btn-danger-action" style="flex:1;">Masadan Ayrıl</button></div>`;
+        <div class="round-result-header"><span>EL SONU · EŞSİZ</span><h2>${handNumber}. EL TAMAMLANDI</h2></div>
+        <div class="solo-score-list">${soloPlayers.map(player => renderHandScore(player.name)).join('')}</div>
+        <div class="round-result-actions"><button id="btn-vote-rematch" class="btn-plus-gold">Sonraki Eli Başlat</button><button id="btn-result-leave" class="btn-danger-action">Masadan Ayrıl</button></div>`;
     }
     content.innerHTML = html;
     modal.classList.remove('hidden');

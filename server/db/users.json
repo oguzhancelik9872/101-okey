@@ -118,5 +118,21 @@
       "totalScore": 0
     },
     "currentRoomId": null
+  },
+  {
+    "id": "usr_guest_045ca8a9fa60359d",
+    "username": "guest_045ca8a9fa60359d",
+    "displayName": "Audit1789235959845",
+    "gender": "female",
+    "avatarIndex": 2,
+    "isGuest": true,
+    "createdAt": 1789235959847,
+    "lastLogin": 1789235959847,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": "F7S6UR"
   }
 ]
