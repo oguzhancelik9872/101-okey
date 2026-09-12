@@ -166,5 +166,21 @@
       "totalScore": 0
     },
     "currentRoomId": "XDXBJT"
+  },
+  {
+    "id": "usr_guest_6ad68624e94ccc4e",
+    "username": "guest_6ad68624e94ccc4e",
+    "displayName": "Tasarım Testi",
+    "gender": "female",
+    "avatarIndex": 0,
+    "isGuest": true,
+    "createdAt": 1789252047052,
+    "lastLogin": 1789252225889,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "totalScore": 0
+    },
+    "currentRoomId": "9AYYDF"
   }
 ]
