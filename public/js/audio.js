@@ -14,7 +14,7 @@ class OkeyAudio {
     // Simple Sound Settings (Master Mute / Unmute)
     this.settings = {
       muted: false,
-      volume: 0.55
+      volume: 0.42
     };
 
     this.loadSettings();
@@ -43,7 +43,7 @@ class OkeyAudio {
     });
   }
 
-  _playMP3OrFallback(name, type = 'sfx', fallbackFn = null, volume = 0.85) {
+  _playMP3OrFallback(name, type = 'sfx', fallbackFn = null, volume = 0.58) {
     if (this.settings.muted) return;
 
     if (this.mp3Audios[name] && !this.mp3Missing[name]) {
@@ -105,7 +105,7 @@ class OkeyAudio {
 
   setVolume(value) {
     const parsed = Number(value);
-    this.settings.volume = Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : 0.55;
+    this.settings.volume = Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : 0.42;
     this.settings.muted = this.settings.volume === 0;
     this.saveSettings();
     return this.settings.volume;
@@ -113,7 +113,7 @@ class OkeyAudio {
 
   toggleMute() {
     this.settings.muted = !this.settings.muted;
-    if (!this.settings.muted && this.settings.volume === 0) this.settings.volume = 0.55;
+    if (!this.settings.muted && this.settings.volume === 0) this.settings.volume = 0.42;
     this.saveSettings();
     return this.settings.muted;
   }
@@ -144,7 +144,7 @@ class OkeyAudio {
     const soundName = roll < 0.4
       ? 'tile_discard_1'
       : (roll < 0.8 ? 'tile_discard_2' : 'tile_discard_3');
-    this._playMP3OrFallback(soundName, 'sfx', this._synthDiscard);
+    this._playMP3OrFallback(soundName, 'sfx', this._synthDiscard, 0.56);
   }
 
   _synthDiscard() {
@@ -167,7 +167,7 @@ class OkeyAudio {
     osc1.frequency.setValueAtTime(260, t);
     osc1.frequency.exponentialRampToValueAtTime(75, t + 0.05);
 
-    gain1.gain.setValueAtTime(vol * 0.75, t);
+    gain1.gain.setValueAtTime(vol * 0.34, t);
     gain1.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
 
     osc1.connect(filter1);
@@ -184,7 +184,7 @@ class OkeyAudio {
     osc2.frequency.setValueAtTime(130, t);
     osc2.frequency.exponentialRampToValueAtTime(45, t + 0.07);
 
-    gain2.gain.setValueAtTime(vol * 0.5, t);
+    gain2.gain.setValueAtTime(vol * 0.18, t);
     gain2.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
 
     osc2.connect(gain2);
@@ -198,7 +198,7 @@ class OkeyAudio {
   playTilePlace() {
     // Reuse the approved short tile samples quietly as meld tiles land.
     const soundName = Math.random() < 0.5 ? 'tile_discard_1' : 'tile_discard_2';
-    this._playMP3OrFallback(soundName, 'sfx', null, 0.38);
+    this._playMP3OrFallback(soundName, 'sfx', this._synthTilePlace, 0.24);
   }
 
   _synthTilePlace() {
@@ -214,7 +214,7 @@ class OkeyAudio {
     osc.frequency.setValueAtTime(320, t);
     osc.frequency.exponentialRampToValueAtTime(110, t + 0.035);
 
-    gain.gain.setValueAtTime(vol * 0.45, t);
+    gain.gain.setValueAtTime(vol * 0.16, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
 
     osc.connect(gain);
@@ -236,7 +236,7 @@ class OkeyAudio {
     osc.frequency.setValueAtTime(480, t);
     osc.frequency.exponentialRampToValueAtTime(280, t + 0.02);
 
-    gain.gain.setValueAtTime(vol * 0.25, t);
+    gain.gain.setValueAtTime(vol * 0.09, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
 
     osc.connect(gain);
@@ -249,7 +249,7 @@ class OkeyAudio {
    * Desteden Taş Alma (Draw from Deck) - Çuhada yumuşak kayma ve hafif ahşap dokunuşu
    */
   playDrawDeck() {
-    this._playMP3OrFallback('tile_draw_deck', 'sfx', this._synthDrawDeck);
+    this._playMP3OrFallback('tile_draw_deck', 'sfx', this._synthDrawDeck, 0.48);
   }
 
   _synthDrawDeck() {
@@ -266,7 +266,7 @@ class OkeyAudio {
     osc.frequency.setValueAtTime(220, t);
     osc.frequency.exponentialRampToValueAtTime(120, t + 0.045);
 
-    gain.gain.setValueAtTime(vol * 0.4, t);
+    gain.gain.setValueAtTime(vol * 0.18, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
 
     osc.connect(gain);
@@ -284,7 +284,7 @@ class OkeyAudio {
    * Yandan Taş Alma (Draw from Discard) - Çift vuruşlu tok taş kavrama sesi
    */
   playDrawDiscard() {
-    this._playMP3OrFallback('tile_draw_discard', 'sfx', this._synthDrawDiscard);
+    this._playMP3OrFallback('tile_draw_discard', 'sfx', this._synthDrawDiscard, 0.5);
   }
 
   _synthDrawDiscard() {
@@ -296,8 +296,8 @@ class OkeyAudio {
     const t = this.ctx.currentTime;
 
     [
-      { offset: 0.00, freq: 200, gainVal: 0.4 },
-      { offset: 0.03, freq: 270, gainVal: 0.55 }
+      { offset: 0.00, freq: 190, gainVal: 0.16 },
+      { offset: 0.035, freq: 245, gainVal: 0.2 }
     ].forEach(({ offset, freq, gainVal }) => {
       const clickTime = t + offset;
       const osc = this.ctx.createOscillator();
@@ -327,7 +327,7 @@ class OkeyAudio {
    * Birisi El Açtığında (Open Hand) - Tok taşlar ve tatlı casino tınısı
    */
   playOpenHand() {
-    // Intentionally silent. The former synthesized opening sound was not approved.
+    this._synthOpenHand();
   }
 
   _synthOpenHand() {
@@ -338,9 +338,9 @@ class OkeyAudio {
 
     const t = this.ctx.currentTime;
     const clacks = [
-      { time: 0.00, freq: 220, decay: 0.04, gVal: 0.4 },
-      { time: 0.03, freq: 280, decay: 0.05, gVal: 0.5 },
-      { time: 0.06, freq: 340, decay: 0.06, gVal: 0.6 }
+      { time: 0.00, freq: 210, decay: 0.045, gVal: 0.1 },
+      { time: 0.045, freq: 270, decay: 0.05, gVal: 0.12 },
+      { time: 0.09, freq: 325, decay: 0.055, gVal: 0.14 }
     ];
 
     clacks.forEach(({ time, freq, decay, gVal }) => {
@@ -362,16 +362,16 @@ class OkeyAudio {
       osc.stop(clackT + decay + 0.01);
     });
 
-    // Tatlı melodik akor (C5 -> E5 -> G5)
-    [523.25, 659.25, 783.99].forEach((freq, i) => {
+    // Soft, short pentatonic lift without casino-like sparkle.
+    [392.00, 493.88, 587.33].forEach((freq, i) => {
       const noteT = t + 0.08 + (i * 0.06);
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, noteT);
 
-      gain.gain.setValueAtTime(vol * 0.35, noteT);
-      gain.gain.exponentialRampToValueAtTime(0.0001, noteT + 0.25);
+      gain.gain.setValueAtTime(vol * 0.075, noteT);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteT + 0.22);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
@@ -398,7 +398,7 @@ class OkeyAudio {
     this.init();
     if (!this.ctx) return;
 
-    const notes = [523.25, 659.25]; // Kısa ve sıcak sıra bildirimi
+    const notes = [392.00, 523.25]; // Soft two-note turn cue
     notes.forEach((freq, i) => {
       const t = this.ctx.currentTime + (i * 0.08);
       const osc = this.ctx.createOscillator();
@@ -407,8 +407,8 @@ class OkeyAudio {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, t);
 
-      gain.gain.setValueAtTime(vol * 0.18, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      gain.gain.setValueAtTime(vol * 0.095, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
@@ -437,14 +437,14 @@ class OkeyAudio {
     const gain = this.ctx.createGain();
 
     // Saniye azaldıkça frekans yükselir (gerilim ve farkındalık artışı)
-    const baseFreq = secondsLeft <= 3 ? 560 : (secondsLeft <= 5 ? 480 : 400);
-    const duration = 0.035;
+    const baseFreq = secondsLeft <= 3 ? 410 : (secondsLeft <= 5 ? 350 : 310);
+    const duration = 0.045;
 
     osc.type = 'sine';
     osc.frequency.setValueAtTime(baseFreq, t);
     osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.65, t + duration);
 
-    const gainVal = secondsLeft <= 3 ? vol * 0.2 : vol * 0.12;
+    const gainVal = secondsLeft <= 3 ? vol * 0.105 : vol * 0.065;
     gain.gain.setValueAtTime(gainVal, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
 
@@ -479,7 +479,7 @@ class OkeyAudio {
     this.init();
     if (!this.ctx) return;
 
-    const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5 (Sıcak C Major)
+    const notes = [293.66, 392.00, 493.88, 587.33];
     notes.forEach((freq, i) => {
       const t = this.ctx.currentTime + (i * 0.07);
       const osc = this.ctx.createOscillator();
@@ -488,7 +488,7 @@ class OkeyAudio {
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, t);
 
-      gain.gain.setValueAtTime(vol * 0.4, t);
+      gain.gain.setValueAtTime(vol * 0.16, t);
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
 
       osc.connect(gain);
@@ -513,7 +513,7 @@ class OkeyAudio {
     applauseFilter.type = 'bandpass';
     applauseFilter.frequency.setValueAtTime(1450, this.ctx.currentTime);
     applauseFilter.Q.setValueAtTime(0.65, this.ctx.currentTime);
-    applauseGain.gain.setValueAtTime(vol * 0.22, this.ctx.currentTime);
+    applauseGain.gain.setValueAtTime(vol * 0.1, this.ctx.currentTime);
     applauseGain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 1.2);
     applause.connect(applauseFilter);
     applauseFilter.connect(applauseGain);
@@ -539,17 +539,17 @@ class OkeyAudio {
     const gain = this.ctx.createGain();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(160, t);
-    osc.frequency.exponentialRampToValueAtTime(65, t + 0.14);
+    osc.frequency.setValueAtTime(220, t);
+    osc.frequency.exponentialRampToValueAtTime(125, t + 0.22);
 
-    gain.gain.setValueAtTime(vol * 0.45, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    gain.gain.setValueAtTime(vol * 0.16, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(t);
-    osc.stop(t + 0.17);
+    osc.stop(t + 0.25);
   }
 
   // =========================================================================

@@ -4,22 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>101 Okey</title>
-  <meta name="description" content="Arkadaşlarınla veya akıllı botlarla modern, hızlı ve eşli 101 Okey deneyimi.">
+  <meta name="description" content="Dostlarınla veya akıllı botlarla yumuşak, modern ve rahat bir 101 Okey deneyimi.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="101 Okey — Alpha 0.1">
-  <meta property="og:description" content="Modern çok oyunculu 101 Okey masası.">
+  <meta property="og:title" content="101 Okey — Dostlarla aynı masa">
+  <meta property="og:description" content="Yumuşak, modern ve çok oyunculu 101 Okey deneyimi.">
   <meta property="og:image" content="https://one01-okey-2f6d.onrender.com/og.png">
-  <meta property="og:image:width" content="1728">
-  <meta property="og:image:height" content="909">
+  <meta property="og:image:width" content="1729">
+  <meta property="og:image:height" content="910">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="101 Okey — Alpha 0.1">
-  <meta name="twitter:description" content="Modern çok oyunculu 101 Okey masası.">
+  <meta name="twitter:title" content="101 Okey — Dostlarla aynı masa">
+  <meta name="twitter:description" content="Yumuşak, modern ve çok oyunculu 101 Okey deneyimi.">
   <meta name="twitter:image" content="https://one01-okey-2f6d.onrender.com/og.png">
   <link rel="stylesheet" href="css/style.css?v=179">
   <link rel="stylesheet" href="css/modern.css?v=4">
+  <link rel="stylesheet" href="css/rework.css?v=3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body class="plus-theme">
   <div class="mobile-not-supported" role="alert" aria-live="polite">
@@ -36,8 +37,9 @@
     <!-- ================= 101 OKEY AUTH VIEW ================= -->
     <div id="auth-view">
       <div class="plus-lobby-wrapper name-picker-wrapper">
-        <div class="plus-logo-box" style="margin-bottom: 20px;">
-          <h1 class="plus-logo-title" style="font-size: 46px; font-weight: 900; letter-spacing: 3px; margin: 0; color: #f1c40f; text-shadow: 0 4px 15px rgba(0,0,0,0.8);">101 OKEY</h1>
+        <div class="plus-logo-box auth-brand-lockup">
+          <span class="brand-tile-mark" aria-hidden="true">101</span>
+          <div><h1 class="plus-logo-title">Okey</h1><span class="brand-subtitle">Dostlarla aynı masa</span></div>
         </div>
 
         <div class="auth-card guest-login-card">
@@ -122,7 +124,8 @@
 
         <!-- Center: Game Logo (Perfect Center) -->
         <div class="lobby-center-title">
-          <h1 class="plus-logo-title">101 OKEY</h1>
+          <span class="brand-tile-mark" aria-hidden="true">101</span>
+          <div><h1 class="plus-logo-title">Okey</h1><span class="brand-subtitle">Oyun salonu</span></div>
         </div>
 
         <!-- Right: Settings & Profile Card -->
@@ -241,15 +244,18 @@
     <div id="game-view" class="hidden">
       <!-- Main Green Casino Felt Table Area (Full Screen Table) -->
       <main class="plus-table-canvas">
+        <div class="game-brand-lockup" aria-label="101 Okey">
+          <span>101</span><strong>OKEY</strong>
+        </div>
         <!-- Floating Top-Right Actions Wrapper -->
         <div class="table-top-actions">
           <button id="btn-table-chat" class="btn-menu-trigger btn-chat-trigger" title="Masa Sohbeti">
-            <span>Sohbet</span>
+            <span>Mesajlar</span>
             <span id="table-chat-badge" class="chat-unread-dot hidden"></span>
           </button>
 
           <button id="btn-table-settings" class="btn-menu-trigger" title="Ayarlar">
-            <span>Ayarlar</span>
+            <span>Menü</span>
           </button>
         </div>
         
@@ -382,13 +388,6 @@
 
               <div id="game-rules-summary" class="game-rules-summary" aria-label="Masa kuralları"></div>
 
-              <div id="turn-center-actions" class="turn-center-actions hidden">
-                <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled><span>Seri Aç</span></button>
-                <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled><span>Çift Aç</span></button>
-                <button id="btn-auto-process" class="btn-pill-action btn-pill-process" disabled title="Eldeki uygun taşları açık perlere otomatik işle"><span>İşle</span></button>
-                <button id="btn-undo-turn" class="btn-pill-action btn-pill-danger hidden" title="Açtığınız perleri ve işlediğiniz taşları geri alın"><span>Geri Topla</span></button>
-              </div>
-
               <!-- Altta Yan Yana: Gösterge ve Deste -->
               <div class="center-deck-side-by-side">
                 <!-- 1. Open Indicator Tile (Gösterge) -->
@@ -432,6 +431,14 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Independent turn dock: it no longer changes the deck or meld layout. -->
+        <div id="turn-center-actions" class="turn-center-actions hidden">
+          <button id="btn-open-hand" class="btn-pill-action btn-pill-green" disabled><span>Seri Aç</span></button>
+          <button id="btn-open-pairs" class="btn-pill-action btn-pill-magenta" disabled><span>Çift Aç</span></button>
+          <button id="btn-auto-process" class="btn-pill-action btn-pill-process" disabled title="Eldeki uygun taşları açık perlere otomatik işle"><span>İşle</span></button>
+          <button id="btn-undo-turn" class="btn-pill-action btn-pill-danger hidden" title="Açtığınız perleri ve işlediğiniz taşları geri alın"><span>Geri Topla</span></button>
         </div>
 
         <!-- Bottom Outer Player & Action Strip (In Dark Green Canvas, Right Above the Brown Istaka Bar!) -->
@@ -550,7 +557,7 @@
           </button>
           <div class="sound-volume-control">
             <label for="master-volume-slider">Ses seviyesi <strong id="master-volume-value">55%</strong></label>
-            <input id="master-volume-slider" class="sound-range-slider" type="range" min="0" max="100" step="1" value="55" aria-label="Ses seviyesi">
+            <input id="master-volume-slider" class="sound-range-slider" type="range" min="0" max="100" step="1" value="42" aria-label="Ses seviyesi">
           </div>
         </div>
 
@@ -609,7 +616,7 @@
 
   <!-- Socket.IO & Application Scripts (Cache Busted) -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="js/audio.js?v=120"></script>
+  <script src="js/audio.js?v=121"></script>
   <script src="js/validator.js?v=114"></script>
   <script src="js/tileAnimations.js?v=118"></script>
   <script src="js/istaka.js?v=124"></script>
